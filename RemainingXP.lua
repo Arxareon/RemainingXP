@@ -1,49 +1,58 @@
-local maxLevel = 120 --TODO: Update when thhe level cap changes
+local maxLevel = 50 --TODO: Update when thhe level cap changes
 local separator = ',' --Thousand separator character
---Preset location offset (compared to the bottom-center of the screen)
-local offsetX = 380
-local offsetY = 2
---Shash keyrods and commands
+
+--Shash keywords and commands
 local slashKeyword = "/remxp"
 local resetPosition = "reset"
 local presetPosition = "preset"
+local defaultPreset = "default"
+local savePreset = "save"
+local toggleVisibility = "toggle"
+local toggleMouseover = "hover"
 
---Setting up the frame
+--Creating the frame & text
 local remainingXP = CreateFrame("Frame", "RemainingXP", UIParent)
 local displayText = remainingXP:CreateFontString("DisplayText", "HIGH")
 
-remainingXP:SetFrameStrata("HIGH")
+--Registering events
+remainingXP:RegisterEvent("ADDON_LOADED");
+remainingXP:RegisterEvent("PLAYER_XP_UPDATE")
+remainingXP:RegisterEvent("PLAYER_LEVEL_UP")
+
+--DB table & defaults
+local db
+local defaultDB = {
+	["preset"] = {
+		["point"] = "BOTTOM",
+		["offsetX"] = 380,
+		["offsetY"] = 2
+	},
+	["toggle"] = false
+}
+
+--Loading the db
+db = defaultDB --[PH!!!] TODO: Implement DB variable saving
+--[[ remainingXP:SetScript("OnEvent", function(self, event, addon, variable)
+	if event == "ADDON_LOADED" and addon == "Remaining XP" and variable == "RemainingXPDB" then
+		if RemainingXPDB == nil then
+			RemainingXPDB = dbDefaults
+			PrintHelp()
+		end
+		
+			db = dbDefaults
+		db = RemainingXPDB
+		print(db["preset"]["point"])
+	end
+end) ]]
+
+--Setting up the frame & text
+remainingXP:SetFrameStrata("MEDIUM")
 remainingXP:SetSize(64, 8)
-remainingXP:SetPoint("BOTTOM", 0, 2)
+remainingXP:SetPoint(db["preset"]["point"], db["preset"]["offsetX"], db["preset"]["offsetY"])
 displayText:SetPoint("CENTER")
 displayText:SetFont("Fonts\\ARIALN.TTF", 12, "THINOUTLINE")
 displayText:SetTextColor(1,1,1,1)
 remainingXP:Show()
-
---Making the frame moveable
-remainingXP:SetMovable(true)
-remainingXP:SetUserPlaced(true)
-remainingXP:SetScript("OnMouseDown", function(self)
-	if (IsShiftKeyDown() and not self.isMoving) then
-		remainingXP:StartMoving()
-		self.isMoving = true
-	end
-end)
-remainingXP:SetScript("OnMouseUp", function(self)
-	if (self.isMoving) then
-		remainingXP:StopMovingOrSizing()
-		self.isMoving = false
-	end
-end)
-
---Registering events
-onLoad = remainingXP:RegisterEvent("PLAYER_ENTERING_WORLD")
-onUpdate = remainingXP:RegisterEvent("PLAYER_XP_UPDATE")
-onLevelUp = remainingXP:RegisterEvent("PLAYER_LEVEL_UP")
-
-if not (onLoad and onUpdate and onLevelUp) then
-	print("RemainingXP failed to load. Sorry. :(")
-end
 
 --Updating the remaining XP value
 remainingXP:SetScript("OnEvent", function(self, event, ...)
@@ -61,27 +70,100 @@ remainingXP:SetScript("OnEvent", function(self, event, ...)
 	end
 end)
 
+--Making the frame moveable
+remainingXP:SetMovable(true)
+remainingXP:SetUserPlaced(true)
+remainingXP:SetScript("OnMouseDown", function(self)
+	if (IsShiftKeyDown() and not self.isMoving) then
+		remainingXP:StartMoving()
+		self.isMoving = true
+	end
+end)
+remainingXP:SetScript("OnMouseUp", function(self)
+	if (self.isMoving) then
+		remainingXP:StopMovingOrSizing()
+		self.isMoving = false
+	end
+end)
+
+--Toggling view on mousover
+remainingXP:SetScript('OnEnter', function()
+	if db["toggle"] then
+		displayText:Show()
+	end
+end)
+remainingXP:SetScript('OnLeave', function()
+	if db["toggle"] then
+		displayText:Hide()
+	end
+end)
+
 --Set up slash commands
 SLASH_REMXP1 = slashKeyword
 function SlashCmdList.REMXP(command)
 	if command == "" or command == "help" then
-		print("Thank you for using Remaining XP!")
-		print("You can click & drag to resposition the text while holding the SHIFT key.")
-		print("Chat command list:")
-		print("    " .. slashKeyword .. " " .. resetPosition .. " - set location to the bottom-center of the screen")
-		print("    " .. slashKeyword .. " " .. presetPosition .. " - set location to the specified preset location")
+		PrintHelp()
 	elseif command == resetPosition then
 		remainingXP:SetPoint("BOTTOM", 0, 2)
+		print("Remaining XP: The location has been set to the bottom-center of the screen.")
 	elseif command == presetPosition then
-		remainingXP:SetPoint("BOTTOM", offsetX, offsetY)
+		remainingXP:SetPoint(db["preset"]["point"], db["preset"]["offsetX"], db["preset"]["offsetY"])
+		print("Remaining XP: The location has been set to the preset location.")
+	elseif command == savePreset then
+		db["preset"]["point"], x, y, db["preset"]["offsetX"], db["preset"]["offsetY"] = RemainingXP:GetPoint() --relativeTo, relativePoint aren't needed
+		--Save DB
+		print("Remaining XP: The current location was saved as the preset location.")
+	elseif command == defaultPreset then
+		db["preset"] = defaultDB["preset"]
+		--Save DB
+		print("Remaining XP: The preset location has been reset to the default location.")
+	elseif command == toggleVisibility then
+		SetToggle(false)
+		FlipVisibility(displayText:IsShown())
+		print("Remaining XP visibility is now " .. ToggleState(displayText:IsShown()) .. ". Toggle on mouseover is disabled.")
+	elseif command == toggleMouseover then
+		SetToggle()
+		FlipVisibility(db["toggle"])
+		print("Remaining XP: Toggle on mouseover has been " .. ToggleState(db["toggle"]) .. ".")
 	end
 end
 
---Toggling view on mousover
---[[ remainingXP:EnableMouse()
-remainingXP:SetScript('OnEnter', function()
-	displayText:Show()
-end)
-remainingXP:SetScript('OnLeave', function()
-	displayText:Hide()
-end) ]]
+function PrintHelp()
+	print("Thank you for using Remaining XP!")
+	print("Chat command list:")
+	print("    " .. slashKeyword .. " " .. resetPosition .. " - set location to the bottom-center of the screen")
+	print("    " .. slashKeyword .. " " .. presetPosition .. " - set location to the specified preset location")
+	print("    " .. slashKeyword .. " " .. savePreset .. " - save the current location as the preset location")
+	print("    " .. slashKeyword .. " " .. defaultPreset .. " - set the preset location to the default location")
+	print("    " .. slashKeyword .. " " .. toggleVisibility .. " - hide/show the XP value display (" .. ToggleState(displayText:IsShown()) .. ")")
+	print("    " .. slashKeyword .. " " .. toggleMouseover .. " - show the XP value only on mouseover (" .. ToggleState(db["toggle"]) ..")")
+	print("Tip: Hold SHIFT and drag the Remaining XP display to a different place.")
+end
+
+function FlipVisibility(toggle)
+	if toggle then
+		displayText:Hide()
+	else
+		displayText:Show()
+	end
+end
+
+--Flip the display toggle
+function SetToggle(toggle)
+	if toggle == nil then
+		db["toggle"] = not db["toggle"] --Flip toggle
+	else
+		db["toggle"] = toggle --Set toggle
+	end
+	--Save DB
+end
+
+--Get display toggle state
+function ToggleState(toggle)
+	if toggle then
+		return "enabled"
+	else
+		return "disabled"
+	end
+	return ""
+end

@@ -1,7 +1,8 @@
-## Interface: 80300
+## Interface: 90001
 ## Title: Remaining XP
-## Notes: Shows the amount of XP needed to reach the next level.
+## Version: 1.2
 ## Author: Barnabas Nagy (Arxareon)
-## Version: 1.1
+## Notes: Shows the amount of XP needed to reach the next level.
+## SavedVariables: RemainingXPDB
 
 RemainingXP.lua
