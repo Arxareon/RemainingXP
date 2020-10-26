@@ -19,7 +19,7 @@ local showDisplay = "show"
 local toggleMouseover = "toggle"
 
 --Creating the frame & text
-local remXP = CreateFrame("Frame", "remXP", UIParent)
+local remXP = CreateFrame("Frame", "RemainingXP", UIParent)
 local text = remXP:CreateFontString("text", "HIGH")
 
 --Registering events
