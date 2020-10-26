@@ -32,14 +32,15 @@ remXP:SetScript("OnEvent", function(self, event, ...) --Event handler
 end)
 
 --DB table & defaults
-local db
-local defaultDB = {
-	["preset"] = {
-		["point"] = "BOTTOM",
-		["offsetX"] = 380,
-		["offsetY"] = 2
-	},
-	["hidden"] = true,
+local dbPreset
+local dbDisplay
+local dbPresetDefault = {
+	["point"] = "BOTTOM",
+	["offsetX"] = 380,
+	["offsetY"] = 2
+}
+local dbDisplayDefault = {
+	["hidden"] = false,
 	["toggle"] = false,
 	["disabled"] = false
 }
@@ -53,15 +54,20 @@ local startLocation = {
 function remXP:ADDON_LOADED(addon)
 	if addon == "RemainingXP" then
 		remXP:UnregisterEvent("ADDON_LOADED")
-		--First load
-		if RemainingXPDB == nil then
-			RemainingXPDB = defaultDB
-			PrintHelp()
-		end
-		--Load the db
-		db = RemainingXPDB
+		--Load the DBs
+		local firstLoad = RemainingXPDBPreset == nil or RemainingXPDBDisplay == nil
+		RemainingXPDBPreset = RemainingXPDBPreset or dbPresetDefault
+		RemainingXPDBDisplay = RemainingXPDBDisplay or dbDisplayDefault
+		dbPreset = RemainingXPDBPreset
+		dbDisplay = RemainingXPDBDisplay
 		--Set up the UI
-		UpdateDisplay()
+		SettingUp()
+		--Load message
+		if firstLoad then
+			PrintHelp()
+		else
+			PrintStatus()
+		end
 	end
 end
 
@@ -77,6 +83,9 @@ function remXP:PLAYER_XP_UPDATE(unit)
 end
 function remXP:PLAYER_LEVEL_UP()
 	CheckMax()
+	if UnitLevel("player") == maxLevel then
+		print(p .. "Remaining XP" .. b .. " is new disabled " .. fb .. "(you reached level " .. maxLevel .. ")" .. b .. ".")
+	end
 end
 
 --Disable the frame and display if the player is max level
@@ -84,16 +93,15 @@ function CheckMax()
 	if UnitLevel("player") == maxLevel then
 		text:Hide()
 		remXP:Hide()
-		db["hidden"] = true
-		db["disabled"] = true
-		print(p .. "Remaining XP" .. b .. " is disabled " .. fb .. "(you are level " .. maxLevel .. ")" .. b .. ".")
+		dbDisplay["hidden"] = true
+		dbDisplay["disabled"] = true
 	else
-		db["disabled"] = false
+		dbDisplay["disabled"] = false
 	end
 end
 
 --Setting up the frame & text
-function UpdateDisplay()
+function SettingUp()
 	remXP:SetFrameStrata("HIGH")
 	remXP:SetFrameLevel(0)
 	remXP:SetSize(64, 10)
@@ -105,7 +113,7 @@ function UpdateDisplay()
 	text:SetPoint("CENTER")
 	text:SetFont("Fonts\\ARIALN.TTF", 12, "THINOUTLINE")
 	text:SetTextColor(1,1,1,1)
-	FlipVisibility(db["hidden"] or db["toggle"] or db["disabled"])
+	FlipVisibility(dbDisplay["hidden"] or dbDisplay["toggle"] or dbDisplay["disabled"])
 end
 
 --Recalculate the XP value and update the diplayed text
@@ -137,12 +145,12 @@ end)
 
 --Toggling view on mousover
 remXP:SetScript('OnEnter', function()
-	if db["toggle"] then
+	if dbDisplay["toggle"] then
 		text:Show()
 	end
 end)
 remXP:SetScript('OnLeave', function()
-	if db["toggle"] then
+	if dbDisplay["toggle"] then
 		text:Hide()
 	end
 end)
@@ -161,34 +169,34 @@ function SlashCmdList.REMXP(command)
 	elseif command == presetPosition then
 		remXP:ClearAllPoints()
 		remXP:SetUserPlaced(false)
-		remXP:SetPoint(db["preset"]["point"], db["preset"]["offsetX"], db["preset"]["offsetY"])
+		remXP:SetPoint(dbPreset["point"], dbPreset["offsetX"], dbPreset["offsetY"])
 		remXP:SetUserPlaced(true)
 		print(p .. "Remaining XP:" .. b .. " The location has been set to the preset location.")
 	elseif command == savePreset then
-		db["preset"]["point"], x, y, db["preset"]["offsetX"], db["preset"]["offsetY"] = remXP:GetPoint()
+		dbPreset["point"], x, y, dbPreset["offsetX"], dbPreset["offsetY"] = remXP:GetPoint()
 		print(p .. "Remaining XP:" .. b .. " The current location was saved as the preset location.")
 	elseif command == defaultPreset then
-		db["preset"] = defaultDB["preset"]
+		dbPreset = dbPresetDefault
 		print(p .. "Remaining XP:" .. b .. " The preset location has been reset to the default location.")
 	elseif command == hideDisplay then
-		db["toggle"] = false
-		db["hidden"] = true
+		dbDisplay["toggle"] = false
+		dbDisplay["hidden"] = true
 		text:Hide()
-		print(p .. "Remaining XP: " .. GetStatus())
+		PrintStatus()
 	elseif command == showDisplay then
-		if not db["disabled"] then
-			db["toggle"] = false
-			db["hidden"] = false
+		if not dbDisplay["disabled"] then
+			dbDisplay["toggle"] = false
+			dbDisplay["hidden"] = false
 			text:Show()
 		end
-		print(p .. "Remaining XP: " .. GetStatus())
+		PrintStatus()
 	elseif command == toggleMouseover then
-		if not db["disabled"] then
-			db["hidden"] = false
-			db["toggle"] = not db["toggle"]
-			FlipVisibility(db["toggle"])
+		if not dbDisplay["disabled"] then
+			dbDisplay["hidden"] = false
+			dbDisplay["toggle"] = not dbDisplay["toggle"]
+			FlipVisibility(dbDisplay["toggle"])
 		end
-		print(p .. "Remaining XP: " .. GetStatus())
+		PrintStatus()
 	else
 		PrintHelp()
 	end
@@ -196,7 +204,7 @@ end
 
 function PrintHelp()
 	print(b .. "Thank you for using " .. p .. "Remaining XP" .. b .. "!")
-	print(fb .. "Display status: " .. GetStatus())
+	PrintStatus()
 	print(fb .. "Type " .. fp .. keyword .. " help" .. fb .. " to see the full command list.")
 	print(fb .. "Hold SHIFT to drag the Remaining XP display to anywhere you like.")
 end
@@ -207,17 +215,25 @@ function PrintCommands()
 	print("    " .. fp .. keyword .. " " .. presetPosition .. fb .. " - set location to the specified preset location")
 	print("    " .. fp .. keyword .. " " .. savePreset .. fb .. " - save the current location as the preset location")
 	print("    " .. fp .. keyword .. " " .. defaultPreset .. fb .. " - set the preset location to the default location")
-	print("    " .. fp .. keyword .. " " .. hideDisplay .. fb .. " - hide the XP value display (" .. b .. "hidden: " .. p.. ToggleState(db["hidden"]) .. fb .. ")")
+	print("    " .. fp .. keyword .. " " .. hideDisplay .. fb .. " - hide the XP value display (" .. b .. "hidden: " .. p.. ToggleState(dbDisplay["hidden"]) .. fb .. ")")
 	print("    " .. fp .. keyword .. " " .. showDisplay .. fb .. " - show the XP value display (" .. b .. "visibility: " .. p.. ToggleState(text:IsShown()) .. fb .. ")")
-	print("    " .. fp .. keyword .. " " .. toggleMouseover .. fb .. " - show the XP value only on mouseover (" .. p.. ToggleState(db["toggle"]) .. fb .. ")")
+	print("    " .. fp .. keyword .. " " .. toggleMouseover .. fb .. " - show the XP value only on mouseover (" .. p.. ToggleState(dbDisplay["toggle"]) .. fb .. ")")
 end
 
-function GetStatus()
-	local status = ""
-	status = status .. b .. "visible: " .. p .. ToggleState(text:IsShown())
-	status = status .. b .. ", hidden: " .. p .. ToggleState(db["hidden"])
-	status = status .. b .. ", mouseover only: " .. p .. ToggleState(db["toggle"])
-	return status
+function PrintStatus()
+	local status = p .. "Remaining XP"
+	if UnitLevel("player") == maxLevel then
+		status = status .. b .. " is disabled " .. fb .. "(you are level " .. maxLevel .. ")" .. b .. "."
+	else
+		if text:IsShown() then
+			status = status .. b .. " is visible "
+		else
+			status = status .. b .. " is not visible "
+		end
+		status = status .. fb .. "(status: " .. b .. "hidden: " .. p .. ToggleState(dbDisplay["hidden"])
+		status = status .. fb .. ", " .. b .. "mouseover only: " .. p .. ToggleState(dbDisplay["toggle"]) .. fb .. ")" .. b .. "."
+	end
+	print(status);
 end
 
 --Set the display visibility (flipped)
