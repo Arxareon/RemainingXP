@@ -206,7 +206,7 @@ function PrintHelp()
 	print(b .. "Thank you for using " .. p .. "Remaining XP" .. b .. "!")
 	PrintStatus()
 	print(fb .. "Type " .. fp .. keyword .. " help" .. fb .. " to see the full command list.")
-	print(fb .. "Hold SHIFT to drag the Remaining XP display to anywhere you like.")
+	print(fb .. "Hold " .. fp .. "SHIFT" .. fb .. " to drag the Remaining XP display anywhere you like.")
 end
 
 function PrintCommands()
