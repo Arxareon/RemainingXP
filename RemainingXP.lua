@@ -1,5 +1,5 @@
 --Parameters
-local maxLevel = 50 --TODO: Update when thhe level cap changes
+local maxLevel = 60 --TODO: Update when thhe level cap changes
 local separator = ',' --Thousand separator character
 
 --Colors
@@ -111,7 +111,7 @@ function SettingUp()
 		remXP:SetUserPlaced(true)
 	end
 	text:SetPoint("CENTER")
-	text:SetFont("Fonts\\ARIALN.TTF", 12, "THINOUTLINE")
+	text:SetFont("Fonts\\FRIZQT__.TTF", 10, "THINOUTLINE")
 	text:SetTextColor(1,1,1,1)
 	FlipVisibility(dbDisplay["hidden"] or dbDisplay["toggle"] or dbDisplay["disabled"])
 end
