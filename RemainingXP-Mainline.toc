@@ -1,4 +1,4 @@
-## Interface: 90005
+## Interface: 90100
 ## Title: Remaining XP
 ## Version: 1.6
 ## Author: Barnabas Nagy (Arxareon)

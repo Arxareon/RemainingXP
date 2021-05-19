@@ -1,4 +1,4 @@
-## Interface: 90005
+## Interface: 20501
 ## Title: Remaining XP
 ## Version: 1.6
 ## Author: Barnabas Nagy (Arxareon)
@@ -6,4 +6,4 @@
 ## SavedVariables: RemainingXPDBPreset
 ## SavedVariablesPerCharacter:: RemainingXPDBDisplay
 
-RemainingXP.lua
+RemainingXPClassicTBC.lua
