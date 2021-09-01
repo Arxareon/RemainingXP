@@ -1,6 +1,6 @@
-## Interface: 90005
+## Interface: 90100
 ## Title: Remaining XP
-## Version: 1.6
+## Version: 1.7
 ## Author: Barnabas Nagy (Arxareon)
 ## Notes: Shows the amount of XP needed to reach the next level.
 ## SavedVariables: RemainingXPDBPreset

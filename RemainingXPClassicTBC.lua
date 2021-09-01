@@ -8,6 +8,25 @@ local p = "|cFF" .. "D41BCA" --purple
 local fb = "|cFF" .. "75B3F0" -- faint blue
 local fp = "|cFF" .. "D257CB" -- faint purple
 
+--DB table & defaults
+local dbPreset --account-wide
+local dbDisplay --character-specific
+local dbPresetDefault = {
+	["point"] = "BOTTOM",
+	["offsetX"] = 485,
+	["offsetY"] = 42
+}
+local dbDisplayDefault = {
+	["hidden"] = false,
+	["toggle"] = false,
+	["disabled"] = false
+}
+local startLocation = {
+	["point"] = "BOTTOM",
+	["offsetX"] = 27,
+	["offsetY"] = 42
+}
+
 --Slash keywords and commands
 local keyword = "/remxp"
 local resetPosition = "reset"
@@ -30,25 +49,6 @@ remXP:RegisterEvent("PLAYER_LEVEL_UP")
 remXP:SetScript("OnEvent", function(self, event, ...) --Event handler
 	return self[event] and self[event](self, ...)
 end)
-
---DB table & defaults
-local dbPreset
-local dbDisplay
-local dbPresetDefault = {
-	["point"] = "BOTTOM",
-	["offsetX"] = 485,
-	["offsetY"] = 42
-}
-local dbDisplayDefault = {
-	["hidden"] = false,
-	["toggle"] = false,
-	["disabled"] = false
-}
-local startLocation = {
-	["point"] = "BOTTOM",
-	["offsetX"] = 27,
-	["offsetY"] = 42
-}
 
 --Display visibility utilities
 local function FlipVisibility(visible)
@@ -228,7 +228,7 @@ function SlashCmdList.REMXP(command)
 		remXP:SetUserPlaced(true)
 		print(p .. "Remaining XP:" .. b .. " The location has been set to the preset location.")
 	elseif command == savePreset then
-		dbPreset["point"], x, y, dbPreset["offsetX"], dbPreset["offsetY"] = remXP:GetPoint()
+		local x local y dbPreset["point"], x, y, dbPreset["offsetX"], dbPreset["offsetY"] = remXP:GetPoint()
 		print(p .. "Remaining XP:" .. b .. " The current location was saved as the preset location.")
 	elseif command == defaultPreset then
 		dbPreset = dbPresetDefault
