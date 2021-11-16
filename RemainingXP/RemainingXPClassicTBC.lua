@@ -1,5 +1,5 @@
 --Parameters
-local maxLevel = 60 --TODO: Update when the level cap changes
+local maxLevel = 70 --TODO: Update when the level cap changes
 local separator = ',' --Thousand separator character
 
 --Colors
@@ -80,7 +80,7 @@ local function PrintStatus()
 			status = status .. b .. " is not visible "
 		end
 		status = status .. fb .. "(status: " .. b .. "hidden: " .. p .. ToggleState(dbDisplay["hidden"])
-		status = status .. fb .. ", " .. b .. "mouseover only: " .. p .. ToggleState(dbDisplay["toggle"]) .. fb .. ")" .. b .. "."
+		status = status .. fb .. ", " .. b .. "mouseover only: " .. p .. ToggleState(dbDisplay["mouseover"]) .. fb .. ")" .. b .. "."
 	end
 	print(status);
 end
@@ -100,7 +100,7 @@ local function PrintCommands()
 	print("    " .. fp .. keyword .. " " .. defaultPreset .. fb .. " - set the preset location to the default location")
 	print("    " .. fp .. keyword .. " " .. hideDisplay .. fb .. " - hide the XP value display (" .. b .. "hidden: " .. p.. ToggleState(dbDisplay["hidden"]) .. fb .. ")")
 	print("    " .. fp .. keyword .. " " .. showDisplay .. fb .. " - show the XP value display (" .. b .. "visibility: " .. p.. ToggleState(text:IsShown()) .. fb .. ")")
-	print("    " .. fp .. keyword .. " " .. toggleMouseover .. fb .. " - show the XP value only on mouseover (" .. p.. ToggleState(dbDisplay["toggle"]) .. fb .. ")")
+	print("    " .. fp .. keyword .. " " .. toggleMouseover .. fb .. " - show the XP value only on mouseover (" .. p.. ToggleState(dbDisplay["mouseover"]) .. fb .. ")")
 end
 
 --Initialization
@@ -109,11 +109,11 @@ function remXP:ADDON_LOADED(addon)
 		remXP:UnregisterEvent("ADDON_LOADED")
 
 		--Load the DBs
-		local firstLoad = RemainingXPDBPreset == nil or RemainingXPDBDisplay == nil
-		RemainingXPDBPreset = RemainingXPDBPreset or dbPresetDefault
-		RemainingXPDBDisplay = RemainingXPDBDisplay or dbDisplayDefault
-		dbPreset = RemainingXPDBPreset
-		dbDisplay = RemainingXPDBDisplay
+		local firstLoad = RemainingXPDB == nil or RemainingXPDBC == nil
+		RemainingXPDB = RemainingXPDB or dbPresetDefault
+		RemainingXPDBC = RemainingXPDBC or dbDisplayDefault
+		dbPreset = RemainingXPDB
+		dbDisplay = RemainingXPDBC
 
 		--Set up the frame & text
 		remXP:SetFrameStrata("HIGH")
@@ -127,7 +127,7 @@ function remXP:ADDON_LOADED(addon)
 		text:SetPoint("CENTER")
 		text:SetFont("Fonts\\FRIZQT__.TTF", 10, "THINOUTLINE")
 		text:SetTextColor(1,1,1,1)
-		FlipVisibility(dbDisplay["hidden"] or dbDisplay["toggle"] or dbDisplay["disabled"])
+		FlipVisibility(dbDisplay["hidden"] or dbDisplay["mouseover"] or dbDisplay["disabled"])
 
 		--Load welcome message
 		if firstLoad then
@@ -200,12 +200,12 @@ end)
 
 --Toggling view on mouseover
 remXP:SetScript('OnEnter', function()
-	if dbDisplay["toggle"] then
+	if dbDisplay["mouseover"] then
 		text:Show()
 	end
 end)
 remXP:SetScript('OnLeave', function()
-	if dbDisplay["toggle"] then
+	if dbDisplay["mouseover"] then
 		text:Hide()
 	end
 end)
@@ -234,13 +234,13 @@ function SlashCmdList.REMXP(command)
 		dbPreset = dbPresetDefault
 		print(p .. "Remaining XP:" .. b .. " The preset location has been reset to the default location.")
 	elseif command == hideDisplay then
-		dbDisplay["toggle"] = false
+		dbDisplay["mouseover"] = false
 		dbDisplay["hidden"] = true
 		text:Hide()
 		PrintStatus()
 	elseif command == showDisplay then
 		if not dbDisplay["disabled"] then
-			dbDisplay["toggle"] = false
+			dbDisplay["mouseover"] = false
 			dbDisplay["hidden"] = false
 			text:Show()
 		end
@@ -248,8 +248,8 @@ function SlashCmdList.REMXP(command)
 	elseif command == toggleMouseover then
 		if not dbDisplay["disabled"] then
 			dbDisplay["hidden"] = false
-			dbDisplay["toggle"] = not dbDisplay["toggle"]
-			FlipVisibility(dbDisplay["toggle"])
+			dbDisplay["mouseover"] = not dbDisplay["mouseover"]
+			FlipVisibility(dbDisplay["mouseover"])
 		end
 		PrintStatus()
 	else
