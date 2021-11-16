@@ -14,6 +14,9 @@
 # Support
 [![Donate on PayPal](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/124px-PayPal.svg.png)](https://www.paypal.com/donate/?hosted_button_id=Z4FSAFKA5LX98)
 
+# Licence
+All Rights Reserved unless otherwise explicitly stated.
+
 - - -
 Thank you for checking out Remaining XP!
 If you have any comments, wishes or problems, please, don't be afraid to share them. GLHF!
