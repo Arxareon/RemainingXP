@@ -26,20 +26,20 @@ local colors = {
 --Fonts
 local fonts = {
 	[0] = { text = strings.misc.default, path = strings.options.font.family.default },
-	[1] = { text = "Arbutus Slab", path = "Interface/AddOns/MovementSpeed/Fonts/ArbutusSlab.ttf" },
-	[2] = { text = "Caesar Dressing", path = "Interface/AddOns/MovementSpeed/Fonts/CaesarDressing.ttf" },
-	[3] = { text = "Germania One", path = "Interface/AddOns/MovementSpeed/Fonts/GermaniaOne.ttf" },
-	[4] = { text = "Mitr", path = "Interface/AddOns/MovementSpeed/Fonts/Mitr.ttf" },
-	[5] = { text = "Oxanium", path = "Interface/AddOns/MovementSpeed/Fonts/Oxanium.ttf" },
-	[6] = { text = "Pattaya", path = "Interface/AddOns/MovementSpeed/Fonts/Pattaya.ttf" },
-	[7] = { text = "Reem Kufi", path = "Interface/AddOns/MovementSpeed/Fonts/ReemKufi.ttf" },
-	[8] = { text = "Source Code Pro", path = "Interface/AddOns/MovementSpeed/Fonts/SourceCodePro.ttf" },
-	[9] = { text = strings.misc.custom, path = "Interface/AddOns/MovementSpeed/Fonts/CUSTOM.ttf" },
+	[1] = { text = "Arbutus Slab", path = "Interface/AddOns/RemainingXP/Fonts/ArbutusSlab.ttf" },
+	[2] = { text = "Caesar Dressing", path = "Interface/AddOns/RemainingXP/Fonts/CaesarDressing.ttf" },
+	[3] = { text = "Germania One", path = "Interface/AddOns/RemainingXP/Fonts/GermaniaOne.ttf" },
+	[4] = { text = "Mitr", path = "Interface/AddOns/RemainingXP/Fonts/Mitr.ttf" },
+	[5] = { text = "Oxanium", path = "Interface/AddOns/RemainingXP/Fonts/Oxanium.ttf" },
+	[6] = { text = "Pattaya", path = "Interface/AddOns/RemainingXP/Fonts/Pattaya.ttf" },
+	[7] = { text = "Reem Kufi", path = "Interface/AddOns/RemainingXP/Fonts/ReemKufi.ttf" },
+	[8] = { text = "Source Code Pro", path = "Interface/AddOns/RemainingXP/Fonts/SourceCodePro.ttf" },
+	[9] = { text = strings.misc.custom, path = "Interface/AddOns/RemainingXP/Fonts/CUSTOM.ttf" },
 }
 
 --Textures
 local textures = {
-	logo = "Interface/AddOns/MovementSpeed/Textures/Logo.tga"
+	logo = "Interface/AddOns/RemainingXP/Textures/Logo.tga"
 }
 
 
@@ -53,6 +53,10 @@ local dbDefault = {
 	},
 	appearance = {
 		frameStrata = "HIGH",
+		backdrop = {
+			visible = false,
+			color = { r = 0, g = 0, b = 0, a = 0.5 },
+		},
 	},
 	font = {
 		family = fonts[0].path,
@@ -191,21 +195,15 @@ local function RemoveMismatch(dbToCheck, dbToSample) --Remove unused or outdated
 	end
 end
 local function RestoreOldData(dbToSaveTo, dbcToSaveTo) --Restore old data to an account-wide and character-specific DB by matching removed items to known old keys
-	for k,v in pairs(oldData) do
-		if k == "point" then
-			dbToSaveTo.position.point = v
-			oldData.k = nil
-		elseif k == "offsetX" then
-			dbToSaveTo.position.offset.x = v
-			oldData.k = nil
-		elseif k == "offsetY" then
-			dbToSaveTo.position.offset.y = v
-			oldData.k = nil
-		elseif k == "toggle" then
-			dbcToSaveTo.appearance.hidden = v
-			oldData.k = nil
-		end
-	end
+	-- for k, v in pairs(oldData) do
+	-- 	if k == "" then
+	-- 		dbToSaveTo. = v
+	-- 		oldData.k = nil
+	-- 	elseif k == "offsetX" then
+	-- 		dbcToSaveTo. = v
+	-- 		oldData.k = nil
+	-- 	end
+	-- end
 end
 
 --Find the ID of the font provided
@@ -224,6 +222,10 @@ end
 --[[ OPTIONS SETTERS ]]
 
 --Main frame positioning
+local function SavePreset()
+	db.position.point, _, _, db.position.offset.x, db.position.offset.y = remXP:GetPoint()
+	print(colors.sg .. addon .. ":" .. colors.ly .. " " .. strings.chat.save.response)
+end
 local function MoveToPreset()
 	remXP:ClearAllPoints()
 	remXP:SetUserPlaced(false)
@@ -231,13 +233,10 @@ local function MoveToPreset()
 	remXP:SetUserPlaced(true)
 	print(colors.sg .. addon .. ":" .. colors.ly .. " " .. strings.chat.preset.response)
 end
-local function SavePosition()
-	db.position.point, _, _, db.position.offset.x, db.position.offset.y = remXP:GetPoint()
-	print(colors.sg .. addon .. ":" .. colors.ly .. " " .. strings.chat.save.response)
-end
 local function DefaultPreset()
 	db.position = Clone(dbDefault.position)
 	print(colors.sg .. addon .. ":" .. colors.ly .. " " .. strings.chat.reset.response)
+	MoveToPreset()
 end
 
 ---Set the visibility of the main display frame based on the flipped value of the input parameter
@@ -259,6 +258,32 @@ local function SetDisplaySize(height)
 	mainDisplay:SetSize(width, height)
 end
 
+---Set the backdrop of the main display
+---@param enabled boolean Set or remove backdrop
+---@param r? number Red (Range: 0 - 1, Default: db.appearance.backdrop.color.r)
+---@param g? number Green (Range: 0 - 1, Default: db.appearance.backdrop.color.g)
+---@param b? number Blue (Range: 0 - 1, Default: db.appearance.backdrop.color.b)
+---@param a? number Opacity (Range: 0 - 1, Default: db.appearance.backdrop.color.a or 1)
+local function SetDisplayBackdrop(enabled, r, g, b, a)
+	if enabled then
+		mainDisplay:SetBackdrop({
+			bgFile = "Interface/ChatFrame/ChatFrameBackground",
+			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+			tile = true, tileSize = 5, edgeSize = 1,
+			insets = { left = 0, right = 0, top = 0, bottom = 0 }
+		})
+		mainDisplay:SetBackdropColor(
+			r or db.appearance.backdrop.color.r,
+			g or db.appearance.backdrop.color.g,
+			b or db.appearance.backdrop.color.b,
+			a or db.appearance.backdrop.color.a or 1
+		)
+		mainDisplay:SetBackdropBorderColor(1, 1, 1, 0.4)
+	else
+		mainDisplay:SetBackdrop(nil)
+	end
+end
+
 ---Set the visibility, backdrop, font family, size and color of the main display to the currently saved values
 ---@param data table DB table to set the main display values from
 local function SetDisplayValues(data, characterData)
@@ -267,6 +292,13 @@ local function SetDisplayValues(data, characterData)
 	FlipVisibility(characterData.hidden or characterData.mouseover or characterData.disabled)
 	--Display
 	SetDisplaySize(data.font.size)
+	SetDisplayBackdrop(
+		data.appearance.backdrop.visible,
+		data.appearance.backdrop.color.r,
+		data.appearance.backdrop.color.g,
+		data.appearance.backdrop.color.b,
+		data.appearance.backdrop.color.a
+	)
 	--Font
 	mainDisplayText:SetFont(data.font.family, data.font.size, "THINOUTLINE")
 	mainDisplayText:SetTextColor(data.font.color.r, data.font.color.g, data.font.color.b, data.font.color.a)
@@ -302,7 +334,7 @@ local function PrintInfo()
 	print(colors.b .. strings.chat.help.thanks:gsub("#ADDON", colors.p .. addon .. colors.b))
 	PrintStatus()
 	print(colors.fb .. strings.chat.help.hint:gsub("#HELP_COMMAND", colors.fp .. strings.chat.keyword .. " " .. strings.chat.help.command .. colors.fb))
-	print(colors.fb .. strings.chat.help.move:gsub("#SHIFT", colors.fp .. "SHIFT" .. colors.fb):gsub("#ADDON", addon))
+	print(colors.fb .. strings.chat.help.move:gsub("#SHIFT", colors.fp .. strings.keys.shift .. colors.fb):gsub("#ADDON", addon))
 end
 local function PrintCommands()
 	print(colors.p .. addon .. colors.b .. " ".. strings.chat.help.list .. ":")
@@ -345,56 +377,51 @@ end
 
 --Slash command handler
 SLASH_REMXP1 = strings.chat.keyword
-function SlashCmdList.REMXP(command)
-	local name, value = strsplit(" ", command)
-	if name == strings.chat.help.command then
+function SlashCmdList.REMXP(line)
+	local command, parameter = strsplit(" ", line)
+	if command == strings.chat.help.command then
 		PrintCommands()
-	elseif name == strings.chat.help.command then
-		remXP:ClearAllPoints()
-		remXP:SetUserPlaced(false)
-		remXP:SetPoint(startPosition["point"], startPosition["offset"]["x"], startPosition["offset"]["y"])
-		remXP:SetUserPlaced(true)
-		print(colors.p .. "Remaining XP:" .. colors.b .. " The location has been reset to the bottom-center.")
-	elseif name == strings.chat.help.command then
-		remXP:ClearAllPoints()
-		remXP:SetUserPlaced(false)
-		remXP:SetPoint(db["position"]["point"], db["position"]["offset"]["x"], db["position"]["offset"]["y"])
-		remXP:SetUserPlaced(true)
-		print(colors.p .. "Remaining XP:" .. colors.b .. " The location has been set to the preset location.")
-	elseif name == strings.chat.help.command then
-		local x local y db["position"]["point"], x, y, db["position"]["offset"]["x"], db["position"]["offset"]["y"] = remXP:GetPoint()
-		print(colors.p .. "Remaining XP:" .. colors.b .. " The current location was saved as the preset location.")
-	elseif name == strings.chat.help.command then
-		db["position"] = dbDefault["position"]
-		print(colors.p .. "Remaining XP:" .. colors.b .. " The preset location has been reset to the default location.")
-	elseif name == strings.chat.help.command then
-		dbc["mouseover"] = false
-		dbc["hidden"] = true
-		mainDisplayText:Hide()
+	elseif command == strings.chat.options.command then
+		InterfaceOptionsFrame_OpenToCategory(addon)
+		InterfaceOptionsFrame_OpenToCategory(addon) --Load twice to make sure the proper page and category is loaded
+	elseif command == strings.chat.save.command then
+		SavePreset()
+	elseif command == strings.chat.preset.command then
+		MoveToPreset()
+	elseif command == strings.chat.reset.command then
+		DefaultPreset()
+	elseif command == strings.chat.toggle.command then
+		FlipVisibility(not dbc.hidden or dbc.disabled)
+		dbc.hidden = not dbc.hidden
+		dbc.mouseover = false
+		--Update the GUI option in case it was open
+		-- options.appearance.hidden:SetChecked(db.appearance.hidden)
+		--Response
+		print(colors.sg .. addon .. ": " .. colors.ly .. strings.chat.toggle.response:gsub("#HIDDEN", dbc.hidden and strings.chat.toggle.shown or strings.chat.toggle.hidden))
 		PrintStatus()
-	elseif name == strings.chat.help.command then
-		if not dbc["disabled"] then
-			dbc["mouseover"] = false
-			dbc["hidden"] = false
-			mainDisplayText:Show()
-		end
+	elseif command == strings.chat.mouseover.command then
+		FlipVisibility(not dbc.mouseover or dbc.disabled)
+		dbc.mouseover = not dbc.mouseover
+		dbc.hidden = false
+		--Update the GUI option in case it was open
+		-- options.appearance.hidden:SetChecked(db.appearance.hidden)
+		--Response
+		print(colors.sg .. addon .. ": " .. colors.ly .. strings.chat.mouseover.response:gsub("#STATE", dbc.hidden and strings.chat.mouseover.shown or strings.chat.mouseover.hidden))
 		PrintStatus()
-	elseif name == strings.chat.help.command then
-		if not dbc["disabled"] then
-			dbc["hidden"] = false
-			dbc["mouseover"] = not dbc["mouseover"]
-			FlipVisibility(dbc["mouseover"])
-		end
-		PrintStatus()
-	elseif command == strings.chat.help.command then
-		local size = tonumber(value)
+	elseif command == strings.chat.size.command then
+		local size = tonumber(parameter)
 		if size ~= nil then
-			db["font"]["size"] = size
-			mainDisplayText:SetFont(db["font"]["family"], db["font"]["size"], "THINOUTLINE")
-			print(colors.p .. "Remaining XP:" .. colors.b .. "The font size has been set to " .. size .. ".")
+			db.font.size = size
+			mainDisplayText:SetFont(db.font.family, db.font.size, "THINOUTLINE")
+			SetDisplaySize(size)
+			--Update the GUI option in case it was open
+			-- options.font.size:SetValue(size)
+			--Response
+			print(colors.p .. addon .. ": " .. colors.b .. strings.chat.size.response:gsub("#VALUE", size))
 		else
-			print(colors.p .. "Remaining XP:" .. colors.b .. "The font size was not changed.")
-			print(colors.fb .. "Please enter a valid number value (e.g. " .. colors.fp .. "/movespeed size 11" ..  colors.fb .. ").")
+			--Error
+			print(colors.p .. addon .. ": " .. colors.b .. strings.chat.size.unchanged)
+			print(colors.fb .. strings.chat.size.error:gsub("#SIZE_DEFAULT", colors.fp .. strings.chat.size.command .. " " .. dbDefault.font.size .. colors.fb))
 		end
 		PrintStatus()
 	else
@@ -426,16 +453,16 @@ end
 
 --Making the frame moveable
 remXP:SetMovable(true)
-mainDisplay:SetScript("OnMouseDown", function(self)
-	if (IsShiftKeyDown() and not self.isMoving) then
+mainDisplay:SetScript("OnMouseDown", function()
+	if (IsShiftKeyDown() and not remXP.isMoving) then
 		remXP:StartMoving()
-		self.isMoving = true
+		remXP.isMoving = true
 	end
 end)
-mainDisplay:SetScript("OnMouseUp", function(self)
-	if (self.isMoving) then
+mainDisplay:SetScript("OnMouseUp", function()
+	if (remXP.isMoving) then
 		remXP:StopMovingOrSizing()
-		self.isMoving = false
+		remXP.isMoving = false
 	end
 end)
 
@@ -464,8 +491,6 @@ local function LoadDBs()
 		RemainingXPDB = dbDefault
 		RemainingXPDBC = dbcDefault
 		PrintInfo()
-	else
-		PrintStatus()
 	end
 	--Load the DBs
 	db = RemainingXPDB --account-wide
@@ -480,15 +505,16 @@ local function LoadDBs()
 	RestoreOldData(db, dbc)
 end
 function remXP:ADDON_LOADED(name)
-	if name == addonNameSpace then
-		remXP:UnregisterEvent("ADDON_LOADED")
-		--Load & check the DBs
-		LoadDBs()
-		--Set up the main UI frame & text
-		SetUpMainDisplayFrame()
-		--Set up the interface options
-		-- LoadInterfaceOptions()
-	end
+	if name ~= addonNameSpace then return end
+	remXP:UnregisterEvent("ADDON_LOADED")
+	--Load & check the DBs
+	LoadDBs()
+	--Set up the main frame & text
+	SetUpMainDisplayFrame()
+	--Set up the interface options
+	-- LoadInterfaceOptions()
+	--Visibility notice
+	if not remXP:IsShown() then PrintStatus() end
 end
 
 

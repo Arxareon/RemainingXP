@@ -6,7 +6,7 @@
 ## Author: Barnabas Nagy (Arxareon)
 ## Notes: Shows the amount of XP needed to reach the next level.
 ## SavedVariables: RemainingXPDB
-## SavedVariablesPerCharacter:: RemainingXPDBC
+## SavedVariablesPerCharacter: RemainingXPDBC
 
 WidgetTools.lua
 RemainingXPLocalizations.lua
