@@ -1,13 +1,12 @@
-# Fallback to the Mainline version
-
-## Interface: 90105
+## Interface: 90200 #Fallback to the Mainline version
 ## Title: Remaining XP
 ## Version: 2.0
 ## Author: Barnabas Nagy (Arxareon)
-## Notes: Shows the amount of XP needed to reach the next level.
-## SavedVariables: RemainingXPDB
-## SavedVariablesPerCharacter: RemainingXPDBC
+## X-License: All Rights Reserved
+## Notes: Shows the amount of XP needed to reach the next level & much more.
+## SavedVariables: RemainingXPDB, RemainingXPCS
+## SavedVariablesPerCharacter: RemainingXPDBC, RemainingXPCSC
 
-WidgetTools.lua
+WidgetTools/WidgetTools.lua
 RemainingXPLocalizations.lua
 RemainingXP.lua

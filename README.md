@@ -17,7 +17,7 @@
 # CurseForge
 Remaining XP is also available on [CurseForge](https://www.curseforge.com/wow/addons/remaining-xp) (providing automatic updates via the CurseForge App).
 
-# Licence
+# License
 All Rights Reserved unless otherwise explicitly stated.
 
 - - -
