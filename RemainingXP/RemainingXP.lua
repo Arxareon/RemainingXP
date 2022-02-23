@@ -960,7 +960,7 @@ local function CreateAboutInfo(parentFrame)
 			offset = { x = 0, y = -12 }
 		},
 		size = { width = parentFrame:GetWidth() - 32, height = 139 },
-		maxLetters = 4096,
+		maxLetters = 5600,
 		fontObject = "GameFontDisableSmall",
 		text = ns.GetChangelog(),
 		label = strings.options.main.about.changelog.label,
@@ -2691,11 +2691,10 @@ function remXP:ADDON_LOADED(name)
 	LoadInterfaceOptions()
 end
 function remXP:PLAYER_ENTERING_WORLD()
+	--Resting status
+	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated)
 	--Update the XP values
-	csc.xp.needed = UnitXPMax("player")
-	csc.xp.current = UnitXP("player")
-	csc.xp.rested = GetXPExhaustion() or 0
-	csc.xp.remaining = csc.xp.needed - csc.xp.current
+	UpdateXPValues()
 	--Set up the main frame & text
 	SetUpMainDisplayFrame()
 	--Set up the integrated frame & text

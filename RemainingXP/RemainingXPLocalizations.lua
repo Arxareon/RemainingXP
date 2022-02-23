@@ -58,6 +58,35 @@ local changelogDB = {
 	},
 	[8] = {
 		[0] = "#V_Version 2.0_#",
+		[1] = "#N_Update:_#",
+		[2] = "Added 9.2 (Retail), 1.14.2 (Classic) and 2.5.3 (BCC) multi-version support.",
+		[3] = "#N_New features:_#",
+		[4] = "#H_Added Interface Options:_#",
+		[5] = "Buttons, sliders, dropdowns and more have been added as alternatives to chat commands (many more new options have not been made available as chat commands).",
+		[6] = "Included an about page where you can find contact and support links, changelongs and more.",
+		[7] = "#H_New display options:_#",
+		[8] = "Background graphic: the display now functions as a customizable XP bar with customizable colors, mouseover fade options.",
+		[9] = "Font family & color customization (with a fully custom font type option - see the tooltip in the settings).",
+		[10] = "Multiple display presets have been added to quickly set it up for your needs.",
+		[11] = "Detailed XP value option.",
+		[12] = "Fine-tune the position (select an anchor point and change the offset coordinates with sliders).",
+		[13] = "Raise or lower the display among other UI elements.",
+		[14] = "#N_New features:_#",
+		[15] = "XP bar enhancement integration: detailed XP text and tooltip can be enabled to replace the default text and tooltip shown when mousing over the default XP bar.",
+		[16] = "Added the ability to hide the default Status/XP/Reputation Bars (so it may be replaced with the Remaining XP display).",
+		[17] = "Chat notifications on event updates like XP or Rested XP gain (with the amount gained), level up and more.",
+		[18] = "Option for an accumulative Rested XP gain notification showing you a summary of the total amount of Rested XP gained while resting when leaving a rested area.",
+		[19] = "Import/Export: Back up your settings (or manually edit them - for advanced users).",
+		[20] = "#C_Other additions & changes:_#",
+		[21] = "Right click on the display (or the default XP bar when the integration is enabled) to quickly open an options category page.",
+		[22] = "The chat notification reminder when you are max level and Remaining XP is disabled can now be turned off.",
+		[23] = "The display now hides during pet battles.",
+		[24] = "Added localization support, so more languages can be supported besides English in the future (more info soon on how you can help me translate!).",
+		[25] = "#O_Coming soon:_#",
+		[26] = "Options profiles for character-specific customization.",
+		[27] = "Tracking the playtime/real time spent on a level.",
+		[28] = "Different styles and looks for the custom XP bar.",
+		[29] = "Event update logs: track your XP, Rested XP gain and more.",
 	},
 }
 
@@ -73,8 +102,8 @@ ns.GetChangelog = function()
 	local changelog = ""
 		for i = #changelogDB, 0, -1 do
 			for j = 0, #changelogDB[i] do
-				changelog = changelog .. (i < #changelogDB and "\n\n" or "") .. changelogDB[i][j]:gsub(
-					"#V_(.-)_#", (i < #changelogDB and "\n" or "") .. "|c" .. version .. "%1|r"
+				changelog = changelog .. (j > 0 and "\n\n" or "") .. changelogDB[i][j]:gsub(
+					"#V_(.-)_#", (i < #changelogDB and "\n\n\n" or "") .. "|c" .. version .. "%1|r"
 				):gsub(
 					"#N_(.-)_#", "|c".. new .. "%1|r"
 				):gsub(

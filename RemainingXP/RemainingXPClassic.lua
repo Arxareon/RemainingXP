@@ -930,7 +930,7 @@ local function CreateAboutInfo(parentFrame)
 			offset = { x = 0, y = -12 }
 		},
 		size = { width = parentFrame:GetWidth() - 32, height = 139 },
-		maxLetters = 4096,
+		maxLetters = 5600,
 		fontObject = "GameFontDisableSmall",
 		text = ns.GetChangelog(),
 		label = strings.options.main.about.changelog.label,
@@ -2748,4 +2748,5 @@ function remXP:PLAYER_UPDATE_RESTING()
 	end
 	--Initiate or remove the cross-section variable
 	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated)
+	UpdateXPValues()
 end
