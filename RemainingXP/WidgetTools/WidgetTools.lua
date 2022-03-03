@@ -2,12 +2,12 @@
 local addonNameSpace, ns = ...
 
 --Version
-ns.WidgetToolsVersion = "1.1"
+ns.WidgetToolsVersion = "1.1.1"
 
---Global Reference Table
+--Global WidgetTools table containing toolbox subtables for each respective WidgetTools version (WidgetToolbox["version_string"])
 if not WidgetToolbox then WidgetToolbox = {} end
 
---WidgetTools toolbox for the current version
+--Create the global reference subtable for the current version
 if not WidgetToolbox[ns.WidgetToolsVersion] then
 
 	--Create Toolbox
@@ -264,7 +264,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	end
 
 	---Compare two tables to check for and fill in missing data from one to the other
-	---@param tableToCheck table|any Reference to the table to fill in missing data to (it will be turned into an empty table first if its type is not alrady "table")
+	---@param tableToCheck table|any Reference to the table to fill in missing data to (it will be turned into an empty table first if its type is not already "table")
 	---@param tableToSample table Reference to the table to sample data from
 	WidgetToolbox[ns.WidgetToolsVersion].AddMissing = function(tableToCheck, tableToSample)
 		if type(tableToSample) ~= "table" then return end
@@ -358,12 +358,12 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	---@param blue number [Range: 0 - 1]
 	---@param alpha? number Opacity [Range: 0 - 1, Default: 1]
 	---@return number table
-	WidgetToolbox[ns.WidgetToolsVersion].PackColors = function(red, green, blue, alpha)
+	WidgetToolbox[ns.WidgetToolsVersion].PackColor = function(red, green, blue, alpha)
 		 return { r = red, g = green, b = blue, a = alpha or 1 }
 	end
 
 	---Return the color values found in a table
-	---@param table table Table containing the colors
+	---@param table table Table containing the color values
 	--- - **r** number ― Red [Range: 0 - 1]
 	--- - **g** number ― Green [Range: 0 - 1]
 	--- - **b** number ― Blue [Range: 0 - 1]
@@ -373,7 +373,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	---@return number g
 	---@return number b
 	---@return number? a
-	WidgetToolbox[ns.WidgetToolsVersion].UnpackColors = function(table, alpha)
+	WidgetToolbox[ns.WidgetToolsVersion].UnpackColor = function(table, alpha)
 		if type(table) ~= "table" then return end
 		if alpha or alpha == nil then
 			return table.r, table.g, table.b, table.a or 1
@@ -441,12 +441,12 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		end
 	end
 
-	---Check all dependancies (disable / enable rules) of a frame
+	---Check all dependencies (disable / enable rules) of a frame
 	---@param rules table Indexed, 0-based table containing the dependency rules of the frame object
 	--- - **frame** Frame — Reference to the widget the state of a widget is tied to
 	--- - **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 	- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 	- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 	- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 	- ***Overloads:***
 	--- 		- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 		- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -475,12 +475,12 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		return state
 	end
 
-	---Set the dependancies (disable / enable rules) of a frame based on a ruleset
+	---Set the dependencies (disable / enable rules) of a frame based on a ruleset
 	---@param rules table Indexed, 0-based table containing the dependency rules of the frame object
 	--- - **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- - **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 	- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 	- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 	- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 	- ***Overloads:***
 	--- 		- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 		- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -507,7 +507,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - **frame** Frame ― Reference to the object to be saved & loaded data to & from
 	---@param type FrameType | UniqueFrameType Type of the widget object (string)
 	--- - ***Example:*** The return value of [**widget**:GetObjectType()](https://wowpedia.fandom.com/wiki/API_UIObject_GetObjectType) (for applicable Blizzard-built widgets).
-	--- - ***Note:*** If GetObjectType() would return "Frame" in case of a Frame with UIDropDownMenuTemplate or another uniquly built frame, provide a UniqueFrameType.
+	--- - ***Note:*** If GetObjectType() would return "Frame" in case of a Frame with UIDropDownMenuTemplate or another uniquely built frame, provide a UniqueFrameType.
 	---@param onSave? function Optional function to be called when they okay button is pressed (after the data has been saved from the options widget to the storage table)
 	--- - @*param* **self** Frame ― Reference to the widget
 	---@param onLoad? function Optional function to be called when an options category is refreshed (after the data has been restored from the storage table to the widget)
@@ -560,7 +560,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 					elseif k == "EditBox" then value = v[i].widget:GetText()
 					elseif k == "Dropdown" then value = UIDropDownMenu_GetSelectedValue(v[i].widget)
 					elseif k == "Selector" then -- value = optionsData[k][i].widget:GetName()
-					elseif k == "ColorPicker" then value = WidgetToolbox[ns.WidgetToolsVersion].PackColors(v[i].widget.getColor()) end
+					elseif k == "ColorPicker" then value = WidgetToolbox[ns.WidgetToolsVersion].PackColor(v[i].widget.getColor()) end
 					if value ~= nil then
 						--Save the value to the storage table
 						if v[i].convertSave ~= nil then value = v[i].convertSave(value) end
@@ -614,13 +614,13 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 					elseif k == "Selector" then -- value = optionsData[k][i].widget:GetName()
 					elseif k == "ColorPicker" then
 						v[i].widget.frame:SetAttribute("loaded", false)
-						v[i].widget.setColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColors(value))
+						v[i].widget.setColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColor(value))
 						v[i].widget.frame:SetAttribute("loaded", true)
 					end
 				end
 				--Call onLoad if specified
 				if v[i].onLoad ~= nil then v[i].onLoad(v[i].widget) end
-				--Signal that the widget's value has been loaded to trigger the OnAttributeChaned event
+				--Signal that the widget's value has been loaded to trigger the OnAttributeChanged event
 			end
 		end
 	end
@@ -630,8 +630,8 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 
 	--Color palette
 	local colors = {
-		normal = WidgetToolbox[ns.WidgetToolsVersion].PackColors(HIGHLIGHT_FONT_COLOR:GetRGB()),
-		title = WidgetToolbox[ns.WidgetToolsVersion].PackColors(NORMAL_FONT_COLOR:GetRGB()),
+		normal = WidgetToolbox[ns.WidgetToolsVersion].PackColor(HIGHLIGHT_FONT_COLOR:GetRGB()),
+		title = WidgetToolbox[ns.WidgetToolsVersion].PackColor(NORMAL_FONT_COLOR:GetRGB()),
 	}
 
 	--Textures
@@ -724,7 +724,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - **onCancel**? function *optional* — The function to be called when the cancel button is pressed, the popup is overwritten (by another popup for instance) or the popup expires and an OnCancel event happens
 	---@return string key Used as the parameter when calling [StaticPopup_Show()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Displaying_the_popup) or [StaticPopup_Hide()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Hiding_the_popup)
 	WidgetToolbox[ns.WidgetToolsVersion].CreatePopup = function(t)
-		local key = "MOVESPEED_" .. t.name:gsub("%s+", "_"):upper()
+		local key = "WIDGETTOOLS_" .. t.name:gsub("%s+", "_"):upper()
 		StaticPopupDialogs[key] = {
 			text = t.text,
 			button1 = t.accept or t.name,
@@ -823,7 +823,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		if t.width ~= nil then text:SetWidth(t.width) end
 		if t.justify ~= nil then text:SetJustifyH(t.justify) end
 		if t.font ~= nil then text:SetFont(t.font.path, t.font.size, t.font.flags) end
-		if t.color ~= nil then text:SetTextColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColors(t.color)) end
+		if t.color ~= nil then text:SetTextColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColor(t.color)) end
 		text:SetText(t.text)
 		return text
 	end
@@ -1127,7 +1127,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	end
 
 	---Create an new ScrollFrame as the child of an Interface Options Panel
-	---@param optionsPanel Frame Reference to the optiony category panel frame
+	---@param optionsPanel Frame Reference to the options category panel frame
 	---@param scrollHeight number Set the height of the scrollable child frame to the specified value
 	---@param scrollSpeed? number Set the scroll rate to the specified value [Default: *half of the height of the scroll bar*]
 	---@return Frame scrollFrame
@@ -1191,7 +1191,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -1253,7 +1253,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -1341,7 +1341,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -1373,7 +1373,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		end
 		if t.maxLetters ~= nil then editBox:SetMaxLetters(t.maxLetters) end
 		if t.color ~= nil and t.text ~= nil then
-			local r, g, b, a = WidgetToolbox[ns.WidgetToolsVersion].UnpackColors(t.color)
+			local r, g, b, a = WidgetToolbox[ns.WidgetToolsVersion].UnpackColor(t.color)
 			t.text = "|c" .. WidgetToolbox[ns.WidgetToolsVersion].ColorToHex(r, g, b, a, true, false) .. t.text .. "|r"
 		end
 		--Events & behavior
@@ -1448,7 +1448,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -1534,8 +1534,8 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - **justify**? table *optional* — Set the justification of the [FontInstance](https://wowwiki-archive.fandom.com/wiki/Widget_API#FontInstance)
 	--- 	- **h**? string *optional* — Horizontal: "LEFT"|"RIGHT"|"CENTER" [Default: "LEFT"]
 	--- 	- **v**? string *optional* — Vertical: "TOP"|"BOTTOM"|"MIDDLE" [Default: "MIDDLE"]
-	--- - **maxLetters**? number *optional* — The value to set by [EditBox:SetMaxLetters()](https://wowpedia.fandom.com/wiki/API_EditBox_SetMaxLetters) [Default: 0 (*no limit*)]
-	--- - **charCount**? boolean — Show or hide the remaining number of characters [Default: true]
+	--- - **maxLetters**? integer *optional* — The value to set by [EditBox:SetMaxLetters()](https://wowpedia.fandom.com/wiki/API_EditBox_SetMaxLetters) [Default: 0 (*no limit*)]
+	--- - **charCount**? boolean — Show or hide the remaining number of characters [Default: (**t.maxLetters** or 0) > 0]
 	--- - **fontObject**? FontString *optional*— Font template object to use [Default: *default font template based on the frame template*]
 	--- - **color**? table *optional* — Apply the specified color to all text in the editbox
 	--- 	- **r** number ― Red [Range: 0 - 1]
@@ -1567,7 +1567,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -1597,15 +1597,15 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		scrollFrame:SetSize(t.size.width, t.size.height)
 		local function ResizeEditBox()
 			local scrollBarOffset = _G[scrollFrame:GetName().."ScrollBar"]:IsShown() and 16 or 0
-			local counterOffset = t.charCount ~= false and tostring(t.maxLetters - scrollFrame.EditBox:GetText():len()):len() * 6 + 3 or 0
+			local counterOffset = t.charCount ~= false and (t.maxLetters or 0) > 0 and tostring(t.maxLetters - scrollFrame.EditBox:GetText():len()):len() * 6 + 3 or 0
 			scrollFrame.EditBox:SetWidth(scrollFrame:GetWidth() - scrollBarOffset - counterOffset)
 		end
 		ResizeEditBox()
 		--Scroll speed
 		if t.scrollSpeed ~= nil then _G[scrollFrame:GetName() .. "ScrollBar"].scrollStep = t.scrollSpeed end
 		--Character counter
-		if t.charCount == false then scrollFrame.CharCount:Hide() end
 		scrollFrame.CharCount:SetFontObject("GameFontDisableTiny2")
+		if t.charCount == false or (t.maxLetters or 0) == 0 then scrollFrame.CharCount:Hide() end
 		--Title
 		local title = nil
 		if t.title ~= false then
@@ -1728,7 +1728,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		--Copyable textline
 		local text = t.text
 		if t.color ~= nil then
-			local r, g, b, a = WidgetToolbox[ns.WidgetToolsVersion].UnpackColors(t.color)
+			local r, g, b, a = WidgetToolbox[ns.WidgetToolsVersion].UnpackColor(t.color)
 			text = "|c" .. WidgetToolbox[ns.WidgetToolsVersion].ColorToHex(r, g, b, a, true, false) .. t.text .. "|r"
 		end
 		local editBox = WidgetToolbox[ns.WidgetToolsVersion].CreateEditBox({
@@ -1771,8 +1771,8 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 		end)
 		if t.flipOnMouse ~= true and t.colorOnMouse ~= nil then
-			copyBox:SetScript("OnEnter", function() textLine:SetTextColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColors(t.colorOnMouse)) end)
-			copyBox:SetScript("OnLeave", function() textLine:SetTextColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColors(t.color)) end)
+			copyBox:SetScript("OnEnter", function() textLine:SetTextColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColor(t.colorOnMouse)) end)
+			copyBox:SetScript("OnLeave", function() textLine:SetTextColor(WidgetToolbox[ns.WidgetToolsVersion].UnpackColor(t.color)) end)
 		end
 		--Tooltip
 		copyBox:HookScript("OnEnter", function()
@@ -1790,11 +1790,11 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - **min** number — Lower numeric value limit of the slider
 	--- - **max** number — Upper numeric value limit of the slider
 	--- - **step**? number *optional* — Size of value increments [Default: *the value can be freely changed (within range, no set increments)*]
-	--- - **fractional**? integer *optional* — If the value is fractual, allow and display this many decimal digits [Default: *the most amount of digits present in the fractional part of* **value.min**, **value.max** *or* **value.step**]
+	--- - **fractional**? integer *optional* — If the value is fractional, allow and display this many decimal digits [Default: *the most amount of digits present in the fractional part of* **value.min**, **value.max** *or* **value.step**]
 	---@return EditBox valueBox
 	local function AddSliderValueBox(slider, value)
 		local valueBox = CreateFrame("EditBox", slider:GetName() .. "ValueBox", slider, BackdropTemplateMixin and "BackdropTemplate")
-		--Calculate the required number of fractal digits, assemple string patterns for value validation
+		--Calculate the required number of fractal digits, assemble string patterns for value validation
 		local decimals = value.fractional ~= nil and value.fractional or max(
 			tostring(value.min):gsub("-?[%d]+[%.]?([%d]*).*", "%1"):len(),
 			tostring(value.max):gsub("-?[%d]+[%.]?([%d]*).*", "%1"):len(),
@@ -1872,12 +1872,12 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **min** number — Lower numeric value limit
 	--- 	- **max** number — Upper numeric value limit
 	--- 	- **step**? number *optional* — Size of value increments [Default: *the value can be freely changed (within range, no set increments)*]
-	--- 	- **fractional**? integer *optional* — If the value is fractual, allow and display this many decimal digits [Default: *the most amount of digits present in the fractional part of* **t.value.min**, **t.value.max** *or* **t.value.step**]
+	--- 	- **fractional**? integer *optional* — If the value is fractional, allow and display this many decimal digits [Default: *the most amount of digits present in the fractional part of* **t.value.min**, **t.value.max** *or* **t.value.step**]
 	--- - **valueBox**? boolean *optional* — Set to false when the frame type should NOT have an [EditBox](https://wowpedia.fandom.com/wiki/UIOBJECT_EditBox) added as a child frame
 	--- - **onValueChanged** function — The function to be called when an [OnValueChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnValueChanged) event happens
 	--- 	- @*param* **self** Frame ― Reference to the widget
 	--- 	- @*param* **value** number ― The new value of the slider
-	--- 	- @*param* **user** boolean ― True if the value was changed by the user, false if it was done programatically
+	--- 	- @*param* **user** boolean ― True if the value was changed by the user, false if it was done programmatically
 	--- - **onEvent**? table [indexed, 0-based] *optional* — Table that holds additional event handler scripts to be set for the slider
 	--- 	- **event** string — Event name
 	--- 	- **handler** function — The handler function to be called when the named event happens
@@ -1886,7 +1886,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -1999,7 +1999,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider
@@ -2302,7 +2302,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- **frame**? Frame — Tie the state of this widget to the evaluation of this frame's value
 	--- 	- **evaluate**? function *optional* — Call this function to evaluate the current value of **rules.frame** [Default: *no evaluation, only for checkboxes*]
 	--- 		- @*param* **value**? any *optional* — The current value of **rules.frame**, its variable type depends on the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** (see overloads)
-	--- 		- @*return* **evaluation** boolean — If false, disable the dependant widget (and enable it when true)
+	--- 		- @*return* **evaluation** boolean — If false, disable the dependent widget (and enable it when true)
 	--- 		- ***Overloads:***
 	--- 			- function(**value**: boolean) -> **evaluation**: boolean — If **rules.frame** is recognized as a checkbox
 	--- 			- function(**value**: number) -> **evaluation**: boolean — If **rules.frame** is recognized as a slider

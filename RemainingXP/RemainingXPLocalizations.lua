@@ -88,6 +88,26 @@ local changelogDB = {
 		[28] = "Different styles and looks for the custom XP bar.",
 		[29] = "Event update logs: track your XP, Rested XP gain and more.",
 	},
+	[9] = {
+		[0] = "#V_Version 2.0.1_#",
+		[1] = "#N_New:_#",
+		[2] = "Added the Wago link of Remaining XP. It's now released and can be updated through the Wago app.\n#H_You may choose to support development through a Wago Subscription._#",
+		[3] = "Added the date of the last update to the About page.",
+		[4] = "#F_Hotfix:_#",
+		[5] = "The interface error appearing after a clean install of Remaining XP in the retail client has been fixed.",
+		[6] = "The Rested XP accumulation notification will no longer show up for max level characters.",
+		[7] = "The accumulated Rested XP amount should now be properly stored even after the character relogs in the retail client.",
+		[8] = "Fixed the max level not being correctly recognized as level 70 in the BCC client.",
+		[9] = "The trial Banked XP text in the XP tooltip has been fixed in the retail client.",
+		[10] = "Fixed the label on the load button in the backup popup window.",
+		[11] = "Hovering over the integrated display will still show the improved tooltip for trial accounts and moving the mouse away will no longer cause an interface error.",
+		[12] = "Remaining XP will now be disabled right away after logging in to a max level character the very first time after a clean install.",
+		[13] = "#C_Change:_#",
+		[14] = "The Remaining XP tooltip will now be refreshed automatically.",
+		[15] = "Certain interface options will fully take effect immediately after being changed that didn't do so before (they still reset on Cancel).",
+		[16] = "Swapped the current & required total XP values in the XP display text.",
+		[17] = "Trial Banked XP and levels info will only be shown on the XP display id details are enabled.",
+	},
 }
 
 ns.GetChangelog = function()
@@ -138,6 +158,7 @@ local english = {
 				title = "About",
 				description = "Thank you for using #ADDON!", --# flags will be replaced with code
 				version = "Version: #VERSION", --# flags will be replaced with code
+				date = "Date: #DATE", --# flags will be replaced with code
 				author = "Author: #AUTHOR", --# flags will be replaced with code
 				license = "License: #LICENSE", --# flags will be replaced with code
 				changelog = {
@@ -356,7 +377,7 @@ local english = {
 				},
 				maxReminder = {
 					label = "Max level reminder",
-					tooltip = "Get a reminder that the functionality of #ADDON is disabled when your character is max level when your interface loads.", --# flags will be replaced with code
+					tooltip = "Get a reminder that the functionality of #ADDON is disabled when your character is max level when your interface loads and you use chat commands.", --# flags will be replaced with code
 				},
 			},
 			logs = {
@@ -390,7 +411,7 @@ local english = {
 				},
 				load = {
 					label = "Load",
-					tooltip = "Check the current string, and addept to load all data from it.",
+					tooltip = "Check the current string, and attempt to load all data from it.",
 				},
 				reset = {
 					label = "Reset",
@@ -417,19 +438,21 @@ local english = {
 				remaining = "(#AMOUNT remaining to reach level #NEXT)", --# flags will be replaced with code
 			},
 			restedXPGained = {
-				text = "Rested XP increased by #AMOUNT to #TOTAL #PERCENT.", --# flags will be replaced with code
+				text = "You gained #AMOUNT Rested XP. Total: #TOTAL #PERCENT.", --# flags will be replaced with code
 				percent = "(#VALUE of the remaining XP)", --# flags will be replaced with code
 			},
 			restedXPAccumulated = {
-				text = "Rested XP was accumulatively increased by #AMOUNT to #TOTAL while resting #PERCENT.", --# flags will be replaced with code
+				feels = "You feel rested.",
+				resting = "You are accumulating Rested XP.",
+				leave = "You stopped resting.",
+				accumulated = "You accumulated #AMOUNT Rested XP. Total: #TOTAL #PERCENT.", --# flags will be replaced with code
 				percent = "(#VALUE of the XP remaining to reach level #NEXT)", --# flags will be replaced with code
-				feels = "You feel rested.", --# flags will be replaced with code
-				resting = "You are accumulating Rested XP.", --# flags will be replaced with code
+				noAccumulation = "You accumulated no Rested XP.",
 			},
 			lvlUp = {
-				text = "You have reached level #LEVEL.", --# flags will be replaced with code
+				text = "You reached level #LEVEL.", --# flags will be replaced with code
 				disabled = {
-					text = "#ADDON has now been disabled #REASON.", --# flags will be replaced with code
+					text = "#ADDON is now disabled #REASON.", --# flags will be replaced with code
 					reason = "(you reached level #MAX)", --# flags will be replaced with code
 				},
 				congrats = "Congrats!",
@@ -487,7 +510,7 @@ local english = {
 	},
 	xpTooltip = {
 		title = "XP details:",
-		text = "(These values don't refresh automatically currently.)",
+		text = "An updating summery of your XP status.",
 		current = "Current XP: #VALUE", --# flags will be replaced with code
 		remaining = "Remaining XP: #VALUE", --# flags will be replaced with code
 		percentTotal = "(#PERCENT of the total required XP.)", --# flags will be replaced with code
@@ -496,7 +519,7 @@ local english = {
 		timeSpent = "Spent #TIME of game time on this level so far since resting in this area.", --# flags will be replaced with code
 		rested = "Rested XP: #VALUE", --# flags will be replaced with code
 		percentRemaining = "(#PERCENT of the remaining XP amount.)", --# flags will be replaced with code
-		restedStatus = "Earn #PERCENT experience from monsters until the Rested XP amount is depleted.", --# flags will be replaced with code
+		restedStatus = "Earn #PERCENT XP from killing monsters and gathering materials until the Rested XP amount is depleted.", --# flags will be replaced with code
 		accumulated = "Accumulated #VALUE Rested XP so far while resting in this area.", --# flags will be replaced with code
 		banked = "Banked XP: #DATA", --# flags will be replaced with code
 		valueBanked = "#VALUE (#LEVELS banked levels).", --# flags will be replaced with code
@@ -526,6 +549,7 @@ local english = {
 		},
 	},
 	misc = {
+		date = "#MONTH/#DAY/#YEAR", --# flags will be replaced with code
 		default = "Default",
 		custom = "Custom",
 		override = "Override",
