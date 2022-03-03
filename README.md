@@ -22,8 +22,6 @@
 
 [**Wago**](https://addons.wago.io/addons/remaining-xp) • You can also use Wago to get updates and support development by watching ads, and provide much appreciated continuous support via a Subscription.
 
-[**BitBucket**](https://bitbucket.org/Arxareon/remaining-xp) • Access the Remaining XP repository and [Issues](https://bitbucket.org/Arxareon/remaining-xp/issues) allowing you to submit reports of problems you encounter, cool feature ideas or other feedback.
-
 ## License
 All Rights Reserved unless otherwise explicitly stated.
 
