@@ -1,9 +1,9 @@
 ***A simple solution to a simple problem:*** Remaining XP tracks your XP gains & calculates the remaining XP value. It also offers a customizable XP display, text integration for the default XP bar, chat notifications tracking your Rested XP accumulation & more.
 
 ## Features
-* Use the **/remxp** chat command to see details about setting and saving display positions, hide/show or toggle the display.
+* Customize the different features of Remaining XP via the Interface Options or the **/remxp** chat command (some settings are not available as chat commands).
 * Use **Shift + Click & drag** to reposition the XP display anywhere you like.
-* After you move it, you can save its location as your own preset position via chat commands. If you change the preset, you can quickly set up the location on your characters without having to drag the addon in just the right place for every character of yours. (The default preset location is the rightmost side of the default XP bar - if the Bottom Right Bar is enabled).
+* After you move it, you can save its location as your own preset position via chat commands. If you change the preset, you can quickly set up the location on your characters without having to drag the addon in just the right place for every character of yours.
 * Includes multi-version support for Retail, Classic and Burning Crusade Classic!
 * .. & much more!
 

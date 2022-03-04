@@ -1,6 +1,7 @@
 --Addon namespace
 local _, ns = ...
 
+
 --[[ CHANGELOG ]]
 
 local changelogDB = {
@@ -168,7 +169,7 @@ local english = {
 			},
 			support = {
 				title = "Support",
-				description = "Follow the links to see how you can provide feedback, report bugs, get help and support development.", --# flags will be replaced with code
+				description = "Follow the links to see how you can provide feedback, report bugs, get help and support development.",
 				curseForge = "CurseForge Page",
 				wago = "Wago Page",
 				bitBucket = "BitBucket Repository",
@@ -261,7 +262,7 @@ local english = {
 			},
 			background = {
 				title = "Background: XP Bar",
-				description = "Customize the graphical background elements of the mini XP bar in the main display.",
+				description = "Customize the graphical elements of the XP bar background in the main XP display.",
 				visible = {
 					label = "Visible",
 					tooltip = "Toggle the visibility of the backdrop elements of the main XP display.",
@@ -429,8 +430,8 @@ local english = {
 			max = "(you are level #MAX)", --# flags will be replaced with code
 			visible = "#ADDON is visible", --# flags will be replaced with code
 			hidden = "#ADDON is not visible", --# flags will be replaced with code
-			toggle = "#hidden: #STATE", --# flags will be replaced with code
-			fade = "#fade: #STATE", --# flags will be replaced with code
+			toggle = "hidden: #STATE", --# flags will be replaced with code
+			fade = "fade: #STATE", --# flags will be replaced with code
 		},
 		notifications = {
 			xpGained = {
@@ -471,7 +472,7 @@ local english = {
 		},
 		save = {
 			command = "save",
-			description = "save the current display attributes to the Custom preset",
+			description = "save the current display setup as the Custom preset",
 			response = "The current position, background size and visibility of the main display were saved to the Custom preset.",
 		},
 		preset = {
@@ -503,7 +504,7 @@ local english = {
 		},
 		integration = {
 			command = "integrate",
-			description = "integrate detailed information into default XP bar",
+			description = "show detaied XP info on the default XP bar",
 			response = "The XP bar enhancement integration has been #STATE.", --# flags will be replaced with code
 			notice = "Please, reload the interface to apply pending changes to the XP bar enhancement integration.",
 		},

@@ -395,29 +395,29 @@ local function SetVisibility(frame, visible)
 	if visible then frame:Show() else frame:Hide() end
 end
 
---[ DB Checkup & Fix ]
+--[ DB Management ]
 
 --Check the validity of the provided key value pair
-local function CheckValidity(k, v) 
-	if k == "size" and v <= 0 then return true
-	elseif (k == "r" or k == "g" or k == "b" or k == "a") and (v < 0 or v > 1) then return true
-	else return false end
+local function CheckValidity(k, v)
+	if type(v) == "number" then
+		--Non-negative
+		if k == "size" then return v > 0 end
+		--Range constraint: 0 - 1
+		if k == "r" or k == "g" or k == "b" or k == "a" or k == "text" or k == "background" then return v >= 0 and v <= 1 end
+	end return true
 end
 
 --Restore old data to an account-wide and character-specific DB by matching removed items to known old keys
-local function RestoreOldData(dbToSaveTo, dbcToSaveTo)
-	-- for k, v in pairs(oldData) do
-	-- 	if k == "" then
-	-- 		dbToSaveTo. = v
-	-- 		ns.recoveredData.k = nil
-	-- 	elseif k == "offsetX" then
-	-- 		dbcToSaveTo. = v
-	-- 		ns.recoveredData.k = nil
+local function RestoreOldData(data, characterData)
+	-- if (wt[addonNameSpace] or {}).recoveredData == nil then return end
+	-- for k, v in pairs(wt[addonNameSpace].recoveredData) do
+	-- 	if k == "" then data. = v
+	-- 	elseif k == "" then characterData. = v
 	-- 	end
 	-- end
+	-- -- Delete the recovery table
+	-- wt[addonNameSpace].recoveredData = nil
 end
-
---[ DB Loading ]
 
 ---Load the addon databases from the SavedVariables tables specified in the TOC
 ---@return boolean firstLoad True is returned when the addon SavedVariables tabled didn't exist prior to loading, false otherwise
@@ -2125,7 +2125,7 @@ local function CreateBackupOptions(parentFrame)
 	local importPopup = wt.CreatePopup({
 		name = addonNameSpace .. strings.options.advanced.backup.load.label:gsub("%s+", ""),
 		text = strings.options.advanced.backup.warning,
-		accept = strings.options.advanced.backup.load.label,
+		accept = strings.options.advanced.backup.import,
 		onAccept = function()
 			--Load from string to a temporary table
 			local success, t = pcall(loadstring("return " .. wt.ClearFormatting(options.backup.string:GetText())))

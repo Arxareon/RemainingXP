@@ -244,10 +244,10 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 
 	---Remove all nil, empty or otherwise invalid items from a data table
 	---@param tableToCheck table Reference to the table to prune
-	---@param valueChecker function Function describing rules by which to validate key, value pairs
+	---@param valueChecker? function Optional function describing rules to validate values
 	--- - @*param* **k** number | string
-	--- - @*param* **v** any
-	--- - @*return* boolean
+	--- - @*param* **v** any [non-table]
+	--- - @*return* boolean ― True if **v** is to be accepted as valid, false if not
 	WidgetToolbox[ns.WidgetToolsVersion].RemoveEmpty = function(tableToCheck, valueChecker)
 		if type(tableToCheck) ~= "table" then return end
 		for k, v in pairs(tableToCheck) do
@@ -257,8 +257,10 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 				else
 					WidgetToolbox[ns.WidgetToolsVersion].RemoveEmpty(v, valueChecker)
 				end
-			elseif v == nil or v == "" or valueChecker(k, v) then --The value is invalid, empty or doesn't exist
-				tableToCheck[k] = nil --Remove the key value pair
+			else
+				local remove = v == nil or v == "" --The value is empty or doesn't exist
+				if not remove and valueChecker ~= nil then remove = not valueChecker(k, v) end--The value is invalid
+				if remove then tableToCheck[k] = nil end --Remove the key value pair
 			end
 		end
 	end
