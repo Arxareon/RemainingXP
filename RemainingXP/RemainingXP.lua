@@ -905,8 +905,9 @@ local options = {
 		colors = {},
 		size = {},
 	},
-	text = {},
-	font = {},
+	text = {
+		font = {},
+	},
 	enhancement = {},
 	removals = {},
 	notifications = {},
@@ -927,13 +928,7 @@ local function CreateOptionsShortcuts(parentFrame)
 		width = 120,
 		label = strings.options.display.title,
 		tooltip = strings.options.display.description:gsub("#ADDON", addon),
-		onClick = function()
-			if not dbc.disabled then
-				options.visibility.hidden:SetChecked(false)
-				remXP:Show()
-			end
-			InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage)
-		end,
+		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage) end,
 	})
 	--Button: Integration page
 	local integration = wt.CreateButton({
@@ -1241,7 +1236,7 @@ local function CreateQuickOptions(parentFrame)
 	})
 	--Button & Popup: Save Custom preset
 	local savePopup = wt.CreatePopup({
-		name = addonNameSpace .. strings.options.display.quick.savePreset.label:gsub("%s+", ""),
+		name = addonNameSpace .. "_SAVEPRESET",
 		text = strings.options.display.quick.savePreset.warning,
 		accept = strings.misc.override,
 		onAccept = function()
@@ -1387,14 +1382,14 @@ local function CreateTextOptions(parentFrame)
 		fontItems[i] = {}
 		fontItems[i].text = fonts[i].name
 		fontItems[i].onSelect = function()
-			mainDisplayText:SetFont(fonts[i].path, options.font.size:GetValue(), "THINOUTLINE")
+			mainDisplayText:SetFont(fonts[i].path, options.text.font.size:GetValue(), "THINOUTLINE")
 			--Refresh the text so the font will be applied even the first time as well not just subsequent times
 			local text = mainDisplayText:GetText()
 			mainDisplayText:SetText("")
 			mainDisplayText:SetText(text)
 		end
 	end
-	options.font.family = wt.CreateDropdown({
+	options.text.font.family = wt.CreateDropdown({
 		parent = parentFrame,
 		position = {
 			anchor = "TOPLEFT",
@@ -1422,7 +1417,7 @@ local function CreateTextOptions(parentFrame)
 		},
 	})
 	--Slider: Font size
-	options.font.size = wt.CreateSlider({
+	options.text.font.size = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
 			anchor = "TOP",
@@ -1442,7 +1437,7 @@ local function CreateTextOptions(parentFrame)
 		},
 	})
 	--Color Picker: Font color
-	options.font.color = wt.CreateColorPicker({
+	options.text.font.color = wt.CreateColorPicker({
 		parent = parentFrame,
 		position = {
 			anchor = "TOPRIGHT",
@@ -1453,7 +1448,7 @@ local function CreateTextOptions(parentFrame)
 		setColors = function() return mainDisplayText:GetTextColor() end,
 		onColorUpdate = function(r, g, b, a)
 			mainDisplayText:SetTextColor(r, g, b, a)
-			db.display.text.font.color = wt.PackColor(options.font.color.getColor())
+			db.display.text.font.color = wt.PackColor(options.text.font.color.getColor())
 			Fade()
 		end,
 		onCancel = function(r, g, b, a)
@@ -1471,7 +1466,7 @@ local function CreateTextOptions(parentFrame)
 	})
 end
 local  function CreateBackgroundOptions(parentFrame)
-	--Checkbox: Backdrop toggle
+	--Checkbox: Visible
 	options.background.visible = wt.CreateCheckbox({
 		parent = parentFrame,
 		position = {
@@ -2123,7 +2118,7 @@ end
 local function CreateBackupOptions(parentFrame)
 	--EditScrollBox & Popup: Import & Export
 	local importPopup = wt.CreatePopup({
-		name = addonNameSpace .. strings.options.advanced.backup.load.label:gsub("%s+", ""),
+		name = addonNameSpace .. "_LOADSTRING",
 		text = strings.options.advanced.backup.warning,
 		accept = strings.options.advanced.backup.import,
 		onAccept = function()
@@ -2548,7 +2543,7 @@ local function SizeCommand(parameter)
 		db.display.text.font.size = size
 		mainDisplayText:SetFont(db.display.text.font.family, db.display.text.font.size, "THINOUTLINE")
 		--Update the GUI option in case it was open
-		options.font.size:SetValue(size)
+		options.text.font.size:SetValue(size)
 		--Response
 		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.response:gsub("#VALUE", size), colors.blue[0]))
 	else

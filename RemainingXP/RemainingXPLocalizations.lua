@@ -479,7 +479,7 @@ local english = {
 			command = "preset",
 			description = "apply a specified display preset (e.g. #INDEX)", --# flags will be replaced with code
 			response = "The specified display preset has been applied.",
-			unchanged = "The preset count not be applied, the display is unchanged.",
+			unchanged = "The preset could not be applied, the display is unchanged.",
 			error = "Please enter a valid preset index (e.g. #INDEX).", --# flags will be replaced with code
 			list = "The following presets are available:",
 		},
