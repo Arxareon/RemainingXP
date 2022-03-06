@@ -378,29 +378,29 @@ local function SetVisibility(frame, visible)
 	if visible then frame:Show() else frame:Hide() end
 end
 
---[ DB Checkup & Fix ]
+--[ DB Management ]
 
 --Check the validity of the provided key value pair
-local function CheckValidity(k, v) 
-	if k == "size" and v <= 0 then return true
-	elseif (k == "r" or k == "g" or k == "b" or k == "a") and (v < 0 or v > 1) then return true
-	else return false end
+local function CheckValidity(k, v)
+	if type(v) == "number" then
+		--Non-negative
+		if k == "size" then return v > 0 end
+		--Range constraint: 0 - 1
+		if k == "r" or k == "g" or k == "b" or k == "a" or k == "text" or k == "background" then return v >= 0 and v <= 1 end
+	end return true
 end
 
 --Restore old data to an account-wide and character-specific DB by matching removed items to known old keys
-local function RestoreOldData(dbToSaveTo, dbcToSaveTo)
-	-- for k, v in pairs(oldData) do
-	-- 	if k == "" then
-	-- 		dbToSaveTo. = v
-	-- 		ns.recoveredData.k = nil
-	-- 	elseif k == "offsetX" then
-	-- 		dbcToSaveTo. = v
-	-- 		ns.recoveredData.k = nil
+local function RestoreOldData(data, characterData)
+	-- if (wt[addonNameSpace] or {}).recoveredData == nil then return end
+	-- for k, v in pairs(wt[addonNameSpace].recoveredData) do
+	-- 	if k == "" then data. = v
+	-- 	elseif k == "" then characterData. = v
 	-- 	end
 	-- end
+	-- -- Delete the recovery table
+	-- wt[addonNameSpace].recoveredData = nil
 end
-
---[ DB Loading ]
 
 ---Load the addon databases from the SavedVariables tables specified in the TOC
 ---@return boolean firstLoad True is returned when the addon SavedVariables tabled didn't exist prior to loading, false otherwise
@@ -642,7 +642,7 @@ local function UpdateXPTooltip()
 	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_PRESERVE", strings.xpTooltip.title, strings.xpTooltip.text, CreateXPTooltipDetails())
 end
 
---[ Main Display ]
+--[ Main XP Display ]
 
 ---Fade the main display in or out
 ---@param state? boolean Decides whether to fade our or fade in the display [Default: db.display.visibility.fade.enabled]
@@ -848,8 +848,9 @@ local options = {
 		colors = {},
 		size = {},
 	},
-	text = {},
-	font = {},
+	text = {
+		font = {},
+	},
 	enhancement = {},
 	removals = {},
 	notifications = {},
@@ -870,13 +871,7 @@ local function CreateOptionsShortcuts(parentFrame)
 		width = 120,
 		label = strings.options.display.title,
 		tooltip = strings.options.display.description:gsub("#ADDON", addon),
-		onClick = function()
-			if not dbc.disabled then
-				options.visibility.hidden:SetChecked(false)
-				remXP:Show()
-			end
-			InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage)
-		end,
+		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage) end,
 	})
 	--Button: Integration page
 	local integration = wt.CreateButton({
@@ -1184,15 +1179,17 @@ local function CreateQuickOptions(parentFrame)
 	})
 	--Button & Popup: Save Custom preset
 	local savePopup = wt.CreatePopup({
-		name = addonNameSpace .. strings.options.display.quick.savePreset.label:gsub("%s+", ""),
+		name = "SAVEPRESET",
 		text = strings.options.display.quick.savePreset.warning,
 		accept = strings.misc.override,
 		onAccept = function()
-			--Save and update the custom preset
+			--Update the Custom preset
 			presets[0].data.position.point, _, _, presets[0].data.position.offset.x, presets[0].data.position.offset.y = remXP:GetPoint()
 			presets[0].data.visibility.frameStrata = options.visibility.raise:GetChecked() and "HIGH" or "MEDIUM"
 			presets[0].data.background.visible = options.background.visible:GetChecked()
 			presets[0].data.background.size = { width = options.background.size.width:GetValue(), height = options.background.size.height:GetValue() }
+			--Save the Custom preset
+			db.customPreset = presets[0].data
 			--Response
 			print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.save.response, colors.blue[0]))
 		end,
@@ -1330,14 +1327,14 @@ local function CreateTextOptions(parentFrame)
 		fontItems[i] = {}
 		fontItems[i].text = fonts[i].name
 		fontItems[i].onSelect = function()
-			mainDisplayText:SetFont(fonts[i].path, options.font.size:GetValue(), "THINOUTLINE")
+			mainDisplayText:SetFont(fonts[i].path, options.text.font.size:GetValue(), "THINOUTLINE")
 			--Refresh the text so the font will be applied even the first time as well not just subsequent times
 			local text = mainDisplayText:GetText()
 			mainDisplayText:SetText("")
 			mainDisplayText:SetText(text)
 		end
 	end
-	options.font.family = wt.CreateDropdown({
+	options.text.font.family = wt.CreateDropdown({
 		parent = parentFrame,
 		position = {
 			anchor = "TOPLEFT",
@@ -1365,7 +1362,7 @@ local function CreateTextOptions(parentFrame)
 		},
 	})
 	--Slider: Font size
-	options.font.size = wt.CreateSlider({
+	options.text.font.size = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
 			anchor = "TOP",
@@ -1385,7 +1382,7 @@ local function CreateTextOptions(parentFrame)
 		},
 	})
 	--Color Picker: Font color
-	options.font.color = wt.CreateColorPicker({
+	options.text.font.color = wt.CreateColorPicker({
 		parent = parentFrame,
 		position = {
 			anchor = "TOPRIGHT",
@@ -1396,7 +1393,7 @@ local function CreateTextOptions(parentFrame)
 		setColors = function() return mainDisplayText:GetTextColor() end,
 		onColorUpdate = function(r, g, b, a)
 			mainDisplayText:SetTextColor(r, g, b, a)
-			db.display.text.font.color = wt.PackColor(options.font.color.getColor())
+			db.display.text.font.color = wt.PackColor(options.text.font.color.getColor())
 			Fade()
 		end,
 		onCancel = function(r, g, b, a)
@@ -1414,7 +1411,7 @@ local function CreateTextOptions(parentFrame)
 	})
 end
 local  function CreateBackgroundOptions(parentFrame)
-	--Checkbox: Backdrop toggle
+	--Checkbox: Visible
 	options.background.visible = wt.CreateCheckbox({
 		parent = parentFrame,
 		position = {
@@ -2066,9 +2063,9 @@ end
 local function CreateBackupOptions(parentFrame)
 	--EditScrollBox & Popup: Import & Export
 	local importPopup = wt.CreatePopup({
-		name = addonNameSpace .. strings.options.advanced.backup.load.label:gsub("%s+", ""),
+		name = "IMPORT",
 		text = strings.options.advanced.backup.warning,
-		accept = strings.options.advanced.backup.load.label,
+		accept = strings.options.advanced.backup.import,
 		onAccept = function()
 			--Load from string to a temporary table
 			local success, t = pcall(loadstring("return " .. wt.ClearFormatting(options.backup.string:GetText())))
@@ -2084,7 +2081,7 @@ local function CreateBackupOptions(parentFrame)
 				--Copy values from the loaded DBs to the addon DBs
 				wt.CopyValues(t.account, db)
 				wt.CopyValues(t.character, dbc)
-				--Update the custom preset
+				--Update the Custom preset
 				presets[0].data = db.customPreset
 				--Main display
 				MoveDisplay(db.display.position.point, db.display.position.offset.x, db.display.position.offset.y)
@@ -2095,9 +2092,7 @@ local function CreateBackupOptions(parentFrame)
 				if t.account.removals.statusBars then MainMenuExpBar:Hide() else MainMenuExpBar:Show() end
 				--Update the interface options
 				wt.LoadOptionsData()
-			else
-				print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.options.advanced.backup.error, colors.blue[0]))
-			end
+			else print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.options.advanced.backup.error, colors.blue[0])) end
 		end
 	})
 	local backupBox
@@ -2122,7 +2117,7 @@ local function CreateBackupOptions(parentFrame)
 		scrollSpeed = 60,
 		onEnterPressed = function() StaticPopup_Show(importPopup) end,
 		onEscapePressed = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
-		onLoad = function() options.backup.string:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
+		onLoad = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
 	})
 	--Checkbox: Compact
 	options.backup.compact = wt.CreateCheckbox({
@@ -2214,9 +2209,6 @@ end
 
 --Save the pending changes
 local function SaveOptions()
-	--Save the Custom Preset
-	presets[0].data = db.customPreset
-	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
 	--Removals
 	db.removals.statusBars = not MainMenuExpBar:IsVisible()
 	--Update the SavedVariabes DBs
@@ -2245,7 +2237,7 @@ local function DefaultOptions()
 	RemainingXPDBC = wt.Clone(dbcDefault)
 	wt.CopyValues(dbDefault, db)
 	wt.CopyValues(dbcDefault, dbc)
-	--Reset the custom preset
+	--Reset the Custom preset
 	presets[0].data = db.customPreset
 	--Reset the main display
 	MoveDisplay(db.display.position.point, db.display.position.offset.x, db.display.position.offset.y)
@@ -2254,7 +2246,7 @@ local function DefaultOptions()
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
 	--Update the removals
 	if db.removals.statusBars then MainMenuExpBar:Hide() else MainMenuExpBar:Show() end
-	--Initiate or remove the cross-section variable
+	--Initiate or remove the cross-session Rested XP accumulation tracking variable
 	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and dbc.disabled)
 	--Update the interface options
 	wt.LoadOptionsData()
@@ -2338,31 +2330,24 @@ end
 --[[ CHAT CONTROL ]]
 
 --Chat control utilities
-local function ToggleState(enabled)
-	if enabled then
-		return "ON"
-	else
-		return "OFF"
-	end
-	return ""
-end
 local function PrintStatus()
-	if db.notifications.maxReminder and UnitLevel("player") == MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then
-		print(Color(strings.chat.status.disabled:gsub(
+	local status
+	if dbc.disabled and db.notifications.maxReminder then
+		status = Color(strings.chat.status.disabled:gsub(
 			"#ADDON", Color(addon, colors.purple[0])
 		) .." " ..  Color(strings.chat.status.max:gsub(
 			"#MAX", MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
-		), colors.blue[2]) .. ".", colors.blue[0]))
+		), colors.blue[2]), colors.blue[0])
 	else
-		local status = ""
-		if remXP:IsShown() then
-			status = status .. strings.chat.status.visible:gsub("#ADDON", Color(addon, colors.purple[0]))
-		else
-			status = status .. strings.chat.status.hidden:gsub("#ADDON", Color(addon, colors.purple[0]))
-		end
-		-- status = status .. Color(" (" .. strings.chat.status.toggle:gsub("#STATE", Color(ToggleState(dbc.hidden), colors.purple[2])), colors.blue[2])
-		-- status = status .. Color(", " .. strings.chat.status.fade:gsub("#STATE", Color(ToggleState(db.display.visibility.fade.enabled)), colors.purple[2]), colors.blue[2]) .. Color(")", colors.blue[2]) .. Color(".", colors.blue[0])
+		status = Color(addon .. ":", colors.purple[0]) .. " " .. Color(
+			remXP:IsVisible() and strings.chat.status.visible or strings.chat.status.hidden, colors.blue[0]
+		):gsub(
+			"#FADE", Color(strings.chat.status.fade:gsub(
+				"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
+			), colors.blue[1])
+		)
 	end
+	print(status)
 end
 local function PrintInfo()
 	print(Color(strings.chat.help.thanks:gsub("#ADDON", Color(addon, colors.purple[0])), colors.blue[0]))
@@ -2384,11 +2369,15 @@ local function PrintCommands()
 		},
 		[2] = {
 			command = strings.chat.preset.command,
-			description = strings.chat.preset.description:gsub("#INDEX", Color(strings.chat.preset.command .. " " .. 0, colors.purple[2]))
+			description = strings.chat.preset.description:gsub(
+				"#INDEX", Color(strings.chat.preset.command .. " " .. 0, colors.purple[2])
+			)
 		},
 		[3] = {
 			command = strings.chat.toggle.command,
-			description = strings.chat.toggle.description:gsub("#HIDDEN", Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[2]))
+			description = strings.chat.toggle.description:gsub(
+				"#HIDDEN", Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.notHidden, colors.purple[2])
+			)
 		},
 		[4] = {
 			command = strings.chat.fade.command,
@@ -2398,7 +2387,9 @@ local function PrintCommands()
 		},
 		[5] = {
 			command = strings.chat.size.command,
-			description =  strings.chat.size.description:gsub("#SIZE", Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[2]))
+			description =  strings.chat.size.description:gsub(
+				"#SIZE", Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[2])
+			)
 		},
 		[6] = {
 			command = strings.chat.integration.command,
@@ -2414,11 +2405,15 @@ end
 --[ Slash command handler ]
 
 local function SaveCommand()
-	--Save and update the custom preset
+	--Update the custom preset
 	presets[0].data.position.point, _, _, presets[0].data.position.offset.x, presets[0].data.position.offset.y = remXP:GetPoint()
 	presets[0].data.visibility.frameStrata = options.visibility.raise:GetChecked() and "HIGH" or "MEDIUM"
 	presets[0].data.background.visible = options.background.visible:GetChecked()
 	presets[0].data.background.size = { width = options.background.size.width:GetValue(), height = options.background.size.height:GetValue() }
+	--Save the Custom preset
+	db.customPreset = presets[0].data
+	--Update in the SavedVariabes DB
+	RemainingXPDB.customPreset = wt.Clone(db.customPreset)
 	--Response
 	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.save.response, colors.blue[0]))
 end
@@ -2448,7 +2443,7 @@ local function PresetCommand(parameter)
 	else
 		--Error
 		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.preset.unchanged, colors.blue[0]))
-		print(Color(strings.chat.preset.error:gsub("#INDEX", Color(strings.chat.preset.command .. " " .. 0, colors.purple[2])), colors.blue[2]))
+		print(Color(strings.chat.preset.error:gsub("#INDEX", Color(strings.chat.preset.command .. " " .. 0, colors.purple[1])), colors.blue[1]))
 		print(Color(strings.chat.preset.list, colors.purple[2]))
 		for i = 0, #presets, 2 do
 			local list = "    " .. Color(i, colors.purple[2]) .. Color(" - " .. presets[i].name, colors.blue[2])
@@ -2464,10 +2459,8 @@ local function ToggleCommand()
 	options.visibility.hidden:SetChecked(dbc.hidden)
 	options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.toggle.response:gsub(
-		"#HIDDEN", dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown
-	), colors.blue[0]))
-	PrintStatus()
+	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(dbc.hidden and strings.chat.toggle.hiding or strings.chat.toggle.unhiding, colors.blue[0]))
+	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
 	RemainingXPDBC.hidden = wt.Clone(dbc.hidden)
 end
@@ -2479,9 +2472,9 @@ local function FadeCommand()
 	options.visibility.fade.toggle:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
 	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.fade.response:gsub(
-		"#STATE", db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled
+		"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[0])
 	), colors.blue[0]))
-	PrintStatus()
+	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
 	RemainingXPDB.display.visibility.fade.enabled = wt.Clone(db.display.visibility.fade.enabled)
 end
@@ -2491,17 +2484,17 @@ local function SizeCommand(parameter)
 		db.display.text.font.size = size
 		mainDisplayText:SetFont(db.display.text.font.family, db.display.text.font.size, "THINOUTLINE")
 		--Update the GUI option in case it was open
-		options.font.size:SetValue(size)
+		options.text.font.size:SetValue(size)
 		--Response
-		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.response:gsub("#VALUE", size), colors.blue[0]))
+		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.response:gsub("#VALUE", Color(size, colors.purple[0])), colors.blue[0]))
 	else
 		--Error
 		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.unchanged, colors.blue[0]))
 		print(Color(strings.chat.size.error:gsub(
-			"#SIZE", Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[2])
-		), colors.blue[2]))
+			"#SIZE", Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[1])
+		), colors.blue[1]))
 	end
-	PrintStatus()
+	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
 	RemainingXPDB.display.text.font.size = wt.Clone(db.display.text.font.size)
 end
@@ -2513,9 +2506,9 @@ local function IntegrationCommand()
 	options.enhancement.toggle:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
 	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.integration.response:gsub(
-		"#STATE", db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled
+		"#STATE", Color(db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[0])
 	), colors.blue[0]))
-	PrintStatus()
+	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
 	RemainingXPDB.enhancement.enabled = wt.Clone(db.enhancement.enabled)
 end
@@ -2725,7 +2718,7 @@ function remXP:PLAYER_ENTERING_WORLD()
 		if db.enhancement.enabled then UpdateIntegratedDisplay(db.enhancement.remaining) end
 	end
 	--Visibility notice
-	if not remXP:IsShown() then PrintStatus() end
+	if not remXP:IsVisible() then PrintStatus() end
 end
 function remXP:QUEST_LOG_UPDATE()
 	--Hide the enabled removals
@@ -2831,7 +2824,7 @@ function remXP:PLAYER_UPDATE_RESTING()
 		else s = s .. " " .. Color(strings.chat.notifications.restedXPAccumulated.noAccumulation, colors.blue[0]) end
 		print(s)
 	end
-	--Initiate or remove the cross-section variable
+	--Initiate or remove the cross-session Rested XP accumulation tracking variable
 	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated)
 	--Update XP
 	UpdateXPValues()

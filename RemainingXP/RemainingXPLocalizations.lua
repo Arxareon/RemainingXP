@@ -147,7 +147,7 @@ end
 local english = {
 	options = {
 		name = "#ADDON options",
-		defaults = "The default options and the custom preset have been reset.",
+		defaults = "The default options and the Custom preset have been reset.",
 		main = {
 			name = "Main page",
 			description = "Customize #ADDON to fit your needs. Type #KEYWORD for chat commands.", --# flags will be replaced with code
@@ -211,6 +211,7 @@ local english = {
 					label = "Update Custom Preset",
 					tooltip = "Save the current position, background size and visibility of the main display to the Custom preset.",
 					warning = "Are you sure you want to override the Custom Preset with the current customizations?\n\nThe Custom preset is account-wide.", --\n represents the newline character
+					response = "The current position, background size and visibility of the main display have been applied to the Custom preset and will be saved along with the other options.",
 				},
 			},
 			position = {
@@ -425,14 +426,6 @@ local english = {
 		},
 	},
 	chat = {
-		status = {
-			disabled = "#ADDON is disabled", --# flags will be replaced with code
-			max = "(you are level #MAX)", --# flags will be replaced with code
-			visible = "#ADDON is visible", --# flags will be replaced with code
-			hidden = "#ADDON is not visible", --# flags will be replaced with code
-			toggle = "hidden: #STATE", --# flags will be replaced with code
-			fade = "fade: #STATE", --# flags will be replaced with code
-		},
 		notifications = {
 			xpGained = {
 				text = "You gained #AMOUNT XP #REMAINING.", --# flags will be replaced with code
@@ -459,6 +452,13 @@ local english = {
 				congrats = "Congrats!",
 			},
 		},
+		status = {
+			disabled = "#ADDON is disabled", --# flags will be replaced with code
+			max = "(you are level #MAX).", --# flags will be replaced with code
+			visible = "The XP display is visible (#FADE).", --# flags will be replaced with code
+			hidden = "The XP display is hidden (#FADE).", --# flags will be replaced with code
+			fade = "fade: #STATE", --# flags will be replaced with code
+		},
 		help = {
 			command = "help",
 			thanks = "Thank you for using #ADDON!", --# flags will be replaced with code
@@ -478,7 +478,7 @@ local english = {
 		preset = {
 			command = "preset",
 			description = "apply a specified display preset (e.g. #INDEX)", --# flags will be replaced with code
-			response = "The specified display preset has been applied.",
+			response = "The specified display preset was applied.",
 			unchanged = "The preset could not be applied, the display is unchanged.",
 			error = "Please enter a valid preset index (e.g. #INDEX).", --# flags will be replaced with code
 			list = "The following presets are available:",
@@ -486,26 +486,27 @@ local english = {
 		toggle = {
 			command = "toggle",
 			description = "show or hide the XP value display (#HIDDEN)", --# flags will be replaced with code
-			response = "The main display is #HIDDEN.", --# flags will be replaced with code
+			hiding = "The XP display has been hidden.",
+			unhiding = "The XP display has been made visible.",
 			hidden = "hidden",
-			shown = "not hidden",
+			notHidden = "not hidden",
 		},
 		fade = {
 			command = "fade",
 			description = "fade the display when it's not hovered (#STATE)", --# flags will be replaced with code
-			response = "The XP display fade is #STATE.", --# flags will be replaced with code
+			response = "The XP display fade was set to #STATE.", --# flags will be replaced with code
 		},
 		size = {
 			command = "size",
 			description = "change the font size (e.g. #SIZE)", --# flags will be replaced with code
-			response = "The font size has been set to #VALUE.", --# flags will be replaced with code
+			response = "The font size was set to #VALUE.", --# flags will be replaced with code
 			unchanged = "The font size was not changed.",
 			error = "Please enter a valid number value (e.g. #SIZE).", --# flags will be replaced with code
 		},
 		integration = {
 			command = "integrate",
 			description = "show detaied XP info on the default XP bar",
-			response = "The XP bar enhancement integration has been #STATE.", --# flags will be replaced with code
+			response = "The XP bar enhancement integration set to #STATE.", --# flags will be replaced with code
 			notice = "Please, reload the interface to apply pending changes to the XP bar enhancement integration.",
 		},
 	},

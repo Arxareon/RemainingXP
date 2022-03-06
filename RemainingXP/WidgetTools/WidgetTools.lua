@@ -2,7 +2,7 @@
 local addonNameSpace, ns = ...
 
 --Version
-ns.WidgetToolsVersion = "1.1.1"
+ns.WidgetToolsVersion = "1.1.2"
 
 --Global WidgetTools table containing toolbox subtables for each respective WidgetTools version (WidgetToolbox["version_string"])
 if not WidgetToolbox then WidgetToolbox = {} end
@@ -175,6 +175,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	---@param currentLevel? number
 	---@return string chunk
 	WidgetToolbox[ns.WidgetToolsVersion].TableToString = function(table, compact, colored, currentLevel)
+		if type(table) ~= "table" then return tostring(table) end
 		--Set whitespaces, calculate indentation based on the current depth level
 		local s = compact ~= true and " " or ""
 		local nl = compact ~= true and "\n" or ""
@@ -671,7 +672,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		return tooltip
 	end
 
-	local customTooltip = CreateGameTooltip("WidgetTools")
+	local customTooltip = CreateGameTooltip("WidgetTools" .. ns.WidgetToolsVersion)
 
 	---Set up a show a GameTooltip for a frame
 	---@param tooltip? GameTooltip Reference to the tooltip widget to set up [Default: WidgetToolsGameTooltip]
@@ -718,15 +719,15 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 
 	---Create a popup dialogue with an accept function and cancel button
 	---@param t table Parameters are to be provided in this table
-	--- - **name** string — The name of the action which will call this popup. Each name must be unique between all popups!
+	--- - **name** string — Appended to the addon's name as a unique identifier key in the global **StaticPopupDialogs** table
 	--- - **text** string — The text to display as the message in the popup window
 	--- - **accept**? string *optional* — The text to display as the label of the accept button [Default: **t.name**]
 	--- - **cancel**? string *optional* — The text to display as the label of the cancel button [Default: **WidgetToolbox[ns.WidgetToolsVersion].strings.misc.cancel**]
 	--- - **onAccept** function — The function to be called when the accept button is pressed and an OnAccept event happens
 	--- - **onCancel**? function *optional* — The function to be called when the cancel button is pressed, the popup is overwritten (by another popup for instance) or the popup expires and an OnCancel event happens
-	---@return string key Used as the parameter when calling [StaticPopup_Show()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Displaying_the_popup) or [StaticPopup_Hide()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Hiding_the_popup)
+	---@return string key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Displaying_the_popup) or [StaticPopup_Hide()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Hiding_the_popup)
 	WidgetToolbox[ns.WidgetToolsVersion].CreatePopup = function(t)
-		local key = "WIDGETTOOLS_" .. t.name:gsub("%s+", "_"):upper()
+		local key = addonNameSpace:upper() .. "_" .. t.name:gsub("%s+", "_"):upper()
 		StaticPopupDialogs[key] = {
 			text = t.text,
 			button1 = t.accept or t.name,
