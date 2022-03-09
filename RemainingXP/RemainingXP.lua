@@ -450,17 +450,6 @@ local function LoadDBs()
 	return firstLoad
 end
 
---[ Max Level ]
-
---Disable the frame and display if the player is max level
-local function CheckMax(level)
-	if level >= GetMaxLevelForPlayerExpansion() then
-		remXP:Hide()
-		dbc.disabled = true
-	else dbc.disabled = false end
-	return dbc.disabled
-end
-
 --[ XP Update ]
 
 ---Initiate or remove the cross-session variable storing the Rested XP accumulation while inside a Rested Area
@@ -857,8 +846,8 @@ end
 ---@param enabled boolean Whether or not the default XP bar integration is enabled
 ---@param keep boolean Whether or not the text is set to be always shown
 ---@param remaining boolean Whether or not only the remaining XP should be visible when the text is always shown
----@param cvar boolean Whether or not turn off the always shown property of the default XP bar text if false
----@param notice boolean Whether or not show a reload notice when the always shown property of the default XP bar text is changed if true
+---@param cvar boolean Whether or not to turn off the always shown property of the default XP bar text if false
+---@param notice boolean Whether or not to show a reload notice when the always shown property of the default XP bar text is changed if true
 local function SetIntegrationVisibility(enabled, keep, remaining, cvar, notice)
 	if enabled and not dbc.disabled then
 		integratedDisplay:Show()
@@ -2796,7 +2785,7 @@ function remXP:ADDON_LOADED(name)
 	LoadInterfaceOptions()
 end
 function remXP:PLAYER_ENTERING_WORLD()
-	local max = CheckMax(UnitLevel("player"))
+	dbc.disabled = UnitLevel("player") >= GetMaxLevelForPlayerExpansion()
 	--Update the XP values
 	UpdateXPValues()
 	--Set up the main frame & text
@@ -2804,7 +2793,7 @@ function remXP:PLAYER_ENTERING_WORLD()
 	--Set up the integrated frame & text
 	SetUpIntegratedFrame()
 	--Check max level, update XP texts
-	if not max then
+	if not dbc.disabled then
 		--Main display
 		UpdateXPDisplayText()
 		--Integration
@@ -2848,12 +2837,18 @@ end
 
 --Level up update
 function remXP:PLAYER_LEVEL_UP(newLevel)
-	if CheckMax(newLevel) then
+	local max = GetMaxLevelForPlayerExpansion()
+	dbc.disabled = newLevel >= max
+	if dbc.disabled then
+		--Hide the displays
+		remXP:hide()
+		integratedDisplay:hide()
+		--Notification
 		print(Color(strings.chat.notifications.lvlUp.disabled.text:gsub(
 			"#ADDON", Color(addon, colors.purple[0])
 		):gsub(
 			"#REASON", Color(strings.chat.notifications.lvlUp.disabled.reason:gsub(
-				"#MAX", GetMaxLevelForPlayerExpansion()
+				"#MAX", max
 			), colors.blue[2])
 		) .. " " .. strings.chat.notifications.lvlUp.congrats, colors.blue[0]))
 	else
