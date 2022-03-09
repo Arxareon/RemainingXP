@@ -1,4 +1,4 @@
---Addon namespace
+--Addon identifier name, namespace table
 local addonNameSpace, ns = ...
 
 --Version
@@ -287,29 +287,23 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	---Remove unused or outdated data from a table while trying to keep any old data
 	---@param tableToCheck table Reference to the table to remove unneeded key, value pairs from
 	---@param tableToSample table Reference to the table to sample data from
-	---@param recoveredData? table Reference to a table where to be removed key, value pairs will be saved to [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].recoveredData**]
+	---@param recoveredData? table
+	---@return table recoveredData Table containing the removed key, value pairs
 	WidgetToolbox[ns.WidgetToolsVersion].RemoveMismatch = function(tableToCheck, tableToSample, recoveredData)
-		if type(tableToCheck) ~= "table" or type(tableToSample) ~= "table" then return end
+		if recoveredData == nil then recoveredData = {} end
+		if type(tableToCheck) ~= "table" or type(tableToSample) ~= "table" then return recoveredData end
 		if next(tableToCheck) == nil then return end --The table to check is empty
 		for k, v in pairs(tableToCheck) do
 			if tableToSample[k] == nil then --The checked key doesn't exist in the sample table
 				--Save the old item to the recovered data container
-				if recoveredData == nil then
-					if WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace] == nil then
-						WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace] = {}
-						WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].recoveredData = {}
-					elseif WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].recoveredData == nil then
-						WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].recoveredData = {}
-					end
-					recoveredData = WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].recoveredData
-				end
 				recoveredData[k] = v
 				--Remove the unneeded item
 				tableToCheck[k] = nil
 			else
-				WidgetToolbox[ns.WidgetToolsVersion].RemoveMismatch(tableToCheck[k], tableToSample[k])
+				recoveredData = WidgetToolbox[ns.WidgetToolsVersion].RemoveMismatch(tableToCheck[k], tableToSample[k], recoveredData)
 			end
 		end
+		return recoveredData
 	end
 
 	--[ String Formatting ]
@@ -515,7 +509,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - @*param* **self** Frame ― Reference to the widget
 	---@param onLoad? function Optional function to be called when an options category is refreshed (after the data has been restored from the storage table to the widget)
 	--- - @*param* **self** Frame ― Reference to the widget
-	---@param optionsTable? table Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	---@param optionsTable? table Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	---@param optionsData? table Table containing the autosave/-load-specific options data of the specified widget
 	--- - **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- - **key** string ― Key of the variable inside the storage table
@@ -528,13 +522,13 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].AddOptionsData = function(widget, type, onSave, onLoad, optionsTable, optionsData)
 		--Set the options data table
 		if optionsTable == nil then
-			if WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace] == nil then
-				WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace] = {}
-				WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].optionsData = {}
-			elseif WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].optionsData == nil then
-				WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].optionsData = {}
+			if WidgetToolbox[ns.WidgetToolsVersion] == nil then
+				WidgetToolbox[ns.WidgetToolsVersion] = {}
+				WidgetToolbox[ns.WidgetToolsVersion].OptionsData = {}
+			elseif WidgetToolbox[ns.WidgetToolsVersion].OptionsData == nil then
+				WidgetToolbox[ns.WidgetToolsVersion].OptionsData = {}
 			end
-			optionsTable = WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].optionsData
+			optionsTable = WidgetToolbox[ns.WidgetToolsVersion].OptionsData
 		end
 		--Add the options data
 		if optionsTable[type] == nil then optionsTable[type] = {} end
@@ -546,11 +540,11 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	end
 
 	---Save all data from the widgets to the storage table(s) specified in an options data table
-	---@param optionsTable? table Reference to the table where all options data is being stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	---@param optionsTable? table Reference to the table where all options data is being stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	WidgetToolbox[ns.WidgetToolsVersion].SaveOptionsData = function(optionsTable)
 		if optionsTable == nil then
-			if (WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace] or nil).optionsData == nil then return end
-			optionsTable = WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].optionsData
+			if WidgetToolbox[ns.WidgetToolsVersion].OptionsData == nil then return end
+			optionsTable = WidgetToolbox[ns.WidgetToolsVersion].OptionsData
 		end
 		for k, v in pairs(optionsTable) do
 			for i = 0, #v do
@@ -584,11 +578,11 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 	- Second, after the widget's value has been successfully loaded:
 	--- 		- **name**: "loaded"
 	--- 		- **value**: true
-	---@param optionsTable? table Reference to the table where all options data is being stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	---@param optionsTable? table Reference to the table where all options data is being stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	WidgetToolbox[ns.WidgetToolsVersion].LoadOptionsData = function(optionsTable)
 		if optionsTable == nil then
-			if (WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace] or nil).optionsData == nil then return end
-			optionsTable = WidgetToolbox[ns.WidgetToolsVersion][addonNameSpace].optionsData
+			if WidgetToolbox[ns.WidgetToolsVersion].OptionsData == nil then return end
+			optionsTable = WidgetToolbox[ns.WidgetToolsVersion].OptionsData
 		end
 		for k, v in pairs(optionsTable) do
 			for i = 0, #v do
@@ -718,6 +712,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--[ Popup Dialogue Box ]
 
 	---Create a popup dialogue with an accept function and cancel button
+	---@param addon string The name of the addon's folder
 	---@param t table Parameters are to be provided in this table
 	--- - **name** string — Appended to the addon's name as a unique identifier key in the global **StaticPopupDialogs** table
 	--- - **text** string — The text to display as the message in the popup window
@@ -726,8 +721,8 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - **onAccept** function — The function to be called when the accept button is pressed and an OnAccept event happens
 	--- - **onCancel**? function *optional* — The function to be called when the cancel button is pressed, the popup is overwritten (by another popup for instance) or the popup expires and an OnCancel event happens
 	---@return string key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Displaying_the_popup) or [StaticPopup_Hide()](https://wowwiki-archive.fandom.com/wiki/Creating_simple_pop-up_dialog_boxes#Hiding_the_popup)
-	WidgetToolbox[ns.WidgetToolsVersion].CreatePopup = function(t)
-		local key = addonNameSpace:upper() .. "_" .. t.name:gsub("%s+", "_"):upper()
+	WidgetToolbox[ns.WidgetToolsVersion].CreatePopup = function(addon, t)
+		local key = addon:upper() .. "_" .. t.name:gsub("%s+", "_"):upper()
 		StaticPopupDialogs[key] = {
 			text = t.text,
 			button1 = t.accept or t.name,
@@ -1063,7 +1058,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- - **refresh**? function *optional* — The function to be called then the interface panel is loaded
 	--- - **autoSave**? boolean *optional* — If true, automatically save all data from the storage tables to the widgets stored within the options data table [Default: true]
 	--- - **autoLoad**? boolean *optional* — If true, automatically load the values of all widgets to the storage tables within the options data table [Default: true]
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	---@return Frame optionsPanel
 	---@return Frame? scrollChild
 	---@return Frame? scrollFrame
@@ -1263,7 +1258,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the checkbox to the referenced options data table to save & load its value automatically to & from the specified storageTable
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table
@@ -1351,7 +1346,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the editbox to the referenced options data table to save & load its value automatically to & from the specified storageTable
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table
@@ -1458,7 +1453,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the editbox to the referenced options data table to save & load its value automatically to & from the specified storageTable
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table
@@ -1577,7 +1572,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the editbox to the referenced options data table to save & load its value automatically to & from the specified storageTable
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table
@@ -1896,7 +1891,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the slider to the referenced options data table to save & load its value automatically to & from the specified storageTable
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table
@@ -2009,7 +2004,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the dropdown to the referenced options data table to save & load its value automatically to & from the specified storageTable (also set its text to the name of the currently selected value automatically on load)
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table
@@ -2312,7 +2307,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	--- 			- function(**value**: integer) -> **evaluation**: boolean — If **rules.frame** is recognized as a dropdown or selector
 	--- 			- function(**value**: nil) -> **evaluation**: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*
 	--- 		- ***Note:*** **rules.evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) of **rules.frame** is not "CheckButton".
-	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion][[addonNameSpace](https://wowpedia.fandom.com/wiki/Using_the_AddOn_namespace)].optionsData**]
+	--- - **optionsTable**? table ― Reference to the table where all options data should be stored in [Default: **WidgetToolbox[ns.WidgetToolsVersion].OptionsData** *(the data of all addons is stored collectively)*]
 	--- - **optionsData**? table ― If set, add the color picker to the referenced options data table to save & load its value automatically to & from the specified storageTable
 	--- 	- **storageTable** table ― Reference to the table containing the value modified by the options widget
 	--- 	- **key** string ― Key of the variable inside the storage table

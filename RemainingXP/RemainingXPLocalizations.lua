@@ -377,9 +377,13 @@ local english = {
 						tooltip = "Automatically call /played for you after you level up (required for calculating time spent) and get a notification to see how much time it took.",
 					},
 				},
-				maxReminder = {
-					label = "Max level reminder",
-					tooltip = "Get a reminder that the functionality of #ADDON is disabled when your character is max level when your interface loads and you use chat commands.", --# flags will be replaced with code
+				statusNotice = {
+					label = "Status notice on load",
+					tooltip = "Get a notice in chat about the state of the #ADDON display after the interface loads.", --# flags will be replaced with code
+					maxReminder = {
+						label = "Max level reminder",
+						tooltip = "Get a reminder that the functionality of #ADDON is disabled when your character is max level after your interface loads.", --# flags will be replaced with code
+					},
 				},
 			},
 			logs = {
@@ -486,10 +490,9 @@ local english = {
 		toggle = {
 			command = "toggle",
 			description = "show or hide the XP value display (#HIDDEN)", --# flags will be replaced with code
-			hiding = "The XP display has been hidden.",
-			unhiding = "The XP display has been made visible.",
+			response = "The XP display visibility was set to #STATE.",
 			hidden = "hidden",
-			notHidden = "not hidden",
+			shown = "shown",
 		},
 		fade = {
 			command = "fade",

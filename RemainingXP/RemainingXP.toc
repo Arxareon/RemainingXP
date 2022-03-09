@@ -1,6 +1,6 @@
 ## Interface: 90200 #Fallback to the Mainline version
 ## Title: Remaining XP
-## Version: 2.0.1
+## Version: 2.0.2
 ## X-Day: 3
 ## X-Month: 3
 ## X-Year: 2022

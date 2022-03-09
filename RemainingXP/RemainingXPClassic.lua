@@ -138,7 +138,10 @@ local dbDefault = {
 			congrats = true,
 			timePlayed = false,
 		},
-		maxReminder = true,
+		statusNotice = {
+			enabled = true,
+			maxReminder = true,
+		},
 	},
 }
 local dbcDefault = {
@@ -390,16 +393,22 @@ local function CheckValidity(k, v)
 	end return true
 end
 
---Restore old data to an account-wide and character-specific DB by matching removed items to known old keys
-local function RestoreOldData(data, characterData)
-	-- if (wt[addonNameSpace] or {}).recoveredData == nil then return end
-	-- for k, v in pairs(wt[addonNameSpace].recoveredData) do
-	-- 	if k == "" then data. = v
+---Restore old data to an account-wide and character-specific DB by matching removed items to known old keys
+---@param data table
+---@param characterData table
+---@param recoveredData? table
+---@param recoveredCharacterData? table
+local function RestoreOldData(data, characterData, recoveredData, recoveredCharacterData)
+	if recoveredData ~= nil then for k, v in pairs(recoveredData) do
+		if k == "maxReminder" then data.notifications.statusNotice.maxReminder = v
+		-- elseif k == "" then data. = v
+		end
+	end end
+	-- if recoveredCharacterData ~= nil then for k, v in pairs(recoveredCharacterData) do
+	-- 	if k == "" then characterData. = v
 	-- 	elseif k == "" then characterData. = v
 	-- 	end
-	-- end
-	-- -- Delete the recovery table
-	-- wt[addonNameSpace].recoveredData = nil
+	-- end end
 end
 
 ---Load the addon databases from the SavedVariables tables specified in the TOC
@@ -424,9 +433,7 @@ local function LoadDBs()
 	wt.RemoveEmpty(dbc, CheckValidity)
 	wt.AddMissing(db, dbDefault)
 	wt.AddMissing(dbc, dbcDefault)
-	wt.RemoveMismatch(db, dbDefault)
-	wt.RemoveMismatch(dbc, dbcDefault)
-	RestoreOldData(db, dbc)
+	RestoreOldData(db, dbc, wt.RemoveMismatch(db, dbDefault), wt.RemoveMismatch(dbc, dbcDefault))
 	--Apply any potential fixes to the SavedVariables DBs
 	RemainingXPDB = wt.Clone(db)
 	RemainingXPDBC = wt.Clone(dbc)
@@ -1167,7 +1174,7 @@ local function CreateQuickOptions(parentFrame)
 		end,
 	})
 	--Button & Popup: Save Custom preset
-	local savePopup = wt.CreatePopup({
+	local savePopup = wt.CreatePopup(addonNameSpace, {
 		name = "SAVEPRESET",
 		text = strings.options.display.quick.savePreset.warning,
 		accept = strings.misc.override,
@@ -1995,8 +2002,8 @@ local function CreateNotificationsOptions(parentFrame)
 		-- 	key = "timePlayed",
 		-- },
 	})
-	--Checkbox: Level up
-	options.notifications.maxReminder = wt.CreateCheckbox({
+	--Checkbox: Status notice
+	options.notifications.status = wt.CreateCheckbox({
 		parent = parentFrame,
 		position = {
 			anchor = "TOPLEFT",
@@ -2004,11 +2011,28 @@ local function CreateNotificationsOptions(parentFrame)
 			relativePoint = "BOTTOMLEFT",
 			offset = { x = 0, y = -4 }
 		},
-		label = strings.options.events.notifications.maxReminder.label,
-		tooltip = strings.options.events.notifications.maxReminder.tooltip:gsub("#ADDON", addon),
-		onClick = function(self) db.notifications.maxReminder = self:GetChecked() end,
+		label = strings.options.events.notifications.statusNotice.label,
+		tooltip = strings.options.events.notifications.statusNotice.tooltip:gsub("#ADDON", addon),
 		optionsData = {
-			storageTable = db.notifications,
+			storageTable = db.notifications.statusNotice,
+			key = "enabled",
+		},
+	})
+	--Checkbox: Max reminder
+	options.notifications.maxReminder = wt.CreateCheckbox({
+		parent = parentFrame,
+		position = {
+			anchor = "TOP",
+			offset = { x = 0, y = -120 }
+		},
+		autoOffset = true,
+		label = strings.options.events.notifications.statusNotice.maxReminder.label,
+		tooltip = strings.options.events.notifications.statusNotice.maxReminder.tooltip:gsub("#ADDON", addon),
+		dependencies = {
+			[0] = { frame = options.notifications.status },
+		},
+		optionsData = {
+			storageTable = db.notifications.statusNotice,
 			key = "maxReminder",
 		},
 	})
@@ -2051,7 +2075,7 @@ local function CreateOptionsProfiles(parentFrame)
 end
 local function CreateBackupOptions(parentFrame)
 	--EditScrollBox & Popup: Import & Export
-	local importPopup = wt.CreatePopup({
+	local importPopup = wt.CreatePopup(addonNameSpace, {
 		name = "IMPORT",
 		text = strings.options.advanced.backup.warning,
 		accept = strings.options.advanced.backup.import,
@@ -2064,9 +2088,7 @@ local function CreateBackupOptions(parentFrame)
 				wt.RemoveEmpty(t.character, CheckValidity)
 				wt.AddMissing(t.account, db)
 				wt.AddMissing(t.character, dbc)
-				wt.RemoveMismatch(t.account, db)
-				wt.RemoveMismatch(t.character, dbc)
-				RestoreOldData(t.account, t.character)
+				RestoreOldData(t.account, t.character, wt.RemoveMismatch(t.account, db), wt.RemoveMismatch(t.character, dbc))
 				--Copy values from the loaded DBs to the addon DBs
 				wt.CopyValues(t.account, db)
 				wt.CopyValues(t.character, dbc)
@@ -2318,32 +2340,38 @@ end
 
 --[[ CHAT CONTROL ]]
 
---Chat control utilities
-local function PrintStatus()
-	local status
-	if dbc.disabled and db.notifications.maxReminder then
-		status = Color(strings.chat.status.disabled:gsub(
-			"#ADDON", Color(addon, colors.purple[0])
-		) .." " ..  Color(strings.chat.status.max:gsub(
-			"#MAX", MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
-		), colors.blue[2]), colors.blue[0])
-	else
-		status = Color(addon .. ":", colors.purple[0]) .. " " .. Color(
-			remXP:IsVisible() and strings.chat.status.visible or strings.chat.status.hidden, colors.blue[0]
-		):gsub(
-			"#FADE", Color(strings.chat.status.fade:gsub(
-				"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
-			), colors.blue[1])
-		)
+--[ Chat Utilities ]
+
+---Print visibility info
+---@param load boolean [Default: false]
+local function PrintStatus(load)
+	if load == true and not db.notifications.statusNotice.enabled then return end
+	local status = Color(addon .. ":", colors.purple[0]) .. " " .. Color(
+		remXP:IsVisible() and strings.chat.status.visible or strings.chat.status.hidden, colors.blue[0]
+	):gsub(
+		"#FADE", Color(strings.chat.status.fade:gsub(
+			"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
+		), colors.blue[1])
+	)
+	if dbc.disabled then
+		if db.notifications.statusNotice.maxReminder then
+			status = Color(strings.chat.status.disabled:gsub(
+				"#ADDON", Color(addon, colors.purple[0])
+			) .." " ..  Color(strings.chat.status.max:gsub(
+				"#MAX", Color(GetMaxLevelForPlayerExpansion(), colors.purple[1])
+			), colors.blue[1]), colors.blue[0])
+		else return end
 	end
 	print(status)
 end
+--Print help info
 local function PrintInfo()
 	print(Color(strings.chat.help.thanks:gsub("#ADDON", Color(addon, colors.purple[0])), colors.blue[0]))
 	PrintStatus()
 	print(Color(strings.chat.help.hint:gsub( "#HELP_COMMAND", Color(strings.chat.keyword .. " " .. strings.chat.help.command, colors.purple[2])), colors.blue[2]))
 	print(Color(strings.chat.help.move:gsub("#SHIFT", Color(strings.keys.shift, colors.purple[2])):gsub("#ADDON", addon), colors.blue[2]))
 end
+--Print the command list with basic functionality info
 local function PrintCommands()
 	print(Color(addon, colors.purple[0]) .. " ".. Color(strings.chat.help.list .. ":", colors.blue[0]))
 	--Index the commands (skipping the help command) and put replacement code segments in place
@@ -2391,7 +2419,7 @@ local function PrintCommands()
 	end
 end
 
---[ Slash command handler ]
+--[ Slash Command Handlers ]
 
 local function SaveCommand()
 	--Update the custom preset
@@ -2448,7 +2476,9 @@ local function ToggleCommand()
 	options.visibility.hidden:SetChecked(dbc.hidden)
 	options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(dbc.hidden and strings.chat.toggle.hiding or strings.chat.toggle.unhiding, colors.blue[0]))
+	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.toggle.response:gsub(
+		"#STATE", Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[1])
+	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
 	RemainingXPDBC.hidden = wt.Clone(dbc.hidden)
@@ -2461,7 +2491,7 @@ local function FadeCommand()
 	options.visibility.fade.toggle:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
 	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.fade.response:gsub(
-		"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[0])
+		"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
@@ -2475,7 +2505,7 @@ local function SizeCommand(parameter)
 		--Update the GUI option in case it was open
 		options.text.font.size:SetValue(size)
 		--Response
-		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.response:gsub("#VALUE", Color(size, colors.purple[0])), colors.blue[0]))
+		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.response:gsub("#VALUE", Color(size, colors.purple[1])), colors.blue[0]))
 	else
 		--Error
 		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.unchanged, colors.blue[0]))
@@ -2495,7 +2525,7 @@ local function IntegrationCommand()
 	options.enhancement.toggle:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
 	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.integration.response:gsub(
-		"#STATE", Color(db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[0])
+		"#STATE", Color(db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
@@ -2707,7 +2737,7 @@ function remXP:PLAYER_ENTERING_WORLD()
 		if db.enhancement.enabled then UpdateIntegratedDisplay(db.enhancement.remaining) end
 	end
 	--Visibility notice
-	if not remXP:IsVisible() then PrintStatus() end
+	if not remXP:IsVisible() then PrintStatus(true) end
 end
 function remXP:QUEST_LOG_UPDATE()
 	--Hide the enabled removals
