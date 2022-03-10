@@ -419,14 +419,24 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 
 	--[ Frame Setup ]
 
+	---Set the visibility of a frame based on the value provided
+	---@param frame Frame Reference to the frame to hide or show
+	---@param visible boolean If false, hide the frame, show it if true
+	WidgetToolbox[ns.WidgetToolsVersion].SetVisibility = function(frame, visible)
+		if visible then frame:Show() else frame:Hide() end
+	end
+
 	---Set the position and anchoring of a frame when it is unknown which parameters will be nil when calling [Region:SetPoint()](https://wowpedia.fandom.com/wiki/API_Region_SetPoint)
-	---@param frame Frame
+	---@param frame Frame Reference to the frame to be moved
 	---@param anchor AnchorPoint Base anchor point
-	---@param relativeTo Frame [Default: UIParent *(the parent frame or the entire screen)*]
+	---@param relativeTo Frame [Default: UIParent *(the entire screen)*]
 	---@param relativePoint AnchorPoint [Default: **anchor**]
 	---@param offsetX? number [Default: 0]
 	---@param offsetY? number [Default: 0]
-	local function PositionFrame(frame, anchor, relativeTo, relativePoint, offsetX, offsetY)
+	---@param userPlaced boolean Whether to set the position of the frame to be user placed [Default: false]
+	WidgetToolbox[ns.WidgetToolsVersion].PositionFrame = function(frame, anchor, relativeTo, relativePoint, offsetX, offsetY, userPlaced)
+		frame:ClearAllPoints()
+		--Set the position
 		if (relativeTo == nil or relativePoint == nil) and (offsetX == nil or offsetY == nil) then
 			frame:SetPoint(anchor)
 		elseif relativeTo == nil or relativePoint == nil then
@@ -436,6 +446,8 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		else
 			frame:SetPoint(anchor, relativeTo, relativePoint, offsetX, offsetY)
 		end
+		--Set user placed
+		if frame["SetUserPlaced"] ~= nil and frame:IsMovable() then frame:SetUserPlaced(userPlaced == true) end
 	end
 
 	---Check all dependencies (disable / enable rules) of a frame
@@ -817,7 +829,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	---@return FontString text
 	WidgetToolbox[ns.WidgetToolsVersion].CreateText = function(t)
 		local text = t.frame:CreateFontString(t.frame:GetName() .. (t.name or "Text"), t.layer, (t.template == nil and t.font == nil) and "GameFontNormal" or t.template)
-		PositionFrame(text, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			text, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y
+		)
 		if t.width ~= nil then text:SetWidth(t.width) end
 		if t.justify ~= nil then text:SetJustifyH(t.justify) end
 		if t.font ~= nil then text:SetFont(t.font.path, t.font.size, t.font.flags) end
@@ -919,7 +933,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateTexture = function(t)
 		local texture = t.parent:CreateTexture(t.parent:GetName() .. (t.name or "Texture"))
 		--Position & dimensions
-		PositionFrame(texture, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			texture, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y
+		)
 		texture:SetSize(t.size.width, t.size.height)
 		--Set asset
 		if t.tile ~= nil then
@@ -957,7 +973,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateScrollFrame = function(t)
 		local scrollFrame = CreateFrame("ScrollFrame", t.parent:GetName() .. "ScrollFrame", t.parent, "UIPanelScrollFrameTemplate")
 		--Position & dimensions
-		PositionFrame(scrollFrame, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			scrollFrame, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y
+		)
 		scrollFrame:SetSize((t.size or {}).width or t.parent:GetWidth(), (t.size or {}).height)
 		--Scrollbar & buttons
 		_G[scrollFrame:GetName() .. "ScrollBarScrollUpButton"]:ClearAllPoints()
@@ -1010,7 +1028,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreatePanel = function(t)
 		local panel = CreateFrame("Frame", t.parent:GetName() .. (t.name or t.title:gsub("%s+", "")), t.parent, BackdropTemplateMixin and "BackdropTemplate")
 		--Position & dimensions
-		PositionFrame(panel, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			panel, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y
+		)
 		panel:SetSize(t.size.width or t.parent:GetWidth() - 32, t.size.height)
 		--Backdrop
 		panel:SetBackdrop({
@@ -1144,12 +1164,12 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		--Reparent, reposition and resize default elements
 		_G[optionsPanel:GetName() .. "Title"]:SetParent(scrollFrame)
 		_G[optionsPanel:GetName() .. "Description"]:SetParent(scrollFrame)
-		PositionFrame(_G[optionsPanel:GetName() .. "Title"], "TOPLEFT", nil, nil, 16, -12)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(_G[optionsPanel:GetName() .. "Title"], "TOPLEFT", nil, nil, 16, -12)
 		_G[optionsPanel:GetName() .. "Title"]:SetWidth(_G[optionsPanel:GetName() .. "Title"]:GetWidth() - 20)
 		_G[optionsPanel:GetName() .. "Description"]:SetWidth(_G[optionsPanel:GetName() .. "Description"]:GetWidth() - 20)
 		if _G[optionsPanel:GetName() .. "Icon"] ~= nil then
 			_G[optionsPanel:GetName() .. "Icon"]:SetParent(scrollFrame)
-			PositionFrame(_G[optionsPanel:GetName() .. "Icon"], "TOPRIGHT", nil, nil, -16, -12)
+			WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(_G[optionsPanel:GetName() .. "Icon"], "TOPRIGHT", nil, nil, -16, -12)
 		end
 		return scrollFrame
 	end
@@ -1200,7 +1220,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateButton = function(t)
 		local button = CreateFrame("Button", t.parent:GetName() .. (t.name or t.label:gsub("%s+", "")) .. "Button", t.parent, "UIPanelButtonTemplate")
 		--Position & dimensions
-		PositionFrame(button, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			button, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y
+		)
 		if t.width ~= nil then button:SetWidth(t.width) end
 		--Font
 		getglobal(button:GetName() .. "Text"):SetText(t.label)
@@ -1280,7 +1302,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		local columnOffset = t.autoOffset and (
 			t.position.anchor == "TOP" and columnWidth / -2 + checkbox:GetWidth() / 2 or (t.position.anchor == "TOPRIGHT" and -columnWidth - 8 + checkbox:GetWidth() or 0) or 8
 		) or 0
-		PositionFrame(checkbox, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x + columnOffset, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			checkbox, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x + columnOffset, (t.position.offset or {}).y
+		)
 		--Font
 		getglobal(checkbox:GetName() .. "Text"):SetFontObject("GameFontHighlight")
 		getglobal(checkbox:GetName() .. "Text"):SetText(t.label)
@@ -1472,7 +1496,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		local editBox = CreateFrame("EditBox", t.parent:GetName() .. (t.name or t.title ~= false and t.label:gsub("%s+", "") or "") .. "EditBox", t.parent, "InputBoxTemplate")
 		--Position & dimensions
 		local titleOffset = t.title ~= false and -18 or 0
-		PositionFrame(editBox, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) + titleOffset)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			editBox, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) + titleOffset
+		)
 		editBox:SetSize(t.width or 180, 17)
 		--Title
 		local title = nil
@@ -1591,7 +1617,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateEditScrollBox = function(t)
 		local scrollFrame = CreateFrame("ScrollFrame", t.parent:GetName() .. (t.name or t.title ~= false and t.label:gsub("%s+", "") or "") .. "EditBox", t.parent, "InputScrollFrameTemplate")
 		--Position & dimensions
-		PositionFrame(scrollFrame, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) - 20)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			scrollFrame, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) - 20
+		)
 		scrollFrame:SetSize(t.size.width, t.size.height)
 		local function ResizeEditBox()
 			local scrollBarOffset = _G[scrollFrame:GetName().."ScrollBar"]:IsShown() and 16 or 0
@@ -1698,7 +1726,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		local copyBox = CreateFrame("Button", t.parent:GetName() .. t.name .. "CopyBox", t.parent)
 		--Position & dimensions
 		local titleOffset = t.label ~= nil and -12 or 0
-		PositionFrame(copyBox, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y + titleOffset)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			copyBox, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y + titleOffset
+		)
 		copyBox:SetSize(t.width or 180, 17)
 		--Title
 		if t.label ~= nil then
@@ -1910,7 +1940,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateSlider = function(t)
 		local slider = CreateFrame("Slider", t.parent:GetName() .. (t.name or t.label:gsub("%s+", "")) .. "Slider", t.parent, "OptionsSliderTemplate")
 		--Position
-		PositionFrame(slider, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) - 12)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			slider, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) - 12
+		)
 		if t.width ~= nil then slider:SetWidth(t.width) end
 		--Font
 		getglobal(slider:GetName() .. "Text"):SetFontObject("GameFontNormal")
@@ -2022,7 +2054,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateDropdown = function(t)
 		local dropdown = CreateFrame("Frame", t.parent:GetName() .. (t.name or t.title ~= false and t.label:gsub("%s+", "") or "") .. "Dropdown", t.parent, "UIDropDownMenuTemplate")
 		--Position & dimensions
-		PositionFrame(dropdown, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) - 16)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			dropdown, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, ((t.position.offset or {}).y or 0) - 16
+		)
 		UIDropDownMenu_SetWidth(dropdown, t.width or 115)
 		--Title
 		local title = nil
@@ -2212,7 +2246,7 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 		pickerButton:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.9)
 		--Background
 		local background = CreateFrame("Frame", pickerButton:GetName() .. "AlphaBG", pickerButton, BackdropTemplateMixin and "BackdropTemplate")
-		PositionFrame(background, "TOPLEFT")
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(background, "TOPLEFT")
 		background:SetSize(pickerButton:GetWidth(), pickerButton:GetHeight())
 		background:SetBackdrop({
 			bgFile = textures.alphaBG,
@@ -2347,7 +2381,9 @@ if not WidgetToolbox[ns.WidgetToolsVersion] then
 	WidgetToolbox[ns.WidgetToolsVersion].CreateColorPicker = function(t)
 		local pickerFrame = CreateFrame("Frame", t.parent:GetName() .. (t.name or t.label:gsub("%s+", "")) .. "ColorPicker", t.parent)
 		--Position & dimensions
-		PositionFrame(pickerFrame, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y)
+		WidgetToolbox[ns.WidgetToolsVersion].PositionFrame(
+			pickerFrame, t.position.anchor, t.position.relativeTo, t.position.relativePoint, (t.position.offset or {}).x, (t.position.offset or {}).y
+		)
 		local frameWidth = (t.size or {}).width or 120
 		pickerFrame:SetSize(frameWidth, 36)
 		--Title

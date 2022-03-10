@@ -8,6 +8,8 @@ local wt = WidgetToolbox[ns.WidgetToolsVersion]
 
 --[[ ASSETS & RESOURCES ]]
 
+local root = "Interface/AddOns/" .. addonNameSpace .. "/"
+
 --Strings & Localization
 local strings = ns.LoadLocale()
 strings.chat.keyword = "/remxp"
@@ -44,20 +46,20 @@ local colors = {
 --Fonts
 local fonts = {
 	[0] = { name = strings.misc.default, path = strings.options.display.text.font.family.default },
-	[1] = { name = "Arbutus Slab", path = "Interface/AddOns/RemainingXP/Fonts/ArbutusSlab.ttf" },
-	[2] = { name = "Caesar Dressing", path = "Interface/AddOns/RemainingXP/Fonts/CaesarDressing.ttf" },
-	[3] = { name = "Germania One", path = "Interface/AddOns/RemainingXP/Fonts/GermaniaOne.ttf" },
-	[4] = { name = "Mitr", path = "Interface/AddOns/RemainingXP/Fonts/Mitr.ttf" },
-	[5] = { name = "Oxanium", path = "Interface/AddOns/RemainingXP/Fonts/Oxanium.ttf" },
-	[6] = { name = "Pattaya", path = "Interface/AddOns/RemainingXP/Fonts/Pattaya.ttf" },
-	[7] = { name = "Reem Kufi", path = "Interface/AddOns/RemainingXP/Fonts/ReemKufi.ttf" },
-	[8] = { name = "Source Code Pro", path = "Interface/AddOns/RemainingXP/Fonts/SourceCodePro.ttf" },
-	[9] = { name = strings.misc.custom, path = "Interface/AddOns/RemainingXP/Fonts/CUSTOM.ttf" },
+	[1] = { name = "Arbutus Slab", path = root .. "Fonts/ArbutusSlab.ttf" },
+	[2] = { name = "Caesar Dressing", path = root .. "Fonts/CaesarDressing.ttf" },
+	[3] = { name = "Germania One", path = root .. "Fonts/GermaniaOne.ttf" },
+	[4] = { name = "Mitr", path = root .. "Fonts/Mitr.ttf" },
+	[5] = { name = "Oxanium", path = root .. "Fonts/Oxanium.ttf" },
+	[6] = { name = "Pattaya", path = root .. "Fonts/Pattaya.ttf" },
+	[7] = { name = "Reem Kufi", path = root .. "Fonts/ReemKufi.ttf" },
+	[8] = { name = "Source Code Pro", path = root .. "Fonts/SourceCodePro.ttf" },
+	[9] = { name = strings.misc.custom, path = root .. "Fonts/CUSTOM.ttf" },
 }
 
 --Textures
 local textures = {
-	logo = "Interface/AddOns/RemainingXP/Textures/Logo.tga",
+	logo = root .. "Textures/Logo.tga",
 }
 
 --Anchor Points
@@ -389,13 +391,6 @@ local function GetAnchorID(point)
 		end
 	end
 	return id
-end
-
----Set the visibility of a frame based on the value provided
----@param frame Frame
----@param visible boolean
-local function SetVisibility(frame, visible)
-	if visible then frame:Show() else frame:Hide() end
 end
 
 --[ DB Management ]
@@ -736,17 +731,6 @@ local function Fade(state, textColor, bgColor, borderColor, xpColor, restedColor
 	end
 end
 
----Move the main display to a location
----@param point AnchorPoint
----@param offsetX number
----@param offsetY number
-local function MoveDisplay(point, offsetX, offsetY)
-	remXP:ClearAllPoints()
-	remXP:SetUserPlaced(false)
-	remXP:SetPoint(point, offsetX, offsetY)
-	remXP:SetUserPlaced(true)
-end
-
 ---Set the size of the main display elements
 ---@param width number
 ---@param height number
@@ -824,7 +808,7 @@ end
 local function SetDisplayValues(data, characterData)
 	--Visibility
 	remXP:SetFrameStrata(data.display.visibility.frameStrata)
-	SetVisibility(remXP, not (characterData.hidden or characterData.disabled))
+	wt.SetVisibility(remXP, not (characterData.hidden or characterData.disabled))
 	--Display
 	ResizeDisplay(data.display.background.size.width, data.display.background.size.height)
 	SetDisplayBackdrop(data.display.background.visible, data.display.background.colors)
@@ -1168,7 +1152,7 @@ local function CreateQuickOptions(parentFrame)
 		},
 		label = strings.options.display.quick.hidden.label,
 		tooltip = strings.options.display.quick.hidden.tooltip:gsub("#ADDON", addon),
-		onClick = function(self) SetVisibility(remXP, not (self:GetChecked() or dbc.disabled)) end,
+		onClick = function(self) wt.SetVisibility(remXP, not (self:GetChecked() or dbc.disabled)) end,
 		optionsData = {
 			storageTable = dbc,
 			key = "hidden",
@@ -1185,7 +1169,7 @@ local function CreateQuickOptions(parentFrame)
 				remXP:Show()
 				remXP:SetFrameStrata(presets[i].data.visibility.frameStrata)
 				ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
-				MoveDisplay(presets[i].data.position.point, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
+				wt.PositionFrame(remXP, presets[i].data.position.point, nil, nil, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
 				SetDisplayBackdrop(presets[i].data.background.visible, {
 					bg = wt.PackColor(options.background.colors.bg.getColor()),
 					xp = wt.PackColor(options.background.colors.xp.getColor()),
@@ -1206,8 +1190,7 @@ local function CreateQuickOptions(parentFrame)
 				options.visibility.raise:SetChecked(presets[i].data.visibility.frameStrata == "HIGH")
 				--Update the DBs
 				db.display.background.visible = presets[i].data.background.visible
-				db.display.background.size.width = presets[i].data.background.size.width
-				db.display.background.size.height = presets[i].data.background.size.height
+				db.display.background.size = presets[i].data.background.size
 				db.display.visibility.frameStrata = presets[i].data.visibility.frameStrata
 			end
 		end
@@ -1268,7 +1251,7 @@ local function CreatePositionOptions(parentFrame)
 	for i = 0, #anchors do
 		anchorItems[i] = {}
 		anchorItems[i].text = anchors[i].name
-		anchorItems[i].onSelect = function() MoveDisplay(anchors[i].point, options.position.xOffset:GetValue(), options.position.yOffset:GetValue()) end
+		anchorItems[i].onSelect = function() wt.PositionFrame(remXP, anchors[i].point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue()) end
 	end
 	options.position.anchor = wt.CreateDropdown({
 		parent = parentFrame,
@@ -1300,7 +1283,7 @@ local function CreatePositionOptions(parentFrame)
 		tooltip = strings.options.display.position.xOffset.tooltip,
 		value = { min = -500, max = 500, fractional = 2 },
 		onValueChanged = function(_, value)
-			MoveDisplay(anchors[UIDropDownMenu_GetSelectedValue(options.position.anchor)].point, value, options.position.yOffset:GetValue())
+			wt.PositionFrame(remXP, anchors[UIDropDownMenu_GetSelectedValue(options.position.anchor)].point, nil, nil, value, options.position.yOffset:GetValue())
 		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1321,7 +1304,7 @@ local function CreatePositionOptions(parentFrame)
 		tooltip = strings.options.display.position.yOffset.tooltip,
 		value = { min = -500, max = 500, fractional = 2 },
 		onValueChanged = function(_, value)
-			MoveDisplay(anchors[UIDropDownMenu_GetSelectedValue(options.position.anchor)].point, options.position.xOffset:GetValue(), value)
+			wt.PositionFrame(remXP, anchors[UIDropDownMenu_GetSelectedValue(options.position.anchor)].point, nil, nil, options.position.xOffset:GetValue(), value)
 		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1342,7 +1325,7 @@ local function CreateTextOptions(parentFrame)
 		},
 		label = strings.options.display.text.visible.label,
 		tooltip = strings.options.display.text.visible.tooltip,
-		onClick = function(self) SetVisibility(mainDisplayText, self:GetChecked()) end,
+		onClick = function(self) wt.SetVisibility(mainDisplayText, self:GetChecked()) end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
 		},
@@ -1903,7 +1886,7 @@ local function CreateRemovalsOptions(parentFrame)
 		autoOffset = true,
 		label = strings.options.integration.removals.statusBars.label,
 		tooltip = strings.options.integration.removals.statusBars.tooltip:gsub("#ADDON", addon),
-		onClick = function(self) SetVisibility(StatusTrackingBarManager, not self:GetChecked()) end,
+		onClick = function(self) wt.SetVisibility(StatusTrackingBarManager, not self:GetChecked()) end,
 		optionsData = {
 			storageTable = db.removals,
 			key = "statusBars",
@@ -2152,7 +2135,7 @@ local function CreateBackupOptions(parentFrame)
 				--Update the Custom preset
 				presets[0].data = db.customPreset
 				--Main display
-				MoveDisplay(db.display.position.point, db.display.position.offset.x, db.display.position.offset.y)
+				wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
 				SetDisplayValues(db, dbc)
 				--Enhancement
 				SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
@@ -2287,7 +2270,7 @@ end
 local function CancelChanges()
 	LoadDBs()
 	--Display
-	MoveDisplay(db.display.position.point, db.display.position.offset.x, db.display.position.offset.y)
+	wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
 	SetDisplayValues(db, dbc)
 	--Enhancement
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, false)
@@ -2308,7 +2291,7 @@ local function DefaultOptions()
 	--Reset the Custom preset
 	presets[0].data = db.customPreset
 	--Reset the main display
-	MoveDisplay(db.display.position.point, db.display.position.offset.x, db.display.position.offset.y)
+	wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
 	SetDisplayValues(db, dbc)
 	--Update the enhancement
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
@@ -2492,25 +2475,44 @@ local function SaveCommand()
 	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.save.response, colors.blue[0]))
 end
 local function PresetCommand(parameter)
-	local index = tonumber(parameter)
-	if index ~= nil and index >= 0 and index <= #presets then
+	local i = tonumber(parameter)
+	if i ~= nil and i >= 0 and i <= #presets then
 		if not dbc.disabled then
 			--Update the display
 			remXP:Show()
-			MoveDisplay(presets[index].data.position.point, presets[index].data.position.offset.x, presets[index].data.position.offset.y)
-			ResizeDisplay(presets[index].data.background.size.width, presets[index].data.background.size.height)
-			SetDisplayBackdrop(presets[index].data.background.visible, db.display.background.colors)
+			remXP:SetFrameStrata(presets[i].data.visibility.frameStrata)
+			ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
+			wt.PositionFrame(remXP, presets[i].data.position.point, nil, nil, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
+			SetDisplayBackdrop(presets[i].data.background.visible, db.display.background.colors)
+			Fade(db.display.visibility.fade.enable)
 			--Update the GUI options in case the window was open
 			options.visibility.hidden:SetChecked(false)
 			options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
-			options.visibility.raise:SetChecked(presets[index].data.visibility.frameStrata == "HIGH")
-			options.background.visible:SetChecked(presets[index].data.background.visible)
+			UIDropDownMenu_SetSelectedValue(options.position.anchor, GetAnchorID(presets[i].data.position.point))
+			UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(presets[i].data.position.point)].name)
+			options.position.xOffset:SetValue(presets[i].data.position.offset.x)
+			options.position.yOffset:SetValue(presets[i].data.position.offset.y)
+			options.background.visible:SetChecked(presets[i].data.background.visible)
 			options.background.visible:SetAttribute("loaded", true) --Update dependent widgets
-			options.background.size.width:SetValue(presets[index].data.background.size.width)
-			options.background.size.height:SetValue(presets[index].data.background.size.height)
-			Fade(db.display.visibility.fade.enabled)
+			options.background.size.width:SetValue(presets[i].data.background.size.width)
+			options.background.size.height:SetValue(presets[i].data.background.size.height)
+			options.visibility.raise:SetChecked(presets[i].data.visibility.frameStrata == "HIGH")
+			--Update the DBs
+			dbc.hidden = false
+			db.display.position = presets[i].data.position
+			db.display.background.visible = presets[i].data.background.visible
+			db.display.background.size = presets[i].data.background.size
+			db.display.visibility.frameStrata = presets[i].data.visibility.frameStrata
+			--Update in the SavedVariabes DB
+			RemainingXPDBC.hidden = false
+			RemainingXPDB.display.position = wt.Clone(db.display.position)
+			RemainingXPDB.display.background.visible = db.display.background.visible
+			RemainingXPDB.display.background.size = wt.Clone(db.display.background.size)
+			RemainingXPDB.display.visibility.frameStrata = db.display.visibility.frameStrata
 			--Response
-			print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.preset.response, colors.blue[0]))
+			print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.preset.response:gsub(
+				"#PRESET", Color(presets[i].name, colors.purple[1])
+			), colors.blue[0]))
 		else
 			PrintStatus()
 		end
@@ -2528,7 +2530,7 @@ local function PresetCommand(parameter)
 end
 local function ToggleCommand()
 	dbc.hidden = not dbc.hidden
-	SetVisibility(remXP, not (dbc.hidden or dbc.disabled))
+	wt.SetVisibility(remXP, not (dbc.hidden or dbc.disabled))
 	--Update the GUI option in case it was open
 	options.visibility.hidden:SetChecked(dbc.hidden)
 	options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
@@ -2538,7 +2540,7 @@ local function ToggleCommand()
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
-	RemainingXPDBC.hidden = wt.Clone(dbc.hidden)
+	RemainingXPDBC.hidden = dbc.hidden
 end
 local function FadeCommand()
 	db.display.visibility.fade.enabled = not db.display.visibility.fade.enabled
@@ -2552,7 +2554,7 @@ local function FadeCommand()
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
-	RemainingXPDB.display.visibility.fade.enabled = wt.Clone(db.display.visibility.fade.enabled)
+	RemainingXPDB.display.visibility.fade.enabled = db.display.visibility.fade.enabled
 end
 local function SizeCommand(parameter)
 	local size = tonumber(parameter)
@@ -2572,7 +2574,7 @@ local function SizeCommand(parameter)
 	end
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
-	RemainingXPDB.display.text.font.size = wt.Clone(db.display.text.font.size)
+	RemainingXPDB.display.text.font.size = db.display.text.font.size
 end
 local function IntegrationCommand()
 	db.enhancement.enabled = not db.enhancement.enabled
@@ -2586,7 +2588,7 @@ local function IntegrationCommand()
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
-	RemainingXPDB.enhancement.enabled = wt.Clone(db.enhancement.enabled)
+	RemainingXPDB.enhancement.enabled = db.enhancement.enabled
 end
 
 SLASH_REMXP1 = strings.chat.keyword
@@ -2674,7 +2676,7 @@ local function SetUpMainDisplayFrame()
 	--Main frame
 	remXP:SetToplevel(true)
 	remXP:SetSize(114, 14)
-	MoveDisplay(db.display.position.point, db.display.position.offset.x, db.display.position.offset.y)
+	wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
 	--Main display
 	mainDisplay:SetPoint("CENTER")
 	mainDisplayXP:SetPoint("LEFT")
@@ -2707,6 +2709,7 @@ mainDisplay:SetScript("OnMouseUp", function()
 	RemainingXPDB.display.position = wt.Clone(db.display.position) --Update in the SavedVariabes DB
 	--Update the GUI options in case the window was open
 	UIDropDownMenu_SetSelectedValue(options.position.anchor, GetAnchorID(db.display.position.point))
+	UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(db.display.position.point)].name)
 	options.position.xOffset:SetValue(db.display.position.offset.x)
 	options.position.yOffset:SetValue(db.display.position.offset.y)
 end)
