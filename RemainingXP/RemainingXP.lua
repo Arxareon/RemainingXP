@@ -1170,6 +1170,7 @@ local function CreateQuickOptions(parentFrame)
 				remXP:SetFrameStrata(presets[i].data.visibility.frameStrata)
 				ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
 				wt.PositionFrame(remXP, presets[i].data.position.point, nil, nil, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
+				if not presets[i].data.background.visible then wt.SetVisibility(mainDisplayText, true) end
 				SetDisplayBackdrop(presets[i].data.background.visible, {
 					bg = wt.PackColor(options.background.colors.bg.getColor()),
 					xp = wt.PackColor(options.background.colors.xp.getColor()),
@@ -1178,17 +1179,21 @@ local function CreateQuickOptions(parentFrame)
 				})
 				Fade(options.visibility.fade.toggle:GetChecked())
 				--Update the options
-				options.visibility.hidden:SetChecked(false)
 				UIDropDownMenu_SetSelectedValue(options.position.anchor, GetAnchorID(presets[i].data.position.point))
 				UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(presets[i].data.position.point)].name)
 				options.position.xOffset:SetValue(presets[i].data.position.offset.x)
 				options.position.yOffset:SetValue(presets[i].data.position.offset.y)
+				if not presets[i].data.background.visible then
+					options.text.visible:SetChecked(true)
+					options.text.visible:SetAttribute("loaded", true) --Update dependent widgets
+				end
 				options.background.visible:SetChecked(presets[i].data.background.visible)
 				options.background.visible:SetAttribute("loaded", true) --Update dependent widgets
 				options.background.size.width:SetValue(presets[i].data.background.size.width)
 				options.background.size.height:SetValue(presets[i].data.background.size.height)
 				options.visibility.raise:SetChecked(presets[i].data.visibility.frameStrata == "HIGH")
 				--Update the DBs
+				if not presets[i].data.background.visible then db.display.text.visible = true end
 				db.display.background.visible = presets[i].data.background.visible
 				db.display.background.size = presets[i].data.background.size
 				db.display.visibility.frameStrata = presets[i].data.visibility.frameStrata
@@ -1325,7 +1330,13 @@ local function CreateTextOptions(parentFrame)
 		},
 		label = strings.options.display.text.visible.label,
 		tooltip = strings.options.display.text.visible.tooltip,
-		onClick = function(self) wt.SetVisibility(mainDisplayText, self:GetChecked()) end,
+		onClick = function(self)
+			local value = self:GetChecked()
+			--Flip the background visibility on if it was hidden
+			if not value and not options.background.visible:GetChecked() then options.background.visible:Click() end
+			--Update the text visibility
+			wt.SetVisibility(mainDisplayText, value)
+		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
 		},
@@ -1457,7 +1468,11 @@ local  function CreateBackgroundOptions(parentFrame)
 		label = strings.options.display.background.visible.label,
 		tooltip = strings.options.display.background.visible.tooltip,
 		onClick = function(self)
-			SetDisplayBackdrop(self:GetChecked(), {
+			local value = self:GetChecked()
+			--Flip the text visibility on if it was hidden
+			if not value and not options.text.visible:GetChecked() then options.text.visible:Click() end
+			--Update the display backdrop
+			SetDisplayBackdrop(value, {
 				bg = wt.PackColor(options.background.colors.bg.getColor()),
 				xp = wt.PackColor(options.background.colors.xp.getColor()),
 				rested = wt.PackColor(options.background.colors.rested.getColor()),
@@ -2483,6 +2498,7 @@ local function PresetCommand(parameter)
 			remXP:SetFrameStrata(presets[i].data.visibility.frameStrata)
 			ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
 			wt.PositionFrame(remXP, presets[i].data.position.point, nil, nil, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
+			if not presets[i].data.background.visible then wt.SetVisibility(mainDisplayText, true) end
 			SetDisplayBackdrop(presets[i].data.background.visible, db.display.background.colors)
 			Fade(db.display.visibility.fade.enable)
 			--Update the GUI options in case the window was open
@@ -2492,6 +2508,10 @@ local function PresetCommand(parameter)
 			UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(presets[i].data.position.point)].name)
 			options.position.xOffset:SetValue(presets[i].data.position.offset.x)
 			options.position.yOffset:SetValue(presets[i].data.position.offset.y)
+			if not presets[i].data.background.visible then
+				options.text.visible:SetChecked(true)
+				options.text.visible:SetAttribute("loaded", true) --Update dependent widgets
+			end
 			options.background.visible:SetChecked(presets[i].data.background.visible)
 			options.background.visible:SetAttribute("loaded", true) --Update dependent widgets
 			options.background.size.width:SetValue(presets[i].data.background.size.width)
@@ -2500,12 +2520,14 @@ local function PresetCommand(parameter)
 			--Update the DBs
 			dbc.hidden = false
 			db.display.position = presets[i].data.position
+			if not presets[i].data.background.visible then db.display.text.visible = true end
 			db.display.background.visible = presets[i].data.background.visible
 			db.display.background.size = presets[i].data.background.size
 			db.display.visibility.frameStrata = presets[i].data.visibility.frameStrata
 			--Update in the SavedVariabes DB
 			RemainingXPDBC.hidden = false
 			RemainingXPDB.display.position = wt.Clone(db.display.position)
+			if not presets[i].data.background.visible then RemainingXPDB.display.text.visible = true end
 			RemainingXPDB.display.background.visible = db.display.background.visible
 			RemainingXPDB.display.background.size = wt.Clone(db.display.background.size)
 			RemainingXPDB.display.visibility.frameStrata = db.display.visibility.frameStrata
