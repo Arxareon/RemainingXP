@@ -406,6 +406,17 @@ local function RestoreOldData(data, characterData, recoveredData, recoveredChara
 	-- end end
 end
 
+---Check the display visibility values
+---@param data table
+---@param characterData table
+local function VisibilityCheckup(data, characterData)
+	if not data.display.text.visible and not data.display.background.visible then
+		data.display.text.visible = true
+		data.display.background.visible = true
+		characterData.hidden = true
+	end
+end
+
 ---Load the addon databases from the SavedVariables tables specified in the TOC
 ---@return boolean firstLoad True is returned when the addon SavedVariables tabled didn't exist prior to loading, false otherwise
 local function LoadDBs()
@@ -429,6 +440,7 @@ local function LoadDBs()
 	wt.AddMissing(db, dbDefault)
 	wt.AddMissing(dbc, dbcDefault)
 	RestoreOldData(db, dbc, wt.RemoveMismatch(db, dbDefault), wt.RemoveMismatch(dbc, dbcDefault))
+	VisibilityCheckup(db, dbc)
 	--Apply any potential fixes to the SavedVariables DBs
 	RemainingXPDB = wt.Clone(db)
 	RemainingXPDBC = wt.Clone(dbc)
@@ -2087,6 +2099,7 @@ local function CreateBackupOptions(parentFrame)
 				wt.AddMissing(t.account, db)
 				wt.AddMissing(t.character, dbc)
 				RestoreOldData(t.account, t.character, wt.RemoveMismatch(t.account, db), wt.RemoveMismatch(t.character, dbc))
+				VisibilityCheckup(t.account, t.character)
 				--Copy values from the loaded DBs to the addon DBs
 				wt.CopyValues(t.account, db)
 				wt.CopyValues(t.character, dbc)
