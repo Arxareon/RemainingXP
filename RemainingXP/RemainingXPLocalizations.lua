@@ -6,16 +6,16 @@ local _, ns = ...
 
 local changelogDB = {
 	[0] = {
-		[0] = "#V_Version 1.0_#",
+		[0] = "#V_Version 1.0_# #H_(4/21/2020)_#",
 		[1] = "#H_It's alive!_#",
 	},
 	[1] = {
-		[0] = "#V_Version 1.1_#",
+		[0] = "#V_Version 1.1_# #H_(4/25/2020)_#",
 		[1] = "#F_Bug fix:_#",
 		[2] = "Remaining XP will now correctly hide with the rest of the interface - This also enables it to scale with the UI.",
 	},
 	[2] = {
-		[0] = "#V_Version: 1.2_#",
+		[0] = "#V_Version: 1.2_# #H_(10/22/2020)_#",
 		[1] = "#N_New features:_#",
 		[2] = "Savable custom preset location: #H_SHIFT+ drag_# the XP display to the position of your liking then type #H_/remxp save_# to set it as your preset location. You can then apply this preset to each of your characters as you log in with them and use #H_/remxp preset_#",
 		[3] = "Show/hide/toggle XP display on mouseover: You can opt to having the XP display appear only when you mouse over its location or you can hide it completely until you ask it to be shown again.",
@@ -26,7 +26,7 @@ local changelogDB = {
 		[8] = "I wanted make a change that would hide the XP display when the world map is opened in fullscreen - I was not able to figure out a simple way to do it - let me know if you'd want this feature.",
 	},
 	[3] = {
-		[0] = "#V_Version 1.3_#",
+		[0] = "#V_Version 1.3_# #H_(10/26/2020)_#",
 		[1] = "#F_Hotfix:_#",
 		[2] = "Fixed an issue where loading the addon for the first time would result in an error",
 		[3] = "Fixed an issue resulting in the XP display to be hidden for all characters after logging in with a max level character",
@@ -36,29 +36,29 @@ local changelogDB = {
 		[7] = "Remaining XP will display a status message on each login for all characters (not only max levels) to let you know if it's currently visible, hidden or disabled, and is mouseover toggle enabled or not.",
 	},
 	[4] = {
-		[0] = "#V_Version 1.3.1_#",
+		[0] = "#V_Version 1.3.1_# #H_(10/26/2020)_#",
 		[1] = "#F_Hotfix:_#",
 		[2] = "With an unintentional change introduced with version 1.2, the character-specific positions set up before have been reset. This was due to the frame name being changed - now this has been reverted back to what it was before. All positions set before the update to 1.2 should be remembered again (however, in turn positions set after updating to 1.2 should be reset after this update.",
 	},
 	[5] = {
-		[0] = "#V_Version 1.4_#",
+		[0] = "#V_Version 1.4_# #H_(11/23/2020)_#",
 		[1] = "#C_Change:_#",
 		[2] = "Max level changed to 60 with the launch of Shadowlands.",
 		[3] = "Font has been changed to a more readable and better looking one.",
 	},
 	[6] = {
-		[0] = "#V_Version 1.5_#",
+		[0] = "#V_Version 1.5_# #H_(3/12/2021)_#",
 		[1] = "#F_Hotfix:_#",
 		[2] = "The XP display will now be correctly disabled when you reach max level.",
 		[3] = "Fixed all potential issues with previously non-local functions.",
 	},
 	[7] = {
-		[0] = "#V_Version 1.6_#",
+		[0] = "#V_Version 1.6_# #H_(3/19/2021)_#",
 		[1] = "#N_Update:_#",
 		[2] = "Added 9.1 (with 9.0.5 is still being supported!), Classic (1.13.7) and Burning Crusade Classic (2.5.1) multi-version support.",
 	},
 	[8] = {
-		[0] = "#V_Version 2.0_#",
+		[0] = "#V_Version 2.0_# #H_(2/23/2022)_#",
 		[1] = "#N_Update:_#",
 		[2] = "Added 9.2 (Retail), 1.14.2 (Classic) and 2.5.3 (BCC) multi-version support.",
 		[3] = "#N_New features:_#",
@@ -90,7 +90,7 @@ local changelogDB = {
 		[29] = "Event update logs: track your XP, Rested XP gain and more.",
 	},
 	[9] = {
-		[0] = "#V_Version 2.0.1_#",
+		[0] = "#V_Version 2.0.1_# #H_(3/3/2022)_#",
 		[1] = "#N_New:_#",
 		[2] = "Added the Wago link of Remaining XP. It's now released and can be updated through the Wago app.\n#H_You may choose to support development through a Wago Subscription._#",
 		[3] = "Added the date of the last update to the About page.",
@@ -108,6 +108,24 @@ local changelogDB = {
 		[15] = "Certain interface options will fully take effect immediately after being changed that didn't do so before (they still reset on Cancel).",
 		[16] = "Swapped the current & required total XP values in the XP display text.",
 		[17] = "Trial Banked XP and levels info will only be shown on the XP display id details are enabled.",
+	},
+	[10] = {
+		[0] = "#V_Version 2.0.2_# #H_(3/11/2022)_#",
+		[1] = "#C_Update:_#",
+		[2] = "The XP display visibility status chat message has been reinstated.",
+		[3] = "Several chat command response messages and descriptions have been updated.",
+		[4] = "The visibility of XP display text and background can't be turned off at the same time. #H_To hide both, you can hide the entire display instead._# (When the addon data is loaded and the visibility of both the text and the background is turned off, set them to visible and hide the XP display instead.)",
+		[5] = "The XP display will no longer be automatically unhidden when navigating to the display settings page through the shortcut button.",
+		[6] = "Other small changes.",
+		[7] = "#N_New:_#",
+		[8] = "Added an option to disable status notifications on load even for non-max level characters.",
+		[9] = "Added release dates for past version notes in the changelog.",
+		[10] = "#F_Hotfix:_#",
+		[11] = "Saving the Custom preset will now be handled properly.",
+		[12] = "Fixed the issue of preset changes not being saved correctly when applied through chat commands (and the interface options not being updated correctly - if chat commands were used while the interface options were open).",
+		[13] = "Fixed the issue of the integrated display not getting hidden upon reaching max level.",
+		[14] = "Fixed the small issue of the position anchor dropdown not being updated correctly after drag & dropping the XP display.",
+		[15] = "Typo fixes.",
 	},
 }
 
