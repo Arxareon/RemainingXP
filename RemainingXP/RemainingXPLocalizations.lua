@@ -127,6 +127,12 @@ local changelogDB = {
 		[14] = "Fixed the small issue of the position anchor dropdown not being updated correctly after drag & dropping the XP display.",
 		[15] = "Typo fixes.",
 	},
+	[11] = {
+		[0] = "#V_Version 2.0.3_# #H_(3/13/2022)_#",
+		[1] = "#C_Change:_#",
+		[2] = "The dropdown menu of the XP display anchor point selection was been changed to a group of radio buttons.",
+		[3] = "Other minor changes.",
+	},
 }
 
 ns.GetChangelog = function()

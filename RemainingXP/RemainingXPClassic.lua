@@ -64,15 +64,15 @@ local textures = {
 
 --Anchor Points
 local anchors = {
-	[0] = { name = strings.points.top.center, point = "TOP" },
-	[1] = { name = strings.points.top.left, point = "TOPLEFT" },
+	[0] = { name = strings.points.top.left, point = "TOPLEFT" },
+	[1] = { name = strings.points.top.center, point = "TOP" },
 	[2] = { name = strings.points.top.right, point = "TOPRIGHT" },
-	[3] = { name = strings.points.bottom.center, point = "BOTTOM" },
-	[4] = { name = strings.points.bottom.left, point = "BOTTOMLEFT" },
-	[5] = { name = strings.points.bottom.right, point = "BOTTOMRIGHT" },
-	[6] = { name = strings.points.left, point = "LEFT" },
-	[7] = { name = strings.points.right, point = "RIGHT" },
-	[8] = { name = strings.points.center, point = "CENTER" },
+	[3] = { name = strings.points.left, point = "LEFT" },
+	[4] = { name = strings.points.center, point = "CENTER" },
+	[5] = { name = strings.points.right, point = "RIGHT" },
+	[6] = { name = strings.points.bottom.left, point = "BOTTOMLEFT" },
+	[7] = { name = strings.points.bottom.center, point = "BOTTOM" },
+	[8] = { name = strings.points.bottom.right, point = "BOTTOMRIGHT" },
 }
 
 
@@ -1134,8 +1134,7 @@ local function CreateQuickOptions(parentFrame)
 				})
 				Fade(options.visibility.fade.toggle:GetChecked())
 				--Update the options
-				UIDropDownMenu_SetSelectedValue(options.position.anchor, GetAnchorID(presets[i].data.position.point))
-				UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(presets[i].data.position.point)].name)
+				options.position.anchor.setSelected(GetAnchorID(presets[i].data.position.point))
 				options.position.xOffset:SetValue(presets[i].data.position.offset.x)
 				options.position.yOffset:SetValue(presets[i].data.position.offset.y)
 				if not presets[i].data.background.visible then
@@ -1206,22 +1205,29 @@ local function CreateQuickOptions(parentFrame)
 	})
 end
 local function CreatePositionOptions(parentFrame)
-	--Dropdown: Anchor Point
+	--Selector: Anchor point
 	local anchorItems = {}
 	for i = 0, #anchors do
 		anchorItems[i] = {}
-		anchorItems[i].text = anchors[i].name
-		anchorItems[i].onSelect = function() wt.PositionFrame(remXP, anchors[i].point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue()) end
+		anchorItems[i].label = anchors[i].name
+		anchorItems[i].onSelect = function()
+			wt.PositionFrame(remXP, anchors[i].point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue())
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
+		end
 	end
-	options.position.anchor = wt.CreateDropdown({
+	options.position.anchor = wt.CreateSelector({
 		parent = parentFrame,
 		position = {
 			anchor = "TOPLEFT",
-			offset = { x = -6, y = -30 }
+			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.display.position.anchor.label,
 		tooltip = strings.options.display.position.anchor.tooltip,
 		items = anchorItems,
+		labels = false,
+		columns = 3,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
 		},
@@ -1232,7 +1238,7 @@ local function CreatePositionOptions(parentFrame)
 			convertLoad = function(point) return GetAnchorID(point) end,
 		},
 	})
-	--Slider: X Offset
+	--Slider: X offset
 	options.position.xOffset = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
@@ -1243,7 +1249,10 @@ local function CreatePositionOptions(parentFrame)
 		tooltip = strings.options.display.position.xOffset.tooltip,
 		value = { min = -500, max = 500, fractional = 2 },
 		onValueChanged = function(_, value)
-			wt.PositionFrame(remXP, anchors[UIDropDownMenu_GetSelectedValue(options.position.anchor)].point, nil, nil, value, options.position.yOffset:GetValue())
+			wt.PositionFrame(remXP, anchors[options.position.anchor.getSelected()].point, nil, nil, value, options.position.yOffset:GetValue())
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
 		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1253,7 +1262,7 @@ local function CreatePositionOptions(parentFrame)
 			key = "x",
 		},
 	})
-	--Slider: Y Offset
+	--Slider: Y offset
 	options.position.yOffset = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
@@ -1264,7 +1273,10 @@ local function CreatePositionOptions(parentFrame)
 		tooltip = strings.options.display.position.yOffset.tooltip,
 		value = { min = -500, max = 500, fractional = 2 },
 		onValueChanged = function(_, value)
-			wt.PositionFrame(remXP, anchors[UIDropDownMenu_GetSelectedValue(options.position.anchor)].point, nil, nil, options.position.xOffset:GetValue(), value)
+			wt.PositionFrame(remXP, anchors[options.position.anchor.getSelected()].point, nil, nil, options.position.xOffset:GetValue(), value)
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
 		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1291,6 +1303,9 @@ local function CreateTextOptions(parentFrame)
 			if not value and not options.background.visible:GetChecked() then options.background.visible:Click() end
 			--Update the text visibility
 			wt.SetVisibility(mainDisplayText, value)
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
 		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1434,6 +1449,9 @@ local  function CreateBackgroundOptions(parentFrame)
 				border = wt.PackColor(options.background.colors.border.getColor()),
 			})
 			Fade()
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
 		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1443,7 +1461,7 @@ local  function CreateBackgroundOptions(parentFrame)
 			key = "visible",
 		},
 	})
-	--Slider: Background Width
+	--Slider: Background width
 	options.background.size.width = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
@@ -1453,7 +1471,12 @@ local  function CreateBackgroundOptions(parentFrame)
 		label = strings.options.display.background.size.width.label,
 		tooltip = strings.options.display.background.size.width.tooltip,
 		value = { min = 64, max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1) , step = 2 },
-		onValueChanged = function(_, value) ResizeDisplay(value, options.background.size.height:GetValue()) end,
+		onValueChanged = function(_, value)
+			ResizeDisplay(value, options.background.size.height:GetValue())
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
+		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
 			[1] = { frame = options.background.visible },
@@ -1463,7 +1486,7 @@ local  function CreateBackgroundOptions(parentFrame)
 			key = "width",
 		},
 	})
-	--Slider: Background Height
+	--Slider: Background height
 	options.background.size.height = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
@@ -1473,7 +1496,12 @@ local  function CreateBackgroundOptions(parentFrame)
 		label = strings.options.display.background.size.height.label,
 		tooltip = strings.options.display.background.size.height.tooltip,
 		value = { min = 2, max = 80, step = 2 },
-		onValueChanged = function(_, value) ResizeDisplay(options.background.size.width:GetValue(), value) end,
+		onValueChanged = function(_, value)
+			ResizeDisplay(options.background.size.width:GetValue(), value)
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
+		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
 			[1] = { frame = options.background.visible },
@@ -1619,7 +1647,12 @@ local function CreateVisibilityOptions(parentFrame)
 		autoOffset = true,
 		label = strings.options.display.visibility.raise.label,
 		tooltip = strings.options.display.visibility.raise.tooltip,
-		onClick = function(self) remXP:SetFrameStrata(self:GetChecked() and "HIGH" or "MEDIUM") end,
+		onClick = function(self)
+			remXP:SetFrameStrata(self:GetChecked() and "HIGH" or "MEDIUM")
+			--Clear the presets dropdown selection
+			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
+			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
+		end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
 		},
@@ -1655,7 +1688,7 @@ local function CreateVisibilityOptions(parentFrame)
 			key = "enabled",
 		},
 	})
-	--Slider: Text Fade Intensity
+	--Slider: Text fade intensity
 	options.visibility.fade.text = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
@@ -1679,7 +1712,7 @@ local function CreateVisibilityOptions(parentFrame)
 			key = "text",
 		},
 	})
-	--Slider: Background Fade Intensity
+	--Slider: Background fade intensity
 	options.visibility.fade.background = wt.CreateSlider({
 		parent = parentFrame,
 		position = {
@@ -1726,7 +1759,7 @@ local function CreateDisplayCategoryPanels(parentFrame) --Add the display page w
 			relativePoint = "BOTTOMLEFT",
 			offset = { x = 0, y = -32 }
 		},
-		size = { height = 88 },
+		size = { height = 103 },
 		title = strings.options.display.position.title,
 		description = strings.options.display.position.description,
 	})
@@ -1928,7 +1961,7 @@ local function CreateNotificationsOptions(parentFrame)
 			key = "gained",
 		},
 	})
-	--Checkbox: Significant Rested XP Updates Only
+	--Checkbox: Significant Rested XP updates only
 	options.notifications.significantRestedOnly = wt.CreateCheckbox({
 		parent = parentFrame,
 		position = {
@@ -2302,8 +2335,8 @@ local function LoadInterfaceOptions()
 		description = strings.options.display.description:gsub("#ADDON", addon),
 		logo = textures.logo,
 		scroll = {
-			height = 766,
-			speed = 42,
+			height = 782,
+			speed = 45,
 		},
 		default = DefaultOptions,
 		autoSave = false,
@@ -2460,8 +2493,7 @@ local function PresetCommand(parameter)
 			--Update the GUI options in case the window was open
 			options.visibility.hidden:SetChecked(false)
 			options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
-			UIDropDownMenu_SetSelectedValue(options.position.anchor, GetAnchorID(presets[i].data.position.point))
-			UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(presets[i].data.position.point)].name)
+			options.position.anchor.setSelected(GetAnchorID(presets[i].data.position.point))
 			options.position.xOffset:SetValue(presets[i].data.position.offset.x)
 			options.position.yOffset:SetValue(presets[i].data.position.offset.y)
 			if not presets[i].data.background.visible then
@@ -2686,8 +2718,7 @@ mainDisplay:SetScript("OnMouseUp", function()
 	db.display.position.point, _, _, db.display.position.offset.x, db.display.position.offset.y = remXP:GetPoint()
 	RemainingXPDB.display.position = wt.Clone(db.display.position) --Update in the SavedVariabes DB
 	--Update the GUI options in case the window was open
-	UIDropDownMenu_SetSelectedValue(options.position.anchor, GetAnchorID(db.display.position.point))
-	UIDropDownMenu_SetText(options.position.anchor, anchors[GetAnchorID(db.display.position.point)].name)
+	options.position.anchor.setSelected(GetAnchorID(db.display.position.point))
 	options.position.xOffset:SetValue(db.display.position.offset.x)
 	options.position.yOffset:SetValue(db.display.position.offset.y)
 end)
