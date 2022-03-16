@@ -319,22 +319,17 @@ dbDefault.customPreset = presets[0].data
 
 --[[ FRAMES & EVENTS ]]
 
---[ Creating Frames ]
+--[ Main XP Display]
 
---Main XP display
-local remXP = CreateFrame("Frame", addon:gsub("%s+", ""), UIParent) --Main addon frame
+--Creating frames
+local remXP = CreateFrame("Frame", addonNameSpace, UIParent) --Main addon frame
 local mainDisplay = CreateFrame("Frame", remXP:GetName() .. "MainDisplay", remXP, BackdropTemplateMixin and "BackdropTemplate")
 local mainDisplayXP = CreateFrame("Frame", mainDisplay:GetName() .. "XP", mainDisplay, BackdropTemplateMixin and "BackdropTemplate")
 local mainDisplayRested = CreateFrame("Frame", mainDisplay:GetName() .. "Rested", mainDisplay, BackdropTemplateMixin and "BackdropTemplate")
 local mainDisplayOverlay = CreateFrame("Frame", mainDisplay:GetName() .. "Text", mainDisplay, BackdropTemplateMixin and "BackdropTemplate")
 local mainDisplayText = mainDisplayOverlay:CreateFontString(mainDisplay:GetName() .. "Value", "OVERLAY")
 
---Integrated display
-local integratedDisplay = CreateFrame("Frame", remXP:GetName() .. "IntegratedDisplay", UIParent)
-local integratedDisplayText = integratedDisplay:CreateFontString(integratedDisplay:GetName() .. "Text", "OVERLAY", "TextStatusBarText")
-
---[ Registering Events ]
-
+--Registering events
 remXP:RegisterEvent("ADDON_LOADED")
 remXP:RegisterEvent("PLAYER_ENTERING_WORLD")
 remXP:RegisterEvent("PLAYER_XP_UPDATE")
@@ -348,6 +343,12 @@ remXP:RegisterEvent("PET_BATTLE_CLOSE")
 remXP:SetScript("OnEvent", function(self, event, ...)
 	return self[event] and self[event](self, ...)
 end)
+
+--[ Integrated Display ]
+
+--Create frames
+local integratedDisplay = CreateFrame("Frame", remXP:GetName() .. "IntegratedDisplay", UIParent)
+local integratedDisplayText = integratedDisplay:CreateFontString(integratedDisplay:GetName() .. "Text", "OVERLAY", "TextStatusBarText")
 
 
 --[[ UTILITIES ]]
@@ -2373,7 +2374,7 @@ end
 local function LoadInterfaceOptions()
 	--Main options panel
 	options.mainOptionsPage = wt.CreateOptionsPanel({
-		name = addon:gsub("%s+", "") .. "Main",
+		name = addonNameSpace .. "Main",
 		title = addon,
 		description = strings.options.main.description:gsub("#ADDON", addon):gsub("#KEYWORD", strings.chat.keyword),
 		logo = textures.logo,
@@ -2387,7 +2388,7 @@ local function LoadInterfaceOptions()
 	local displayOptionsScrollFrame
 	options.displayOptionsPage, displayOptionsScrollFrame = wt.CreateOptionsPanel({
 		parent = options.mainOptionsPage.name,
-		name = addon:gsub("%s+", "") .. "Display",
+		name = addonNameSpace .. "Display",
 		title = strings.options.display.title,
 		description = strings.options.display.description:gsub("#ADDON", addon),
 		logo = textures.logo,
@@ -2403,7 +2404,7 @@ local function LoadInterfaceOptions()
 	--Integration options panel
 	options.integrationOptionsPage = wt.CreateOptionsPanel({
 		parent = options.mainOptionsPage.name,
-		name = addon:gsub("%s+", "") .. "Integration",
+		name = addonNameSpace .. "Integration",
 		title = strings.options.integration.title,
 		description = strings.options.integration.description:gsub("#ADDON", addon),
 		logo = textures.logo,
@@ -2415,7 +2416,7 @@ local function LoadInterfaceOptions()
 	--Notifications options panel
 	options.notificationsOptionsPage = wt.CreateOptionsPanel({
 		parent = options.mainOptionsPage.name,
-		name = addon:gsub("%s+", "") .. "Notifications",
+		name = addonNameSpace .. "Notifications",
 		title = strings.options.events.title,
 		description = strings.options.events.description:gsub("#ADDON", addon),
 		logo = textures.logo,
@@ -2427,7 +2428,7 @@ local function LoadInterfaceOptions()
 	--Advanced options panel
 	options.advancedOptionsPage = wt.CreateOptionsPanel({
 		parent = options.mainOptionsPage.name,
-		name = addon:gsub("%s+", "") .. "Advanced",
+		name = addonNameSpace .. "Advanced",
 		title = strings.options.advanced.title,
 		description = strings.options.advanced.description:gsub("#ADDON", addon),
 		logo = textures.logo,
