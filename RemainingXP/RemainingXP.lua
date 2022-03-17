@@ -1819,7 +1819,7 @@ local function CreateDisplayCategoryPanels(parentFrame) --Add the display page w
 		},
 		size = { height = 103 },
 		title = strings.options.display.position.title,
-		description = strings.options.display.position.description,
+		description = strings.options.display.position.description:gsub("#SHIFT", strings.keys.shift),
 	})
 	CreatePositionOptions(positionOptions)
 	--Text

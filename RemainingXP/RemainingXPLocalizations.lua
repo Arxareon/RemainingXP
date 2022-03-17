@@ -128,10 +128,10 @@ local changelogDB = {
 		[15] = "Typo fixes.",
 	},
 	[11] = {
-		[0] = "#V_Version 2.0.3_# #H_(3/13/2022)_#",
+		[0] = "#V_Version 2.0.3_# #H_(3/17/2022)_#",
 		[1] = "#C_Change:_#",
 		[2] = "The dropdown menu of the XP display anchor point selection was been changed to a group of radio buttons.",
-		[3] = "Other minor changes.",
+		[3] = "Other small changes & fixes.",
 	},
 }
 
@@ -240,7 +240,7 @@ local english = {
 			},
 			position = {
 				title = "Position",
-				description = "You may drag the main display while holding #SHIFT to position it anywhere on the screen, fine-tune it here.", --# flags will be replaced with code
+				description = "Drag & drop the main display while holding #SHIFT to position it anywhere on the screen, fine-tune it here.", --# flags will be replaced with code
 				anchor = {
 					label = "Screen Anchor Point",
 					tooltip = "Select which point of the screen should the display be anchored to.",
@@ -532,7 +532,7 @@ local english = {
 		},
 		integration = {
 			command = "integrate",
-			description = "show detaied XP info on the default XP bar",
+			description = "show detailed XP info on the default XP bar",
 			response = "The XP bar enhancement integration set to #STATE.", --# flags will be replaced with code
 			notice = "Please, reload the interface to apply pending changes to the XP bar enhancement integration.",
 		},
