@@ -10,7 +10,13 @@
 ## Other Addons
 *If you like minimalistic solutions, you might want to check out there Addons as well:*
 
-[**Movement Speed**](https://bitbucket.org/Arxareon/movement-speed) • Shows your character's current movement speed in a customizable display with fast updates.
+[**Movement Speed**](https://bitbucket.org/Arxareon/movement-speed) • View the movement speed of anyone in customizable displays and tooltips with fast updates.
+
+*Coming soon™:*
+[**Party Targets**](https://bitbucket.org/Arxareon/party-targets) • See who your party and raid members are targeting.
+
+*Coming soon™:*
+[**RP Keyboard**](https://bitbucket.org/Arxareon/rp-keyboard) • Type fantasy letters & runes in chat to talk to other RP Keyboard users.
 
 ## Support
 *Possibilities to directly support the development of Remaining XP and other addons:*
@@ -21,6 +27,8 @@
 [**CurseForge**](https://www.curseforge.com/wow/addons/remaining-xp) • Should you prefer, support development by watching ads on CurseForge, and keep up to date via automatic updates via the CurseForge App.
 
 [**Wago**](https://addons.wago.io/addons/remaining-xp) • You can also use Wago to get updates and support development by watching ads, and provide much appreciated continuous support via a Subscription.
+
+*You can also get updates via **WoWUP** if you have Wago.io enabled as an addon provider!*
 
 ## License
 All Rights Reserved unless otherwise explicitly stated.

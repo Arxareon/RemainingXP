@@ -101,6 +101,15 @@ local dbDefault = {
 				background = 0.6,
 			},
 		},
+		text = {
+			visible = true,
+			details = false,
+			font = {
+				family = fonts[0].path,
+				size = 11,
+				color = { r = 1, g = 1, b = 1, a = 1 },
+			},
+		},
 		background = {
 			visible = true,
 			size = { width = 116, height = 16, },
@@ -109,15 +118,6 @@ local dbDefault = {
 				xp = { r = 0.8, g = 0.1, b = 0.8, a = 0.8 },
 				rested = { r = 0.1, g = 0.5, b = 1, a = 0.8 },
 				border = { r = 1, g = 1, b = 1, a = 0.4 },
-			},
-		},
-		text = {
-			visible = true,
-			details = false,
-			font = {
-				family = fonts[0].path,
-				size = 11,
-				color = { r = 1, g = 1, b = 1, a = 1 },
 			},
 		},
 	},
@@ -303,7 +303,7 @@ dbDefault.customPreset = presets[0].data
 
 --[[ FRAMES & EVENTS ]]
 
---[ Main XP Display]
+--[ Main XP Display ]
 
 --Creating frames
 local remXP = CreateFrame("Frame", addonNameSpace, UIParent) --Main addon frame
@@ -773,7 +773,8 @@ local function SetDisplayBackdrop(enabled, backdropColors)
 end
 
 ---Set the visibility, backdrop, font family, size and color of the main display to the currently saved values
----@param data table DB table to set the main display values from
+---@param data table Accound-wide data table to set the main display values from
+---@param characterData table Character-specific data table to set the main display values from
 local function SetDisplayValues(data, characterData)
 	--Visibility
 	remXP:SetFrameStrata(data.display.visibility.frameStrata)
@@ -1762,7 +1763,7 @@ local function CreateDisplayCategoryPanels(parentFrame) --Add the display page w
 		},
 		size = { height = 103 },
 		title = strings.options.display.position.title,
-		description = strings.options.display.position.description,
+		description = strings.options.display.position.description:gsub("#SHIFT", strings.keys.shift),
 	})
 	CreatePositionOptions(positionOptions)
 	--Text
