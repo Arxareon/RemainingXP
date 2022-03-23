@@ -353,19 +353,6 @@ local integratedDisplayText = integratedDisplay:CreateFontString(integratedDispl
 
 --[[ UTILITIES ]]
 
----Add coloring escape sequences to a string
----@param text string Text to add coloring to
----@param color table Table containing the color values
---- - **r** number ― Red [Range: 0 - 1]
---- - **g** number ― Green [Range: 0 - 1]
---- - **b** number ― Blue [Range: 0 - 1]
---- - **a**? number *optional* ― Opacity [Range: 0 - 1, Default: 1]
----@return string
-local function Color(text, color)
-	local r, g, b, a = wt.UnpackColor(color)
-	return WrapTextInColorCode(text, wt.ColorToHex(r, g, b, a, true, false))
-end
-
 ---Find the ID of the font provided
 ---@param fontPath string
 ---@return integer
@@ -392,6 +379,11 @@ local function GetAnchorID(point)
 		end
 	end
 	return id
+end
+
+--Returns the current max level
+local function GetMax()
+	return GetMaxLevelForPlayerExpansion()
 end
 
 --[ DB Management ]
@@ -479,9 +471,9 @@ local function SetRestedAccumulation(enabled)
 		--Chat notification
 		if enabled then
 			print(
-				Color(
+				wt.Color(
 					strings.chat.notifications.restedXPAccumulated.feels, colors.purple[0]
-				) .. " " .. Color(
+				) .. " " .. wt.Color(
 					strings.chat.notifications.restedXPAccumulated.resting, colors.blue[0]
 				)
 			)
@@ -579,115 +571,130 @@ local function UpdateIntegratedDisplay(remaining)
 end
 
 ---Assemble the detailed text lines for xp tooltip
----@return table extraLines Table containing additional string lines to be added to the tooltip text [indexed, 0-based]
+---@return table textLines Table containing text lines to be added to the tooltip [indexed, 0-based]
 --- - **text** string ― Text to be added to the line
---- - **color**? table *optional* ― RGB colors line
+--- - **font**? string | FontObject *optional* ― The FontObject to set for this line [Default: GameTooltipTextSmall]
+--- - **color**? table *optional* ― Table containing the RGB values to color this line with [Default: HIGHLIGHT_FONT_COLOR (white)]
 --- 	- **r** number ― Red [Range: 0 - 1]
 --- 	- **g** number ― Green [Range: 0 - 1]
 --- 	- **b** number ― Blue [Range: 0 - 1]
---- - **wrap**? boolean *optional* ― Allow wrapping the line [Default: true]
-local function CreateXPTooltipDetails()
-	local extraLines = {
+--- - **wrap**? boolean *optional* ― Allow this line to be wrapped [Default: true]
+local function GetXPTooltipDetails()
+	local textLines = {
+		[0] = { text = strings.xpTooltip.text, },
 		--Current XP
-		[0] = {
-			text = strings.xpTooltip.current:gsub(
-				"#VALUE", Color(wt.FormatThousands(csc.xp.current), colors.purple[1])
+		[1] = {
+			text = "\n" .. strings.xpTooltip.current:gsub(
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.current), colors.purple[1])
 			),
 			color = colors.purple[0],
 		},
-		[1] = {
+		[2] = {
 			text = strings.xpTooltip.percentTotal:gsub(
-				"#PERCENT", Color(wt.FormatThousands(math.floor(csc.xp.current / csc.xp.needed * 10000) / 100) .. "%%", colors.purple[1])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.current / csc.xp.needed * 10000) / 100) .. "%%", colors.purple[1])
 			),
 			color = colors.purple[2],
 		},
 		--Remaining XP
-		[2] = {
+		[3] = {
 			text = "\n" .. strings.xpTooltip.remaining:gsub(
-				"#VALUE", Color(wt.FormatThousands(csc.xp.remaining), colors.rose[1])
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.remaining), colors.rose[1])
 			),
 			color = colors.rose[0],
 		},
-		[3] = {
+		[4] = {
 			text = strings.xpTooltip.percentTotal:gsub(
-				"#PERCENT", Color(wt.FormatThousands(math.floor((csc.xp.remaining / csc.xp.needed) * 10000) / 100) .. "%%", colors.rose[1])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor((csc.xp.remaining / csc.xp.needed) * 10000) / 100) .. "%%", colors.rose[1])
 			),
 			color = colors.rose[2],
 		},
 		--Max needed XP
-		[4] = {
+		[5] = {
 			text = "\n" .. strings.xpTooltip.needed:gsub(
-				"#DATA", Color(strings.xpTooltip.valueNeeded:gsub(
-					"#VALUE", Color(wt.FormatThousands(csc.xp.needed), colors.peach[1])
+				"#DATA", wt.Color(strings.xpTooltip.valueNeeded:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(csc.xp.needed), colors.peach[1])
 				):gsub(
-					"#LEVEL", Color(UnitLevel("player"), colors.peach[1])
+					"#LEVEL", wt.Color(UnitLevel("player"), colors.peach[1])
 				), colors.peach[2])
 			),
 			color = colors.peach[0],
 		},
 		--Playtime --TODO: Add time played info
-		-- [5] = {
+		-- [6] = {
 		-- 	text = "\n" .. strings.xpTooltip.timeSpent:gsub("#TIME", "?") .. " (Soon™)",
 		-- },
 	}
 	--Current Rested XP
 	if csc.xp.rested > 0 then
-		extraLines[#extraLines + 1] = {
+		textLines[#textLines + 1] = {
 			text = "\n" .. strings.xpTooltip.rested:gsub(
-				"#VALUE", Color(wt.FormatThousands(csc.xp.rested), colors.blue[1])
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.rested), colors.blue[1])
 			),
 			color = colors.blue[0],
 		}
-		extraLines[#extraLines + 1] = {
+		textLines[#textLines + 1] = {
 			text = strings.xpTooltip.percentRemaining:gsub(
-				"#PERCENT", Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100) .. "%%", colors.blue[1])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100) .. "%%", colors.blue[1])
 			),
 			color = colors.blue[2],
 		}
 		--Description
-		extraLines[#extraLines + 1] = {
+		textLines[#textLines + 1] = {
 			text = "\n" .. strings.xpTooltip.restedStatus:gsub(
-				"#PERCENT", Color("200%%", colors.blue[1])
+				"#PERCENT", wt.Color("200%%", colors.blue[1])
 			),
 			color = colors.blue[2],
 		}
 	end
 	--Resting status
 	if IsResting() then
-		extraLines[#extraLines + 1] = {
+		textLines[#textLines + 1] = {
 			text = "\n" .. strings.chat.notifications.restedXPAccumulated.feels,
 			color = colors.blue[0],
 		}
 	end
 	--Accumulated Rested XP
 	if (csc.xp.accumulatedRested or 0) > 0 then
-		extraLines[#extraLines + 1] = {
+		textLines[#textLines + 1] = {
 			text = strings.xpTooltip.accumulated:gsub(
-				"#VALUE", Color(wt.FormatThousands(csc.xp.accumulatedRested or 0), colors.blue[1])
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested or 0), colors.blue[1])
 			),
 			color = colors.blue[2],
 		}
 	end
 	--Banked XP & levels
 	if GameLimitedMode_IsActive() and csc.xp.banked > 0 then
-		extraLines[#extraLines + 1] = {
+		textLines[#textLines + 1] = {
 			text = "\n" .. strings.xpTooltip.banked:gsub(
-				"#DATA", Color(strings.xpTooltip.valueBanked:gsub(
-					"#VALUE", Color(wt.FormatThousands(csc.xp.banked), colors.grey[1])
+				"#DATA", wt.Color(strings.xpTooltip.valueBanked:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(csc.xp.banked), colors.grey[1])
 				):gsub(
-					"#LEVELS", Color(csc.xp.bankedLevels, colors.grey[1])
+					"#LEVELS", wt.Color(csc.xp.bankedLevels, colors.grey[1])
 				), colors.grey[2])
 			),
 			color = colors.grey[0],
 		}
 	end
-	return extraLines
+	--Hints
+	textLines[#textLines + 1] = {
+		text = "\n" .. strings.xpTooltip.hintOptions,
+		font = GameFontNormalTiny,
+		color = colors.grey[0],
+	}
+	if mainDisplay:IsMouseOver() then
+		textLines[#textLines + 1] = {
+			text = strings.xpTooltip.hintMove:gsub("#SHIFT", strings.keys.shift),
+			font = GameFontNormalTiny,
+			color = colors.grey[0],
+		}
+	end
+	return textLines
 end
 
 --Update the text of the xp tooltip
 local function UpdateXPTooltip()
 	if not integratedDisplay:IsMouseOver() and not mainDisplay:IsMouseOver() then return end
-	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_PRESERVE", strings.xpTooltip.title, strings.xpTooltip.text, CreateXPTooltipDetails())
+	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_PRESERVE", strings.xpTooltip.title, GetXPTooltipDetails())
 end
 
 --[ Main XP Display ]
@@ -817,7 +824,7 @@ local function SetDisplayBackdrop(enabled, backdropColors)
 end
 
 ---Set the visibility, backdrop, font family, size and color of the main display to the currently saved values
----@param data table Accound-wide data table to set the main display values from
+---@param data table Account-wide data table to set the main display values from
 ---@param characterData table Character-specific data table to set the main display values from
 local function SetDisplayValues(data, characterData)
 	--Visibility
@@ -862,7 +869,7 @@ local function SetIntegrationVisibility(enabled, keep, remaining, cvar, notice)
 			C_CVar.SetCVar("xpBarText", 0)
 			--Reload notice
 			if notice then
-				print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.integration.notice, colors.blue[0]))
+				print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.integration.notice, colors.blue[0]))
 				wt.CreateReloadNotice()
 			end
 		end
@@ -921,7 +928,7 @@ local function CreateOptionsShortcuts(parentFrame)
 		},
 		width = 120,
 		label = strings.options.display.title,
-		tooltip = strings.options.display.description:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.display.description:gsub("#ADDON", addon) }, },
 		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage) end,
 	})
 	--Button: Integration page
@@ -935,7 +942,7 @@ local function CreateOptionsShortcuts(parentFrame)
 		},
 		width = 120,
 		label = strings.options.integration.title,
-		tooltip = strings.options.integration.description:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.integration.description:gsub("#ADDON", addon) }, },
 		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.integrationOptionsPage) end,
 	})
 	--Button: Notifications page
@@ -949,7 +956,7 @@ local function CreateOptionsShortcuts(parentFrame)
 		},
 		width = 120,
 		label = strings.options.events.title,
-		tooltip = strings.options.events.description:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.events.description:gsub("#ADDON", addon) }, },
 		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.notificationsOptionsPage) end,
 	})
 	--Button: Advanced page
@@ -961,7 +968,7 @@ local function CreateOptionsShortcuts(parentFrame)
 		},
 		width = 120,
 		label = strings.options.advanced.title,
-		tooltip = strings.options.advanced.description:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.advanced.description:gsub("#ADDON", addon) }, },
 		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.advancedOptionsPage) end,
 	})
 end
@@ -1045,7 +1052,7 @@ local function CreateAboutInfo(parentFrame)
 		fontObject = "GameFontDisableSmall",
 		text = ns.GetChangelog(),
 		label = strings.options.main.about.changelog.label,
-		tooltip = strings.options.main.about.changelog.tooltip,
+		tooltip = { [0] = { text = strings.options.main.about.changelog.tooltip }, },
 		scrollSpeed = 45,
 		readOnly = true,
 	})
@@ -1165,7 +1172,7 @@ local function CreateQuickOptions(parentFrame)
 			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.display.quick.hidden.label,
-		tooltip = strings.options.display.quick.hidden.tooltip:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.display.quick.hidden.tooltip:gsub("#ADDON", addon) }, },
 		onClick = function(self) wt.SetVisibility(remXP, not (self:GetChecked() or dbc.disabled)) end,
 		optionsData = {
 			storageTable = dbc,
@@ -1221,7 +1228,7 @@ local function CreateQuickOptions(parentFrame)
 		},
 		width = 160,
 		label = strings.options.display.quick.presets.label,
-		tooltip = strings.options.display.quick.presets.tooltip,
+		tooltip = { [0] = { text = strings.options.display.quick.presets.tooltip }, },
 		items = presetItems,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1245,7 +1252,7 @@ local function CreateQuickOptions(parentFrame)
 			--Save the Custom preset
 			db.customPreset = presets[0].data
 			--Response
-			print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.save.response, colors.blue[0]))
+			print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.save.response, colors.blue[0]))
 		end,
 	})
 	wt.CreateButton({
@@ -1256,7 +1263,7 @@ local function CreateQuickOptions(parentFrame)
 		},
 		width = 160,
 		label = strings.options.display.quick.savePreset.label,
-		tooltip = strings.options.display.quick.savePreset.tooltip,
+		tooltip = { [0] = { text = strings.options.display.quick.savePreset.tooltip }, },
 		onClick = function() StaticPopup_Show(savePopup) end,
 		dependencies = {
 			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
@@ -1283,7 +1290,7 @@ local function CreatePositionOptions(parentFrame)
 			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.display.position.anchor.label,
-		tooltip = strings.options.display.position.anchor.tooltip,
+		tooltip = { [0] = { text = strings.options.display.position.anchor.tooltip }, },
 		items = anchorItems,
 		labels = false,
 		columns = 3,
@@ -1305,7 +1312,7 @@ local function CreatePositionOptions(parentFrame)
 			offset = { x = 0, y = -30 }
 		},
 		label = strings.options.display.position.xOffset.label,
-		tooltip = strings.options.display.position.xOffset.tooltip,
+		tooltip = { [0] = { text = strings.options.display.position.xOffset.tooltip }, },
 		value = { min = -500, max = 500, fractional = 2 },
 		onValueChanged = function(_, value)
 			wt.PositionFrame(remXP, anchors[options.position.anchor.getSelected()].point, nil, nil, value, options.position.yOffset:GetValue())
@@ -1329,7 +1336,7 @@ local function CreatePositionOptions(parentFrame)
 			offset = { x = -14, y = -30 }
 		},
 		label = strings.options.display.position.yOffset.label,
-		tooltip = strings.options.display.position.yOffset.tooltip,
+		tooltip = { [0] = { text = strings.options.display.position.yOffset.tooltip }, },
 		value = { min = -500, max = 500, fractional = 2 },
 		onValueChanged = function(_, value)
 			wt.PositionFrame(remXP, anchors[options.position.anchor.getSelected()].point, nil, nil, options.position.xOffset:GetValue(), value)
@@ -1355,7 +1362,7 @@ local function CreateTextOptions(parentFrame)
 			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.display.text.visible.label,
-		tooltip = strings.options.display.text.visible.tooltip,
+		tooltip = { [0] = { text = strings.options.display.text.visible.tooltip }, },
 		onClick = function(self)
 			local value = self:GetChecked()
 			--Flip the background visibility on if it was hidden
@@ -1383,7 +1390,7 @@ local function CreateTextOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.display.text.details.label,
-		tooltip = strings.options.display.text.details.tooltip,
+		tooltip = { [0] = { text = strings.options.display.text.details.tooltip }, },
 		onClick = function(self)
 			db.display.text.details = self:GetChecked()
 			UpdateXPDisplayText()
@@ -1417,13 +1424,13 @@ local function CreateTextOptions(parentFrame)
 			offset = { x = -6, y = -60 }
 		},
 		label = strings.options.display.text.font.family.label,
-		tooltip = strings.options.display.text.font.family.tooltip[0],
-		tooltipExtra = {
-			[0] = { text = strings.options.display.text.font.family.tooltip[1] },
-			[1] = { text = "\n" .. strings.options.display.text.font.family.tooltip[2]:gsub("#OPTION_CUSTOM", strings.misc.custom):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
-			[2] = { text = "[WoW]\\Interface\\AddOns\\" .. addonNameSpace .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
-			[3] = { text = strings.options.display.text.font.family.tooltip[3]:gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
-			[4] = { text = strings.options.display.text.font.family.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 } },
+		tooltip = {
+			[0] = { text = strings.options.display.text.font.family.tooltip[0] },
+			[1] = { text = strings.options.display.text.font.family.tooltip[1] },
+			[2] = { text = "\n" .. strings.options.display.text.font.family.tooltip[2]:gsub("#OPTION_CUSTOM", strings.misc.custom):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
+			[3] = { text = "[WoW]\\Interface\\AddOns\\" .. addonNameSpace .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
+			[4] = { text = strings.options.display.text.font.family.tooltip[3]:gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
+			[5] = { text = strings.options.display.text.font.family.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 } },
 		},
 		items = fontItems,
 		dependencies = {
@@ -1445,7 +1452,7 @@ local function CreateTextOptions(parentFrame)
 			offset = { x = 0, y = -60 }
 		},
 		label = strings.options.display.text.font.size.label,
-		tooltip = strings.options.display.text.font.size.tooltip .. "\n\n" .. strings.misc.default .. ": " .. dbDefault.display.text.font.size,
+		tooltip = { [0] = { text = strings.options.display.text.font.size.tooltip .. "\n\n" .. strings.misc.default .. ": " .. dbDefault.display.text.font.size }, },
 		value = { min = 8, max = 64, step = 1 },
 		onValueChanged = function(_, value) mainDisplayText:SetFont(mainDisplayText:GetFont(), value, "THINOUTLINE") end,
 		dependencies = {
@@ -1495,7 +1502,7 @@ local  function CreateBackgroundOptions(parentFrame)
 			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.display.background.visible.label,
-		tooltip = strings.options.display.background.visible.tooltip,
+		tooltip = { [0] = { text = strings.options.display.background.visible.tooltip }, },
 		onClick = function(self)
 			local value = self:GetChecked()
 			--Flip the text visibility on if it was hidden
@@ -1528,7 +1535,7 @@ local  function CreateBackgroundOptions(parentFrame)
 			offset = { x = 0, y = -32 }
 		},
 		label = strings.options.display.background.size.width.label,
-		tooltip = strings.options.display.background.size.width.tooltip,
+		tooltip = { [0] = { text = strings.options.display.background.size.width.tooltip }, },
 		value = { min = 64, max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1) , step = 2 },
 		onValueChanged = function(_, value)
 			ResizeDisplay(value, options.background.size.height:GetValue())
@@ -1553,7 +1560,7 @@ local  function CreateBackgroundOptions(parentFrame)
 			offset = { x = -14, y = -32 }
 		},
 		label = strings.options.display.background.size.height.label,
-		tooltip = strings.options.display.background.size.height.tooltip,
+		tooltip = { [0] = { text = strings.options.display.background.size.height.tooltip }, },
 		value = { min = 2, max = 80, step = 2 },
 		onValueChanged = function(_, value)
 			ResizeDisplay(options.background.size.width:GetValue(), value)
@@ -1705,7 +1712,7 @@ local function CreateVisibilityOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.display.visibility.raise.label,
-		tooltip = strings.options.display.visibility.raise.tooltip,
+		tooltip = { [0] = { text = strings.options.display.visibility.raise.tooltip }, },
 		onClick = function(self)
 			remXP:SetFrameStrata(self:GetChecked() and "HIGH" or "MEDIUM")
 			--Clear the presets dropdown selection
@@ -1732,7 +1739,7 @@ local function CreateVisibilityOptions(parentFrame)
 			offset = { x = 0, y = -4 }
 		},
 		label = strings.options.display.visibility.fade.label,
-		tooltip = strings.options.display.visibility.fade.tooltip,
+		tooltip = { [0] = { text = strings.options.display.visibility.fade.tooltip }, },
 		onClick = function(self)
 			db.display.visibility.fade.enabled = self:GetChecked()
 			Fade()
@@ -1755,7 +1762,7 @@ local function CreateVisibilityOptions(parentFrame)
 			offset = { x = 0, y = -60 }
 		},
 		label = strings.options.display.visibility.fade.text.label,
-		tooltip = strings.options.display.visibility.fade.text.tooltip,
+		tooltip = { [0] = { text = strings.options.display.visibility.fade.text.tooltip }, },
 		value = { min = 0, max = 1, step = 0.05 },
 		onValueChanged = function(_, value)
 			db.display.visibility.fade.text = value
@@ -1779,7 +1786,7 @@ local function CreateVisibilityOptions(parentFrame)
 			offset = { x = -14, y = -60 }
 		},
 		label = strings.options.display.visibility.fade.background.label,
-		tooltip = strings.options.display.visibility.fade.background.tooltip,
+		tooltip = { [0] = { text = strings.options.display.visibility.fade.background.tooltip }, },
 		value = { min = 0, max = 1, step = 0.05 },
 		onValueChanged = function(_, value)
 			db.display.visibility.fade.background = value
@@ -1878,7 +1885,7 @@ local function CreateEnhancementOptions(parentFrame)
 			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.integration.enhancement.toggle.label,
-		tooltip = strings.options.integration.enhancement.toggle.tooltip,
+		tooltip = { [0] = { text = strings.options.integration.enhancement.toggle.tooltip }, },
 		onClick = function(self)
 			local value = self:GetChecked()
 			SetIntegrationVisibility(value, options.enhancement.keep:GetChecked(), options.enhancement.remaining:GetChecked(), false, false)
@@ -1898,7 +1905,7 @@ local function CreateEnhancementOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.integration.enhancement.keep.label,
-		tooltip = strings.options.integration.enhancement.keep.tooltip,
+		tooltip = { [0] = { text = strings.options.integration.enhancement.keep.tooltip }, },
 		onClick = function(self)
 			local value = self:GetChecked()
 			SetIntegrationTextVisibility(value, options.enhancement.remaining:GetChecked())
@@ -1921,7 +1928,7 @@ local function CreateEnhancementOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.integration.enhancement.remaining.label,
-		tooltip = strings.options.integration.enhancement.remaining.tooltip,
+		tooltip = { [0] = { text = strings.options.integration.enhancement.remaining.tooltip }, },
 		onClick = function(self)
 			local value = self:GetChecked()
 			SetIntegrationTextVisibility(options.enhancement.keep:GetChecked(), value)
@@ -1947,7 +1954,7 @@ local function CreateRemovalsOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.integration.removals.statusBars.label,
-		tooltip = strings.options.integration.removals.statusBars.tooltip:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.integration.removals.statusBars.tooltip:gsub("#ADDON", addon) }, },
 		onClick = function(self) wt.SetVisibility(StatusTrackingBarManager, not self:GetChecked()) end,
 		optionsData = {
 			storageTable = db.removals,
@@ -1996,7 +2003,7 @@ local function CreateNotificationsOptions(parentFrame)
 			offset = { x = 8, y = -30 }
 		},
 		label = strings.options.events.notifications.xpGained.label,
-		tooltip = strings.options.events.notifications.xpGained.tooltip,
+		tooltip = { [0] = { text = strings.options.events.notifications.xpGained.tooltip }, },
 		onClick = function(self) db.notifications.xpGained = self:GetChecked() end,
 		optionsData = {
 			storageTable = db.notifications,
@@ -2013,7 +2020,7 @@ local function CreateNotificationsOptions(parentFrame)
 			offset = { x = 0, y = -4 }
 		},
 		label = strings.options.events.notifications.restedXPGained.label,
-		tooltip = strings.options.events.notifications.restedXPGained.tooltip,
+		tooltip = { [0] = { text = strings.options.events.notifications.restedXPGained.tooltip }, },
 		onClick = function(self) db.notifications.restedXP.gained = self:GetChecked() end,
 		optionsData = {
 			storageTable = db.notifications.restedXP,
@@ -2029,7 +2036,7 @@ local function CreateNotificationsOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.events.notifications.restedXPGained.significantOnly.label,
-		tooltip = strings.options.events.notifications.restedXPGained.significantOnly.tooltip,
+		tooltip = { [0] = { text = strings.options.events.notifications.restedXPGained.significantOnly.tooltip }, },
 		onClick = function(self) db.notifications.restedXP.significantOnly = self:GetChecked() end,
 		dependencies = {
 			[0] = { frame = options.notifications.restedXPGained },
@@ -2048,11 +2055,12 @@ local function CreateNotificationsOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.events.notifications.restedXPGained.accumulated.label,
-		tooltip = strings.options.events.notifications.restedXPGained.accumulated.tooltip[0],
-		tooltipExtra = {
-			[0] = { text = strings.options.events.notifications.restedXPGained.accumulated.tooltip[1]:gsub(
-				"#ADDON", addon
-			), color = { r = 0.89, g = 0.65, b = 0.40 } },
+		tooltip = {
+			[0] = { text = strings.options.events.notifications.restedXPGained.accumulated.tooltip[0] },
+			[1] = {
+				text = strings.options.events.notifications.restedXPGained.accumulated.tooltip[1]:gsub("#ADDON", addon),
+				color = { r = 0.89, g = 0.65, b = 0.40 }
+			},
 		},
 		onClick = function(self)
 			local value = self:GetChecked()
@@ -2077,7 +2085,7 @@ local function CreateNotificationsOptions(parentFrame)
 			offset = { x = 0, y = -4 }
 		},
 		label = strings.options.events.notifications.lvlUp.label,
-		tooltip = strings.options.events.notifications.lvlUp.tooltip,
+		tooltip = { [0] = { text = strings.options.events.notifications.lvlUp.tooltip }, },
 		onClick = function(self) db.notifications.lvlUp.congrats = self:GetChecked() end,
 		optionsData = {
 			storageTable = db.notifications.lvlUp,
@@ -2093,7 +2101,7 @@ local function CreateNotificationsOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.events.notifications.lvlUp.timePlayed.label .. " (Soon™)",
-		tooltip = strings.options.events.notifications.lvlUp.timePlayed.tooltip,
+		tooltip = { [0] = { text = strings.options.events.notifications.lvlUp.timePlayed.tooltip }, },
 		onClick = function(self) db.notifications.lvlUp.timePlayed = self:GetChecked() end,
 		disabled = true --TODO: Add time played notifications
 		-- dependencies = {
@@ -2114,7 +2122,7 @@ local function CreateNotificationsOptions(parentFrame)
 			offset = { x = 0, y = -4 }
 		},
 		label = strings.options.events.notifications.statusNotice.label,
-		tooltip = strings.options.events.notifications.statusNotice.tooltip:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.events.notifications.statusNotice.tooltip:gsub("#ADDON", addon) }, },
 		optionsData = {
 			storageTable = db.notifications.statusNotice,
 			key = "enabled",
@@ -2129,7 +2137,7 @@ local function CreateNotificationsOptions(parentFrame)
 		},
 		autoOffset = true,
 		label = strings.options.events.notifications.statusNotice.maxReminder.label,
-		tooltip = strings.options.events.notifications.statusNotice.maxReminder.tooltip:gsub("#ADDON", addon),
+		tooltip = { [0] = { text = strings.options.events.notifications.statusNotice.maxReminder.tooltip:gsub("#ADDON", addon) }, },
 		dependencies = {
 			[0] = { frame = options.notifications.status },
 		},
@@ -2206,7 +2214,7 @@ local function CreateBackupOptions(parentFrame)
 				if t.account.removals.statusBars then StatusTrackingBarManager:Hide() else StatusTrackingBarManager:Show() end
 				--Update the interface options
 				wt.LoadOptionsData()
-			else print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.options.advanced.backup.error, colors.blue[0])) end
+			else print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.options.advanced.backup.error, colors.blue[0])) end
 		end
 	})
 	local backupBox
@@ -2221,12 +2229,12 @@ local function CreateBackupOptions(parentFrame)
 		maxLetters = 5400,
 		fontObject = "GameFontWhiteSmall",
 		label = strings.options.advanced.backup.backupBox.label,
-		tooltip = strings.options.advanced.backup.backupBox.tooltip[0],
-		tooltipExtra = {
-			[0] = { text = strings.options.advanced.backup.backupBox.tooltip[1] },
-			[1] = { text = "\n" .. strings.options.advanced.backup.backupBox.tooltip[2]:gsub("#ENTER", strings.keys.enter) },
-			[2] = { text = strings.options.advanced.backup.backupBox.tooltip[3], color = { r = 0.89, g = 0.65, b = 0.40 } },
-			[3] = { text = "\n" .. strings.options.advanced.backup.backupBox.tooltip[4], color = { r = 0.92, g = 0.34, b = 0.23 } },
+		tooltip = {
+			[0] = { text = strings.options.advanced.backup.backupBox.tooltip[0] },
+			[1] = { text = strings.options.advanced.backup.backupBox.tooltip[1] },
+			[2] = { text = "\n" .. strings.options.advanced.backup.backupBox.tooltip[2]:gsub("#ENTER", strings.keys.enter) },
+			[3] = { text = strings.options.advanced.backup.backupBox.tooltip[3], color = { r = 0.89, g = 0.65, b = 0.40 } },
+			[4] = { text = "\n" .. strings.options.advanced.backup.backupBox.tooltip[4], color = { r = 0.92, g = 0.34, b = 0.23 } },
 		},
 		scrollSpeed = 60,
 		onEnterPressed = function() StaticPopup_Show(importPopup) end,
@@ -2243,7 +2251,7 @@ local function CreateBackupOptions(parentFrame)
 			offset = { x = -8, y = -13 }
 		},
 		label = strings.options.advanced.backup.compact.label,
-		tooltip = strings.options.advanced.backup.compact.tooltip,
+		tooltip = { [0] = { text = strings.options.advanced.backup.compact.tooltip }, },
 		onClick = function(self)
 			options.backup.string:SetText(wt.TableToString({ account = db, character = dbc }, self:GetChecked(), true))
 			--Set focus after text change to set the scroll to the top and refresh the position character counter
@@ -2266,7 +2274,7 @@ local function CreateBackupOptions(parentFrame)
 		},
 		width = 80,
 		label = strings.options.advanced.backup.load.label,
-		tooltip = strings.options.advanced.backup.load.tooltip,
+		tooltip = { [0] = { text = strings.options.advanced.backup.load.tooltip }, },
 		onClick = function() StaticPopup_Show(importPopup) end,
 	})
 	--Button: Reset
@@ -2280,7 +2288,7 @@ local function CreateBackupOptions(parentFrame)
 		},
 		width = 80,
 		label = strings.options.advanced.backup.reset.label,
-		tooltip = strings.options.advanced.backup.reset.tooltip,
+		tooltip = { [0] = { text = strings.options.advanced.backup.reset.tooltip }, },
 		onClick = function()
 			options.backup.string:SetText("") --Remove text to make sure OnTextChanged will get called
 			options.backup.string:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true))
@@ -2344,7 +2352,7 @@ end
 local function DefaultOptions()
 	if db.enhancement.enabled ~= dbDefault.enhancement.enabled then
 		wt.CreateReloadNotice()
-		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.integration.notice, colors.blue[0]))
+		print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.integration.notice, colors.blue[0]))
 	end
 	--Reset the DBs
 	RemainingXPDB = wt.Clone(dbDefault)
@@ -2368,7 +2376,7 @@ local function DefaultOptions()
 	UIDropDownMenu_SetSelectedValue(options.visibility.presets, 0)
 	UIDropDownMenu_SetText(options.visibility.presets, presets[0].name)
 	--Notification
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.options.defaults, colors.blue[0]))
+	print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.options.defaults, colors.blue[0]))
 end
 
 --Create and add the options category panel frames to the WoW Interface Options
@@ -2449,19 +2457,19 @@ end
 ---@param load boolean [Default: false]
 local function PrintStatus(load)
 	if load == true and not db.notifications.statusNotice.enabled then return end
-	local status = Color(addon .. ":", colors.purple[0]) .. " " .. Color(
+	local status = wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(
 		remXP:IsVisible() and strings.chat.status.visible or strings.chat.status.hidden, colors.blue[0]
 	):gsub(
-		"#FADE", Color(strings.chat.status.fade:gsub(
-			"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
+		"#FADE", wt.Color(strings.chat.status.fade:gsub(
+			"#STATE", wt.Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
 		), colors.blue[1])
 	)
 	if dbc.disabled then
 		if db.notifications.statusNotice.maxReminder then
-			status = Color(strings.chat.status.disabled:gsub(
-				"#ADDON", Color(addon, colors.purple[0])
-			) .." " ..  Color(strings.chat.status.max:gsub(
-				"#MAX", Color(GetMaxLevelForPlayerExpansion(), colors.purple[1])
+			status = wt.Color(strings.chat.status.disabled:gsub(
+				"#ADDON", wt.Color(addon, colors.purple[0])
+			) .." " ..  wt.Color(strings.chat.status.max:gsub(
+				"#MAX", wt.Color(GetMax(), colors.purple[1])
 			), colors.blue[1]), colors.blue[0])
 		else return end
 	end
@@ -2469,14 +2477,14 @@ local function PrintStatus(load)
 end
 --Print help info
 local function PrintInfo()
-	print(Color(strings.chat.help.thanks:gsub("#ADDON", Color(addon, colors.purple[0])), colors.blue[0]))
+	print(wt.Color(strings.chat.help.thanks:gsub("#ADDON", wt.Color(addon, colors.purple[0])), colors.blue[0]))
 	PrintStatus()
-	print(Color(strings.chat.help.hint:gsub( "#HELP_COMMAND", Color(strings.chat.keyword .. " " .. strings.chat.help.command, colors.purple[2])), colors.blue[2]))
-	print(Color(strings.chat.help.move:gsub("#SHIFT", Color(strings.keys.shift, colors.purple[2])):gsub("#ADDON", addon), colors.blue[2]))
+	print(wt.Color(strings.chat.help.hint:gsub( "#HELP_COMMAND", wt.Color(strings.chat.keyword .. " " .. strings.chat.help.command, colors.purple[2])), colors.blue[2]))
+	print(wt.Color(strings.chat.help.move:gsub("#SHIFT", wt.Color(strings.keys.shift, colors.purple[2])):gsub("#ADDON", addon), colors.blue[2]))
 end
 --Print the command list with basic functionality info
 local function PrintCommands()
-	print(Color(addon, colors.purple[0]) .. " ".. Color(strings.chat.help.list .. ":", colors.blue[0]))
+	print(wt.Color(addon, colors.purple[0]) .. " ".. wt.Color(strings.chat.help.list .. ":", colors.blue[0]))
 	--Index the commands (skipping the help command) and put replacement code segments in place
 	local commands = {
 		[0] = {
@@ -2490,25 +2498,25 @@ local function PrintCommands()
 		[2] = {
 			command = strings.chat.preset.command,
 			description = strings.chat.preset.description:gsub(
-				"#INDEX", Color(strings.chat.preset.command .. " " .. 0, colors.purple[2])
+				"#INDEX", wt.Color(strings.chat.preset.command .. " " .. 0, colors.purple[2])
 			)
 		},
 		[3] = {
 			command = strings.chat.toggle.command,
 			description = strings.chat.toggle.description:gsub(
-				"#HIDDEN", Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.notHidden, colors.purple[2])
+				"#HIDDEN", wt.Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[2])
 			)
 		},
 		[4] = {
 			command = strings.chat.fade.command,
 			description = strings.chat.fade.description:gsub(
-				"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[2])
+				"#STATE", wt.Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[2])
 			)
 		},
 		[5] = {
 			command = strings.chat.size.command,
 			description =  strings.chat.size.description:gsub(
-				"#SIZE", Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[2])
+				"#SIZE", wt.Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[2])
 			)
 		},
 		[6] = {
@@ -2518,7 +2526,7 @@ local function PrintCommands()
 	}
 	--Print the list
 	for i = 0, #commands do
-		print("    " .. Color(strings.chat.keyword .. " " .. commands[i].command, colors.purple[2]) .. Color(" - " .. commands[i].description, colors.blue[2]))
+		print("    " .. wt.Color(strings.chat.keyword .. " " .. commands[i].command, colors.purple[2]) .. wt.Color(" - " .. commands[i].description, colors.blue[2]))
 	end
 end
 
@@ -2535,7 +2543,7 @@ local function SaveCommand()
 	--Update in the SavedVariabes DB
 	RemainingXPDB.customPreset = wt.Clone(db.customPreset)
 	--Response
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.save.response, colors.blue[0]))
+	print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.save.response, colors.blue[0]))
 end
 local function PresetCommand(parameter)
 	local i = tonumber(parameter)
@@ -2579,20 +2587,20 @@ local function PresetCommand(parameter)
 			RemainingXPDB.display.background.size = wt.Clone(db.display.background.size)
 			RemainingXPDB.display.visibility.frameStrata = db.display.visibility.frameStrata
 			--Response
-			print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.preset.response:gsub(
-				"#PRESET", Color(presets[i].name, colors.purple[1])
+			print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.preset.response:gsub(
+				"#PRESET", wt.Color(presets[i].name, colors.purple[1])
 			), colors.blue[0]))
 		else
 			PrintStatus()
 		end
 	else
 		--Error
-		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.preset.unchanged, colors.blue[0]))
-		print(Color(strings.chat.preset.error:gsub("#INDEX", Color(strings.chat.preset.command .. " " .. 0, colors.purple[1])), colors.blue[1]))
-		print(Color(strings.chat.preset.list, colors.purple[2]))
+		print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.preset.unchanged, colors.blue[0]))
+		print(wt.Color(strings.chat.preset.error:gsub("#INDEX", wt.Color(strings.chat.preset.command .. " " .. 0, colors.purple[1])), colors.blue[1]))
+		print(wt.Color(strings.chat.preset.list, colors.purple[2]))
 		for i = 0, #presets, 2 do
-			local list = "    " .. Color(i, colors.purple[2]) .. Color(" - " .. presets[i].name, colors.blue[2])
-			if i + 1 <= #presets then list = list .. "    " .. Color(i + 1, colors.purple[2]) .. Color(" - " .. presets[i + 1].name, colors.blue[2]) end
+			local list = "    " .. wt.Color(i, colors.purple[2]) .. wt.Color(" - " .. presets[i].name, colors.blue[2])
+			if i + 1 <= #presets then list = list .. "    " .. wt.Color(i + 1, colors.purple[2]) .. wt.Color(" - " .. presets[i + 1].name, colors.blue[2]) end
 			print(list)
 		end
 	end
@@ -2604,8 +2612,8 @@ local function ToggleCommand()
 	options.visibility.hidden:SetChecked(dbc.hidden)
 	options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.toggle.response:gsub(
-		"#STATE", Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[1])
+	print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.toggle.response:gsub(
+		"#STATE", wt.Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[1])
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
@@ -2618,8 +2626,8 @@ local function FadeCommand()
 	options.visibility.fade.toggle:SetChecked(db.display.visibility.fade.enabled)
 	options.visibility.fade.toggle:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.fade.response:gsub(
-		"#STATE", Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
+	print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.fade.response:gsub(
+		"#STATE", wt.Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
@@ -2633,12 +2641,12 @@ local function SizeCommand(parameter)
 		--Update the GUI option in case it was open
 		options.text.font.size:SetValue(size)
 		--Response
-		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.response:gsub("#VALUE", Color(size, colors.purple[1])), colors.blue[0]))
+		print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.size.response:gsub("#VALUE", wt.Color(size, colors.purple[1])), colors.blue[0]))
 	else
 		--Error
-		print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.size.unchanged, colors.blue[0]))
-		print(Color(strings.chat.size.error:gsub(
-			"#SIZE", Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[1])
+		print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.size.unchanged, colors.blue[0]))
+		print(wt.Color(strings.chat.size.error:gsub(
+			"#SIZE", wt.Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[1])
 		), colors.blue[1]))
 	end
 	if dbc.disabled then PrintStatus() end
@@ -2652,8 +2660,8 @@ local function IntegrationCommand()
 	options.enhancement.toggle:SetChecked(db.enhancement.enabled)
 	options.enhancement.toggle:SetAttribute("loaded", true) --Update dependent widgets
 	--Response
-	print(Color(addon .. ":", colors.purple[0]) .. " " .. Color(strings.chat.integration.response:gsub(
-		"#STATE", Color(db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
+	print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.integration.response:gsub(
+		"#STATE", wt.Color(db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
 	), colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
 	--Update in the SavedVariabes DB
@@ -2766,13 +2774,25 @@ mainDisplay:SetScript("OnMouseDown", function()
 	if IsShiftKeyDown() and not remXP.isMoving then
 		remXP:StartMoving()
 		remXP.isMoving = true
+		--Stop moving when SHIFT is released
+		mainDisplay:SetScript("OnUpdate", function ()
+			if IsShiftKeyDown() then return end
+			remXP:StopMovingOrSizing()
+			remXP.isMoving = false
+			--Reset the position
+			wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
+			--Chat response
+			print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.position.cancel, colors.blue[0]))
+			print(wt.Color(strings.chat.position.error:gsub("#SHIFT", strings.keys.shift), colors.blue[1]))
+			--Stop checking if SHIFT is pressed
+			mainDisplay:SetScript("OnUpdate", nil)
+		end)
 	end
 end)
 mainDisplay:SetScript("OnMouseUp", function()
-	if remXP.isMoving then
-		remXP:StopMovingOrSizing()
-		remXP.isMoving = false
-	end
+	if not remXP.isMoving then return end
+	remXP:StopMovingOrSizing()
+	remXP.isMoving = false
 	--Save the position (for account-wide use)
 	db.display.position.point, _, _, db.display.position.offset.x, db.display.position.offset.y = remXP:GetPoint()
 	RemainingXPDB.display.position = wt.Clone(db.display.position) --Update in the SavedVariabes DB
@@ -2780,12 +2800,16 @@ mainDisplay:SetScript("OnMouseUp", function()
 	options.position.anchor.setSelected(GetAnchorID(db.display.position.point))
 	options.position.xOffset:SetValue(db.display.position.offset.x)
 	options.position.yOffset:SetValue(db.display.position.offset.y)
+	--Chat response
+	print(wt.Color(addon .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.position.save, colors.blue[0]))
+	--Stop checking if SHIFT is pressed
+	mainDisplay:SetScript("OnUpdate", nil)
 end)
 
 --Toggling the main display tooltip and fade on mouseover
 mainDisplay:SetScript('OnEnter', function()
 	--Show tooltip
-	ns.tooltip = wt.AddTooltip(nil, mainDisplay, "ANCHOR_BOTTOMRIGHT", strings.xpTooltip.title, strings.xpTooltip.text, CreateXPTooltipDetails(), 0, mainDisplay:GetHeight())
+	ns.tooltip = wt.AddTooltip(nil, mainDisplay, "ANCHOR_BOTTOMRIGHT", strings.xpTooltip.title, GetXPTooltipDetails(), 0, mainDisplay:GetHeight())
 	--Fade toggle
 	if db.display.visibility.fade.enabled then Fade(false) end
 end)
@@ -2835,7 +2859,7 @@ integratedDisplay:SetScript("OnEnter", function()
 	integratedDisplayText:Show()
 	UpdateIntegratedDisplay(false)
 	--Show the custom tooltip
-	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_NONE", strings.xpTooltip.title, strings.xpTooltip.text, CreateXPTooltipDetails())
+	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_NONE", strings.xpTooltip.title, GetXPTooltipDetails())
 	ns.tooltip:SetPoint("BOTTOMRIGHT", -11, 115)
 	--Handling trial accounts & Banked XP
 	local label = XPBAR_LABEL
@@ -2886,7 +2910,7 @@ function remXP:ADDON_LOADED(name)
 	LoadInterfaceOptions()
 end
 function remXP:PLAYER_ENTERING_WORLD()
-	dbc.disabled = UnitLevel("player") >= GetMaxLevelForPlayerExpansion()
+	dbc.disabled = UnitLevel("player") >= GetMax()
 	--Update the XP values
 	UpdateXPValues()
 	--Set up the main frame & text
@@ -2922,11 +2946,11 @@ function remXP:PLAYER_XP_UPDATE(unit)
 	UpdateIntegratedDisplay(db.enhancement.remaining)
 	--Notification
 	if db.notifications.xpGained then
-		print(Color(strings.chat.notifications.xpGained.text:gsub(
-			"#AMOUNT", Color(wt.FormatThousands(gainedXP), colors.purple[0])
+		print(wt.Color(strings.chat.notifications.xpGained.text:gsub(
+			"#AMOUNT", wt.Color(wt.FormatThousands(gainedXP), colors.purple[0])
 		):gsub(
-			"#REMAINING", Color(strings.chat.notifications.xpGained.remaining:gsub(
-				"#AMOUNT", Color(wt.FormatThousands(csc.xp.remaining), colors.purple[2])
+			"#REMAINING", wt.Color(strings.chat.notifications.xpGained.remaining:gsub(
+				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.remaining), colors.purple[2])
 			):gsub(
 				"#NEXT", UnitLevel("player") + 1
 			), colors.blue[2])
@@ -2938,26 +2962,26 @@ end
 
 --Level up update
 function remXP:PLAYER_LEVEL_UP(newLevel)
-	local max = GetMaxLevelForPlayerExpansion()
+	local max = GetMax()
 	dbc.disabled = newLevel >= max
 	if dbc.disabled then
 		--Hide the displays
 		remXP:hide()
 		integratedDisplay:hide()
 		--Notification
-		print(Color(strings.chat.notifications.lvlUp.disabled.text:gsub(
-			"#ADDON", Color(addon, colors.purple[0])
+		print(wt.Color(strings.chat.notifications.lvlUp.disabled.text:gsub(
+			"#ADDON", wt.Color(addon, colors.purple[0])
 		):gsub(
-			"#REASON", Color(strings.chat.notifications.lvlUp.disabled.reason:gsub(
+			"#REASON", wt.Color(strings.chat.notifications.lvlUp.disabled.reason:gsub(
 				"#MAX", max
 			), colors.blue[2])
 		) .. " " .. strings.chat.notifications.lvlUp.congrats, colors.blue[0]))
 	else
 		--Notification
 		if db.notifications.lvlUp.congrats then
-			print(Color(strings.chat.notifications.lvlUp.text:gsub(
-				"#LEVEL", Color(newLevel, colors.purple[0])
-			) .. " " .. Color(strings.chat.notifications.lvlUp.congrats, colors.purple[2]), colors.blue[0]))
+			print(wt.Color(strings.chat.notifications.lvlUp.text:gsub(
+				"#LEVEL", wt.Color(newLevel, colors.purple[0])
+			) .. " " .. wt.Color(strings.chat.notifications.lvlUp.congrats, colors.purple[2]), colors.blue[0]))
 			if db.notifications.lvlUp.timePlayed then RequestTimePlayed() end
 		end
 		--Tooltip
@@ -2976,13 +3000,13 @@ function remXP:UPDATE_EXHAUSTION()
 	UpdateIntegratedDisplay(db.enhancement.remaining)
 	--Notification
 	if db.notifications.restedXP.gained and not (db.notifications.restedXP.significantOnly and gainedRestedXP < 10) then
-		print(Color(strings.chat.notifications.restedXPGained.text:gsub(
-				"#AMOUNT", Color(gainedRestedXP, colors.purple[0])
+		print(wt.Color(strings.chat.notifications.restedXPGained.text:gsub(
+				"#AMOUNT", wt.Color(gainedRestedXP, colors.purple[0])
 			):gsub(
-				"#TOTAL", Color(wt.FormatThousands(csc.xp.rested), colors.purple[0])
+				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), colors.purple[0])
 			):gsub(
-				"#PERCENT", Color(strings.chat.notifications.restedXPGained.percent:gsub(
-					"#VALUE", Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 100000) / 1000, 3) .. "%%%%", colors.purple[2])
+				"#PERCENT", wt.Color(strings.chat.notifications.restedXPGained.percent:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 100000) / 1000, 3) .. "%%%%", colors.purple[2])
 				), colors.blue[2])
 			), colors.blue[0])
 		)
@@ -2996,19 +3020,19 @@ function remXP:PLAYER_UPDATE_RESTING()
 	if dbc.disabled then return end
 	--Notification
 	if db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and not IsResting() then
-		local s = Color(strings.chat.notifications.restedXPAccumulated.leave, colors.purple[0])
-		if (csc.xp.accumulatedRested or 0) > 0 then s = s .. " " .. Color(strings.chat.notifications.restedXPAccumulated.accumulated:gsub(
-				"#AMOUNT", Color(wt.FormatThousands(csc.xp.accumulatedRested), colors.purple[0])
+		local s = wt.Color(strings.chat.notifications.restedXPAccumulated.leave, colors.purple[0])
+		if (csc.xp.accumulatedRested or 0) > 0 then s = s .. " " .. wt.Color(strings.chat.notifications.restedXPAccumulated.accumulated:gsub(
+				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested), colors.purple[0])
 			):gsub(
-				"#TOTAL", Color(wt.FormatThousands(csc.xp.rested), colors.purple[0])
+				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), colors.purple[0])
 			):gsub(
-				"#PERCENT", Color(strings.chat.notifications.restedXPAccumulated.percent:gsub(
-					"#VALUE", Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%", colors.purple[2])
+				"#PERCENT", wt.Color(strings.chat.notifications.restedXPAccumulated.percent:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%", colors.purple[2])
 				):gsub(
-					"#NEXT", Color(UnitLevel("player") + 1, colors.purple[2])
+					"#NEXT", wt.Color(UnitLevel("player") + 1, colors.purple[2])
 				), colors.blue[2])
 			), colors.blue[0])
-		else s = s .. " " .. Color(strings.chat.notifications.restedXPAccumulated.noAccumulation, colors.blue[0]) end
+		else s = s .. " " .. wt.Color(strings.chat.notifications.restedXPAccumulated.noAccumulation, colors.blue[0]) end
 		print(s)
 	end
 	--Initiate or remove the cross-session Rested XP accumulation tracking variable

@@ -133,6 +133,20 @@ local changelogDB = {
 		[2] = "The dropdown menu of the XP display anchor point selection was been changed to a group of radio buttons.",
 		[3] = "Other small changes & fixes.",
 	},
+	[12] = {
+		[0] = "#V_Version 2.0.4_# #H_(3/23/2022)_#",
+		[1] = "#N_Update:_#",
+		[2] = "New hints have been added to the XP display tooltip.",
+		[3] = "Chat responses have been added when the XP display is dragged to confirm when the position is saved.",
+		[4] = "Added 2.5.4 (BCC) support.",
+		[5] = "#C_Change:_#",
+		[6] = "The repositioning of the XP display will now be cancelled when SHIFT is released before the mouse button.",
+		[7] = "The tooltips have been adjusted to fit in more with the base UI.",
+		[8] = "#F_Hotfix:_#",
+		[9] = "Fixed an issue with appearing when listing out the chat command list.",
+		[10] = "Other small changes & fixes.",
+		[11] = "#H_If you encounter any issues, please, consider reporting them! Try to include when/how they occur, and which addons are you using to give me the best chance to be able to reproduce and fix them._#",
+	},
 }
 
 ns.GetChangelog = function()
@@ -500,27 +514,27 @@ local english = {
 		},
 		save = {
 			command = "save",
-			description = "save the current display setup as the Custom preset",
-			response = "The current position, background size and visibility of the main display were saved to the Custom preset.",
+			description = "save the current XP display setup as the Custom preset",
+			response = "The current position, background size and visibility of the main XP display were saved to the Custom preset.",
 		},
 		preset = {
 			command = "preset",
-			description = "apply a specified display preset (e.g. #INDEX)", --# flags will be replaced with code
-			response = "The #PRESET display preset was applied.", --# flags will be replaced with code
+			description = "apply a specified XP display preset (e.g. #INDEX)", --# flags will be replaced with code
+			response = "The #PRESET XP display preset was applied.", --# flags will be replaced with code
 			unchanged = "The preset could not be applied, the display is unchanged.",
 			error = "Please enter a valid preset index (e.g. #INDEX).", --# flags will be replaced with code
 			list = "The following presets are available:",
 		},
 		toggle = {
 			command = "toggle",
-			description = "show or hide the XP value display (#HIDDEN)", --# flags will be replaced with code
+			description = "show or hide the XP display (#HIDDEN)", --# flags will be replaced with code
 			response = "The XP display visibility was set to #STATE.",
 			hidden = "hidden",
 			shown = "shown",
 		},
 		fade = {
 			command = "fade",
-			description = "fade the display when it's not hovered (#STATE)", --# flags will be replaced with code
+			description = "fade the XP display when it's not hovered (#STATE)", --# flags will be replaced with code
 			response = "The XP display fade was set to #STATE.", --# flags will be replaced with code
 		},
 		size = {
@@ -535,6 +549,11 @@ local english = {
 			description = "show detailed XP info on the default XP bar",
 			response = "The XP bar enhancement integration set to #STATE.", --# flags will be replaced with code
 			notice = "Please, reload the interface to apply pending changes to the XP bar enhancement integration.",
+		},
+		position = {
+			save = "The XP display position was saved.",
+			cancel = "The repositioning of the XP display was cancelled.",
+			error = "Hold #SHIFT until the mouse button is released to save the position.", --# flags will be replaced with code
 		},
 	},
 	xpTooltip = {
@@ -552,6 +571,8 @@ local english = {
 		accumulated = "Accumulated #VALUE Rested XP so far while resting in this area.", --# flags will be replaced with code
 		banked = "Banked XP: #DATA", --# flags will be replaced with code
 		valueBanked = "#VALUE (#LEVELS banked levels).", --# flags will be replaced with code
+		hintOptions = "Right-click to open specific options.",
+		hintMove = "Hold #SHIFT & drag to reposition.", --# flags will be replaced with code
 	},
 	xpBar = {
 		text = "XP: #CURRENT / #NEEDED (#REMAINING Remaining)", --# flags will be replaced with code
