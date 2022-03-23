@@ -1,10 +1,6 @@
 ***A simple solution to a simple problem:*** Remaining XP tracks your XP gains & calculates the remaining XP value. It also offers a customizable XP display, text integration for the default XP bar, chat notifications tracking your Rested XP accumulation & more.
 
 ## Features
-* See your own movement speed in a customizable and repositionable display.
-* View the movement speed of other players or NPCs by mousing over them within the inspect tooltip.
-* Set up Movement Speed via the Interface Options or the **/movespeed** chat command *(some settings are not available as chat commands)*.
-
 * Get more information on your XP status - how much XP you need exactly, how many Rested XP you have accumulated & more.
 * Includes a fully customizable, repositionable and resizable optional custom XP bar, an optional enhancement of the default XP bar text, detailed XP tooltip, chat notifications, & much more!
 * Set up Remaining XP via the Interface Options or the **/remxp** chat command *(some settings are not available as chat commands)*.
