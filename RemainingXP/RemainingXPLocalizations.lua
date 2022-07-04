@@ -147,6 +147,14 @@ local changelogDB = {
 		[10] = "Other small changes & fixes.",
 		[11] = "#H_If you encounter any issues, please, consider reporting them! Try to include when/how they occur, and which addons are you using to give me the best chance to be able to reproduce and fix them._#",
 	},
+	[13] = {
+		[0] = "#V_Version 2.0.5_# #H_(7/9/2022)_#",
+		[1] = "#N_Update:_#",
+		[2] = "Added 9.2.5 (Retail) and 1.14.3 (Classic) support.",
+		[3] = "Numerous under the hood changes & improvements.",
+		[4] = "#F_Fix:_#",
+		[5] = "The integrated display will now readjust when the Honor bar appears/disappears when entering/leaving Arena or a Battleground.",
+	},
 }
 
 ns.GetChangelog = function()
