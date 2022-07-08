@@ -343,6 +343,7 @@ remXP:RegisterEvent("UPDATE_EXHAUSTION")
 remXP:RegisterEvent("PLAYER_UPDATE_RESTING")
 remXP:RegisterEvent("PET_BATTLE_OPENING_START")
 remXP:RegisterEvent("PET_BATTLE_CLOSE")
+remXP:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
 
 --Event handler
 remXP:SetScript("OnEvent", function(self, event, ...)
@@ -878,9 +879,7 @@ local function SetIntegrationVisibility(enabled, keep, remaining, cvar, notice)
 				wt.CreateReloadNotice()
 			end
 		end
-	else
-		integratedDisplay:Hide()
-	end
+	else integratedDisplay:Hide() end
 end
 
 ---Check whether a reputation is being tracked or not
@@ -1260,7 +1259,7 @@ local function CreatePositionOptions(parentFrame)
 	local anchorItems = {}
 	for i = 0, #anchors do
 		anchorItems[i] = {}
-		anchorItems[i].label = anchors[i].name
+		anchorItems[i].title = anchors[i].name
 		anchorItems[i].onSelect = function()
 			wt.PositionFrame(remXP, anchors[i].point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue())
 			--Clear the presets dropdown selection
@@ -2796,21 +2795,31 @@ local function SetUpIntegratedFrame()
 	integratedDisplay:SetPoint("BOTTOM")
 	integratedDisplay:SetFrameStrata("HIGH")
 	integratedDisplay:SetToplevel(true)
-	integratedDisplay:SetSize(MainMenuBarArtFrame:GetWidth(), CheckRepBarStatus() and 10 or 14)
 	integratedDisplayText:SetPoint("CENTER", 0, 1)
+	integratedDisplay:SetSize(MainMenuBarArtFrame:GetWidth(), CheckRepBarStatus() and 10 or 14)
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, false)
 	--Size updates
 	InterfaceOptionsActionBarsPanelBottomRight:HookScript("OnClick", function() integratedDisplay:SetWidth(MainMenuBarArtFrame:GetWidth()) end)
-	ReputationDetailMainScreenCheckBox:HookScript("OnClick", function() integratedDisplay:SetHeight(ReputationDetailMainScreenCheckBox:GetChecked() and 10 or 14) end)
-	if IsAddOnLoaded("RepHelper") then RPH_ReputationDetailMainScreenCheckBox:HookScript("OnClick", function()
-		integratedDisplay:SetHeight(not RPH_ReputationDetailMainScreenCheckBox:GetChecked() and 10 or 14) --TODO: Only works when flipped, look into it
+	ReputationDetailMainScreenCheckBox:HookScript("OnClick", function()
+		wt.SetVisibility(integratedDisplay, not (ReputationDetailMainScreenCheckBox:GetChecked() and C_PvP.IsActiveBattlefield()))
+		integratedDisplay:SetHeight((ReputationDetailMainScreenCheckBox:GetChecked() or C_PvP.IsActiveBattlefield()) and 10 or 14)
+	end)
+	if IsAddOnLoaded("RepHelper") then RPH_ReputationDetailMainScreenCheckBox:HookScript("OnClick", function() --TODO: Only works when flipped, look into it
+		wt.SetVisibility(integratedDisplay, RPH_ReputationDetailMainScreenCheckBox:GetChecked() or not C_PvP.IsActiveBattlefield())
+		integratedDisplay:SetHeight((not RPH_ReputationDetailMainScreenCheckBox:GetChecked() or C_PvP.IsActiveBattlefield()) and 10 or 14)
 	end) end
-	if IsActiveBattlefieldArena() then integratedDisplay:SetHeight(10) end
 	--Context menu
 	wt.CreateContextMenu({
 		parent = integratedDisplay,
 		menu = CreateContextMenuItems(),
 	})
+end
+
+--Update the integrated frame during PvP
+function remXP:UPDATE_BATTLEFIELD_STATUS()
+	--Update the integrated display
+	integratedDisplay:SetSize(MainMenuBarArtFrame:GetWidth(), (CheckRepBarStatus() or C_PvP.IsActiveBattlefield()) and 10 or 14)
+	wt.SetVisibility(integratedDisplay, not (CheckRepBarStatus() and C_PvP.IsActiveBattlefield()))
 end
 
 --Set up the OnEnter and OnLeave functions for the custom integrated frame

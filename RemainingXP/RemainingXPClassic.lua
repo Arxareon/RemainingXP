@@ -1203,7 +1203,7 @@ local function CreatePositionOptions(parentFrame)
 	local anchorItems = {}
 	for i = 0, #anchors do
 		anchorItems[i] = {}
-		anchorItems[i].label = anchors[i].name
+		anchorItems[i].title = anchors[i].name
 		anchorItems[i].onSelect = function()
 			wt.PositionFrame(remXP, anchors[i].point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue())
 			--Clear the presets dropdown selection
@@ -2731,8 +2731,8 @@ local function SetUpIntegratedFrame()
 	integratedDisplay:SetPoint("CENTER", MainMenuExpBar, "CENTER", 0, 0)
 	integratedDisplay:SetFrameStrata("HIGH")
 	integratedDisplay:SetToplevel(true)
-	integratedDisplay:SetSize(MainMenuExpBar:GetWidth(), MainMenuExpBar:GetHeight())
 	integratedDisplayText:SetPoint("CENTER", 0, 1)
+	integratedDisplay:SetSize(MainMenuExpBar:GetWidth(), MainMenuExpBar:GetHeight())
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, false)
 	--Context menu
 	wt.CreateContextMenu({
