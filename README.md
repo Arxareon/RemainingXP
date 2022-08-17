@@ -4,7 +4,7 @@
 
 ### Features
 - Get more information on your XP status - how much XP do you need exactly to level up, how many Rested XP you have accumulated while being in a rested area (even while offline) & more.
-- Includes a fully customizable, repositionable and resizable optional custom XP bar, a togglable enhancement of the default XP bar text providing useful info in a minimalistic fashion both granting access to a detailed XP tooltip.
+- Includes a fully customizable, repositionable & resizable custom XP bar, an enhancement for the default XP bar text providing useful info in a minimalistic fashion, both granting access to a detailed XP tooltip.
 - Get chat notifications for XP updates if you wish (with detailed event logging coming soon as well).
 - Set up Remaining XP via the Interface Options or the **/remxp** chat command *(some settings are not available as chat commands)*.
 - Includes multi-version support for Retail, Classic and Burning Crusade Classic!
