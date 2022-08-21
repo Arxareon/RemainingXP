@@ -7,7 +7,7 @@
 - Includes a fully customizable, repositionable & resizable custom XP bar, an enhancement for the default XP bar text providing useful info in a minimalistic fashion, both granting access to a detailed XP tooltip.
 - Get chat notifications for XP updates if you wish (with detailed event logging coming soon as well).
 - Set up Remaining XP in the Interface Options, access select options via the **/remxp** chat command.
-- Includes multi-version support for Retail, Classic and Burning Crusade Classic!
+- Includes multi-version support for Retail, Classic, Burning Crusade Classic and Wrath of the Lich King Classic!
 
 ## Other Addons
 *If you like minimalistic solutions, you might want to check out these Addons as well:*
