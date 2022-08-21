@@ -1082,14 +1082,14 @@ local function CreateSupportInfo(parentFrame)
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
 		colorOnMouse = { r = 0.75, g = 0.95, b = 1, a = 1 },
 	})
-	--Copybox: BitBucket
+	--Copybox: Repository
 	wt.CreateCopyBox({
 		parent = parentFrame,
-		name = "BitBucket",
-		title = strings.options.main.support.bitBucket .. ":",
+		name = "Repository",
+		title = strings.options.main.support.repository .. ":",
 		position = { offset = { x = 16, y = -70 } },
 		width = parentFrame:GetWidth() / 2 - 22,
-		text = "bitbucket.org/Arxareon/remaining-xp",
+		text = "github.com/Arxareon/RemainingXP",
 		template = "GameFontNormalSmall",
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
 		colorOnMouse = { r = 0.75, g = 0.95, b = 1, a = 1 },
@@ -1104,7 +1104,7 @@ local function CreateSupportInfo(parentFrame)
 			offset = { x = (parentFrame:GetWidth() / 2 - 22) / 2 + 8, y = -70 }
 		},
 		width = parentFrame:GetWidth() / 2 - 22,
-		text = "bitbucket.org/Arxareon/remaining-xp/issues",
+		text = "github.com/Arxareon/RemainingXP/issues",
 		template = "GameFontNormalSmall",
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
 		colorOnMouse = { r = 0.75, g = 0.95, b = 1, a = 1 },
@@ -1160,8 +1160,9 @@ local function CreateQuickOptions(parentFrame)
 		position = { offset = { x = 8, y = -30 } },
 		onClick = function(self) wt.SetVisibility(remXP, not (self:GetChecked() or dbc.disabled)) end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = dbc,
-			key = "hidden",
+			storageKey = "hidden",
 		},
 	})
 	--Dropdown: Apply a preset
@@ -1217,10 +1218,13 @@ local function CreateQuickOptions(parentFrame)
 		width = 160,
 		items = presetItems,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
-		onLoad = function(self)
-			UIDropDownMenu_SetSelectedValue(self, nil)
-			UIDropDownMenu_SetText(self, strings.options.display.quick.presets.select)
-		end,
+		optionsData = {
+			optionsKey = addonNameSpace,
+			onLoad = function(self)
+				UIDropDownMenu_SetSelectedValue(self, nil)
+				UIDropDownMenu_SetText(self, strings.options.display.quick.presets.select)
+			end,
+		},
 	})
 	--Button & Popup: Save Custom preset
 	local savePopup = wt.CreatePopup({
@@ -1278,8 +1282,9 @@ local function CreatePositionOptions(parentFrame)
 		columns = 3,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.position,
-			key = "point",
+			storageKey = "point",
 			convertSave = function(value) return anchors[value].point end,
 			convertLoad = function(point) return GetAnchorID(point) end,
 		},
@@ -1303,8 +1308,9 @@ local function CreatePositionOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.position.offset,
-			key = "x",
+			storageKey = "x",
 		},
 	})
 	--Slider: Y offset
@@ -1326,8 +1332,9 @@ local function CreatePositionOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.position.offset,
-			key = "y",
+			storageKey = "y",
 		},
 	})
 end
@@ -1351,8 +1358,9 @@ local function CreateTextOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.text,
-			key = "visible",
+			storageKey = "visible",
 		},
 	})
 	--Checkbox: Details
@@ -1375,8 +1383,9 @@ local function CreateTextOptions(parentFrame)
 			[1] = { frame = options.text.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.text,
-			key = "details",
+			storageKey = "details",
 		},
 	})
 	--Dropdown: Font family
@@ -1411,8 +1420,9 @@ local function CreateTextOptions(parentFrame)
 			[1] = { frame = options.text.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.text.font,
-			key = "family",
+			storageKey = "family",
 			convertSave = function(value) return fonts[value].path end,
 			convertLoad = function(font) return GetFontID(font) end,
 		},
@@ -1434,8 +1444,9 @@ local function CreateTextOptions(parentFrame)
 			[1] = { frame = options.text.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.text.font,
-			key = "size",
+			storageKey = "size",
 		},
 	})
 	--Color Picker: Font color
@@ -1463,8 +1474,9 @@ local function CreateTextOptions(parentFrame)
 			[1] = { frame = options.text.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.text.font,
-			key = "color",
+			storageKey = "color",
 		},
 	})
 end
@@ -1494,8 +1506,9 @@ local  function CreateBackgroundOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background,
-			key = "visible",
+			storageKey = "visible",
 		},
 	})
 	--Slider: Background width
@@ -1520,8 +1533,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			[1] = { frame = options.background.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background.size,
-			key = "width",
+			storageKey = "width",
 		},
 	})
 	--Slider: Background height
@@ -1546,8 +1560,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			[1] = { frame = options.background.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background.size,
-			key = "height",
+			storageKey = "height",
 		},
 	})
 	--Color Picker: Background color
@@ -1575,8 +1590,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			[1] = { frame = options.background.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background.colors,
-			key = "bg",
+			storageKey = "bg",
 		},
 	})
 	--Color Picker: Border color
@@ -1607,8 +1623,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			[1] = { frame = options.background.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background.colors,
-			key = "border",
+			storageKey = "border",
 		},
 	})
 	--Color Picker: XP color
@@ -1639,8 +1656,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			[1] = { frame = options.background.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background.colors,
-			key = "xp",
+			storageKey = "xp",
 		},
 	})
 	--Color Picker: Rested color
@@ -1671,8 +1689,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			[1] = { frame = options.background.visible },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.background.colors,
-			key = "rested",
+			storageKey = "rested",
 		},
 	})
 end
@@ -1693,8 +1712,9 @@ local function CreateVisibilityOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility,
-			key = "frameStrata",
+			storageKey = "frameStrata",
 			convertSave = function(enabled) return enabled and "HIGH" or "MEDIUM" end,
 			convertLoad = function(strata) return strata == "HIGH" end,
 		},
@@ -1720,8 +1740,9 @@ local function CreateVisibilityOptions(parentFrame)
 			[2] = { frame = options.background.visible, evaluate = function(state) return state or options.text.visible:GetChecked() end, },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility.fade,
-			key = "enabled",
+			storageKey = "enabled",
 		},
 	})
 	--Slider: Text fade intensity
@@ -1745,8 +1766,9 @@ local function CreateVisibilityOptions(parentFrame)
 			[2] = { frame = options.visibility.fade.toggle },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility.fade,
-			key = "text",
+			storageKey = "text",
 		},
 	})
 	--Slider: Background fade intensity
@@ -1770,8 +1792,9 @@ local function CreateVisibilityOptions(parentFrame)
 			[2] = { frame = options.visibility.fade.toggle },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility.fade,
-			key = "background",
+			storageKey = "background",
 		},
 	})
 end
@@ -1859,8 +1882,9 @@ local function CreateEnhancementOptions(parentFrame)
 			db.enhancement.enabled = value
 		end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.enhancement,
-			key = "enabled",
+			storageKey = "enabled",
 		},
 	})
 	--Checkbox: Keep text
@@ -1881,8 +1905,9 @@ local function CreateEnhancementOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.enhancement.toggle }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.enhancement,
-			key = "keep",
+			storageKey = "keep",
 		},
 	})
 	--Checkbox: Keep only remaining XP text
@@ -1906,8 +1931,9 @@ local function CreateEnhancementOptions(parentFrame)
 			[1] = { frame = options.enhancement.keep },
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.enhancement,
-			key = "remaining",
+			storageKey = "remaining",
 		},
 	})
 end
@@ -1922,8 +1948,9 @@ local function CreateRemovalsOptions(parentFrame)
 		autoOffset = true,
 		onClick = function(self) wt.SetVisibility(StatusTrackingBarManager, not self:GetChecked()) end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.removals,
-			key = "statusBars",
+			storageKey = "statusBars",
 		},
 	})
 end
@@ -1965,8 +1992,9 @@ local function CreateNotificationsOptions(parentFrame)
 		position = { offset = { x = 8, y = -30 } },
 		onClick = function(self) db.notifications.xpGained = self:GetChecked() end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications,
-			key = "xpGained",
+			storageKey = "xpGained",
 		},
 	})
 	--Checkbox: Rested XP gained
@@ -1982,8 +2010,9 @@ local function CreateNotificationsOptions(parentFrame)
 		},
 		onClick = function(self) db.notifications.restedXP.gained = self:GetChecked() end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications.restedXP,
-			key = "gained",
+			storageKey = "gained",
 		},
 	})
 	--Checkbox: Significant Rested XP updates only
@@ -2000,8 +2029,9 @@ local function CreateNotificationsOptions(parentFrame)
 		onClick = function(self) db.notifications.restedXP.significantOnly = self:GetChecked() end,
 		dependencies = { [0] = { frame = options.notifications.restedXPGained }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications.restedXP,
-			key = "significantOnly",
+			storageKey = "significantOnly",
 		},
 	})
 	--Checkbox: Accumulated Rested XP
@@ -2028,8 +2058,9 @@ local function CreateNotificationsOptions(parentFrame)
 		end,
 		dependencies = { [0] = { frame = options.notifications.restedXPGained }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications.restedXP,
-			key = "accumulated",
+			storageKey = "accumulated",
 		},
 	})
 	--Checkbox: Level up
@@ -2045,8 +2076,9 @@ local function CreateNotificationsOptions(parentFrame)
 		tooltip = { [0] = { text = strings.options.events.notifications.lvlUp.tooltip }, },
 		onClick = function(self) db.notifications.lvlUp.congrats = self:GetChecked() end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications.lvlUp,
-			key = "congrats",
+			storageKey = "congrats",
 		},
 	})
 	--Checkbox: Time played
@@ -2066,8 +2098,9 @@ local function CreateNotificationsOptions(parentFrame)
 		-- 	[0] = { frame = options.notifications.lvlUp },
 		-- },
 		-- optionsData = {
+		-- 	optionsKey = addonNameSpace,
 		-- 	storageTable = db.notifications.lvlUp,
-		-- 	key = "timePlayed",
+		-- 	storageKey = "timePlayed",
 		-- },
 	})
 	--Checkbox: Status notice
@@ -2082,8 +2115,9 @@ local function CreateNotificationsOptions(parentFrame)
 			offset = { y = -4 }
 		},
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications.statusNotice,
-			key = "enabled",
+			storageKey = "enabled",
 		},
 	})
 	--Checkbox: Max reminder
@@ -2099,8 +2133,9 @@ local function CreateNotificationsOptions(parentFrame)
 		autoOffset = true,
 		dependencies = { [0] = { frame = options.notifications.status }, },
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = db.notifications.statusNotice,
-			key = "maxReminder",
+			storageKey = "maxReminder",
 		},
 	})
 end
@@ -2169,7 +2204,7 @@ local function CreateBackupOptions(parentFrame)
 				--Removals
 				if t.account.removals.statusBars then StatusTrackingBarManager:Hide() else StatusTrackingBarManager:Show() end
 				--Update the interface options
-				wt.LoadOptionsData()
+				wt.LoadOptionsData(addonNameSpace)
 			else print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.options.advanced.backup.error, colors.blue[0])) end
 		end
 	})
@@ -2192,7 +2227,10 @@ local function CreateBackupOptions(parentFrame)
 		scrollSpeed = 60,
 		onEnterPressed = function() StaticPopup_Show(importPopup) end,
 		onEscapePressed = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
-		onLoad = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
+		optionsData = {
+			optionsKey = addonNameSpace,
+			onLoad = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
+		},
 	})
 	--Checkbox: Compact
 	options.backup.compact = wt.CreateCheckbox({
@@ -2212,8 +2250,9 @@ local function CreateBackupOptions(parentFrame)
 			options.backup.string:ClearFocus()
 		end,
 		optionsData = {
+			optionsKey = addonNameSpace,
 			storageTable = cs,
-			key = "compactBackup",
+			storageKey = "compactBackup",
 		},
 	})
 	--Button: Load
@@ -2324,7 +2363,7 @@ local function DefaultOptions()
 	--Initiate or remove the cross-session Rested XP accumulation tracking variable
 	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and dbc.disabled)
 	--Update the interface options
-	wt.LoadOptionsData()
+	wt.LoadOptionsData(addonNameSpace)
 	--Set the preset selection to Custom
 	UIDropDownMenu_SetSelectedValue(options.visibility.presets, 0)
 	UIDropDownMenu_SetText(options.visibility.presets, presets[0].name)
@@ -2345,6 +2384,7 @@ local function LoadInterfaceOptions()
 		okay = SaveOptions,
 		cancel = CancelChanges,
 		default = DefaultOptions,
+		optionsKey = addonNameSpace,
 	})
 	CreateMainCategoryPanels(options.mainOptionsPage) --Add categories & GUI elements to the panel
 	--Display options panel
@@ -2361,8 +2401,6 @@ local function LoadInterfaceOptions()
 			speed = 45,
 		},
 		default = DefaultOptions,
-		autoSave = false,
-		autoLoad = false,
 	})
 	CreateDisplayCategoryPanels(displayOptionsScrollFrame) --Add categories & GUI elements to the panel
 	--Integration options panel
@@ -2374,8 +2412,6 @@ local function LoadInterfaceOptions()
 		description = strings.options.integration.description:gsub("#ADDON", addonTitle),
 		logo = textures.logo,
 		default = DefaultOptions,
-		autoSave = false,
-		autoLoad = false,
 	})
 	CreateIntegrationCategoryPanels(options.integrationOptionsPage) --Add categories & GUI elements to the panel
 	--Notifications options panel
@@ -2387,8 +2423,6 @@ local function LoadInterfaceOptions()
 		description = strings.options.events.description:gsub("#ADDON", addonTitle),
 		logo = textures.logo,
 		default = DefaultOptions,
-		autoSave = false,
-		autoLoad = false,
 	})
 	CreateEventsCategoryPanels(options.notificationsOptionsPage) --Add categories & GUI elements to the panel
 	--Advanced options panel
@@ -2400,8 +2434,6 @@ local function LoadInterfaceOptions()
 		description = strings.options.advanced.description:gsub("#ADDON", addonTitle),
 		logo = textures.logo,
 		default = DefaultOptions,
-		autoSave = false,
-		autoLoad = false,
 	})
 	CreateAdvancedCategoryPanels(options.advancedOptionsPage) --Add categories & GUI elements to the panel
 end

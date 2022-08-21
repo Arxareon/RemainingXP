@@ -155,6 +155,14 @@ local changelogDB = {
 		[4] = "#F_Fix:_#",
 		[5] = "The integrated display will now readjust when the Honor bar appears/disappears when entering/leaving Arena or a Battleground.",
 	},
+	[14] = {
+		[0] = "#V_Version 2.0.6_# #H_(8/21/2022)_#",
+		[1] = "#N_Update:_#",
+		[2] = "Added 3.4 (WotLK Classic) & 9.2.7 (Retail) support.",
+		[3] = "Under the hood changes & improvements.",
+		[4] = "#C_Change:_#",
+		[5] = "Remaining XP has moved from Bitbucket to GitHub. Links to the Repository & Issues have been updated.\n#H_There is now an opportunity to Sponsor my work on GitHub to support and justify the continued development of my addons should you wish and have the means to do so. Every bit of help is appreciated!_#",
+	},
 }
 
 ns.GetChangelog = function()
@@ -218,8 +226,8 @@ local english = {
 				description = "Follow the links to see how you can provide feedback, report bugs, get help and support development.",
 				curseForge = "CurseForge Page",
 				wago = "Wago Page",
-				bitBucket = "BitBucket Repository",
-				issues = "Issues & Ideas",
+				repository = "GitHub Repository",
+				issues = "Issues & Feedback",
 			},
 			feedback = {
 				title = "Feedback",

@@ -1,4 +1,4 @@
-## Interface: 90207 #Fallback to the Mainline version
+## Interface: 30400
 ## Title: Remaining XP
 ## Version: 2.0.6
 ## X-Day: 21
@@ -12,4 +12,4 @@
 
 WidgetTools/WidgetTools.lua
 RemainingXPLocalizations.lua
-RemainingXP.lua
+RemainingXPClassic.lua
