@@ -3,7 +3,7 @@
 ***A simple solution to a simple problem:*** Remaining XP tracks your XP gains & calculates the remaining XP value. It also offers a customizable display & XP bar, text integration for the default XP bar, chat notifications tracking your Rested XP accumulation & more in a minimalistic package - use only what you need.
 
 ### Features
-- Get more information on your XP status - how much XP do you need exactly to level up, how many Rested XP you have accumulated while being in a rested area (even while offline) & more.
+- Get more information on your XP status - how much XP do you need exactly to reach the next level, how much Rested XP have you accumulated while being in a rested area (even while offline) & more.
 - Includes a fully customizable, repositionable & resizable custom XP bar, an enhancement for the default XP bar text providing useful info in a minimalistic fashion, both granting access to a detailed XP tooltip.
 - Get chat notifications for XP updates if you wish (with detailed event logging coming soon as well).
 - Set up Remaining XP in the Interface Options, access select options via the **/remxp** chat command.
