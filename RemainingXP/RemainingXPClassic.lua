@@ -6,79 +6,14 @@ local addonNameSpace, ns = ...
 --Addon display name
 local _, addonTitle = GetAddOnInfo(addonNameSpace)
 
---Addon root folder
-local root = "Interface/AddOns/" .. addonNameSpace .. "/"
 
+--[[ RESOURCES ]]
 
---[[ ASSETS & RESOURCES ]]
+---@class WidgetToolbox
+local wt = ns.WidgetToolbox
 
---WidgetTools reference
-local wt = WidgetToolbox[ns.WidgetToolsVersion]
-
---Strings & Localization
-local strings = ns.LoadLocale()
-strings.chat.keyword = "/remxp"
-
---Colors
-local colors = {
-	grey = {
-		[0] = { r = 0.54, g = 0.54, b = 0.54 },
-		[1] = { r = 0.69, g = 0.69, b = 0.69 },
-		[2] = { r = 0.79, g = 0.79, b = 0.79 },
-	},
-	purple = {
-		[0] = { r = 0.83, g = 0.11, b = 0.79 },
-		[1] = { r = 0.82, g = 0.34, b = 0.80 },
-		[2] = { r = 0.88, g = 0.56, b = 0.86 },
-	},
-	blue = {
-		[0] = { r = 0.06, g = 0.54, b = 1 },
-		[1] = { r = 0.46, g = 0.70, b = 0.94 },
-		[2] = { r = 0.64, g = 0.80, b = 0.96 },
-	},
-	rose = {
-		[0] = { r = 0.69, g = 0.21, b = 0.47 },
-		[1] = { r = 0.84, g = 0.25, b = 0.58 },
-		[2] = { r = 0.80, g = 0.47, b = 0.65 },
-	},
-	peach = {
-		[0] = { r = 0.95, g = 0.58, b = 0.52 },
-		[1] = { r = 0.96, g = 0.72, b = 0.68 },
-		[2] = { r = 0.98, g = 0.81, b = 0.78 },
-	}
-}
-
---Fonts
-local fonts = {
-	[0] = { name = strings.misc.default, path = strings.options.display.text.font.family.default },
-	[1] = { name = "Arbutus Slab", path = root .. "Fonts/ArbutusSlab.ttf" },
-	[2] = { name = "Caesar Dressing", path = root .. "Fonts/CaesarDressing.ttf" },
-	[3] = { name = "Germania One", path = root .. "Fonts/GermaniaOne.ttf" },
-	[4] = { name = "Mitr", path = root .. "Fonts/Mitr.ttf" },
-	[5] = { name = "Oxanium", path = root .. "Fonts/Oxanium.ttf" },
-	[6] = { name = "Pattaya", path = root .. "Fonts/Pattaya.ttf" },
-	[7] = { name = "Reem Kufi", path = root .. "Fonts/ReemKufi.ttf" },
-	[8] = { name = "Source Code Pro", path = root .. "Fonts/SourceCodePro.ttf" },
-	[9] = { name = strings.misc.custom, path = root .. "Fonts/CUSTOM.ttf" },
-}
-
---Textures
-local textures = {
-	logo = root .. "Textures/Logo.tga",
-}
-
---Anchor Points
-local anchors = {
-	[0] = { name = strings.points.top.left, point = "TOPLEFT" },
-	[1] = { name = strings.points.top.center, point = "TOP" },
-	[2] = { name = strings.points.top.right, point = "TOPRIGHT" },
-	[3] = { name = strings.points.left, point = "LEFT" },
-	[4] = { name = strings.points.center, point = "CENTER" },
-	[5] = { name = strings.points.right, point = "RIGHT" },
-	[6] = { name = strings.points.bottom.left, point = "BOTTOMLEFT" },
-	[7] = { name = strings.points.bottom.center, point = "BOTTOM" },
-	[8] = { name = strings.points.bottom.right, point = "BOTTOMRIGHT" },
-}
+--Clean up the addon title
+addonTitle = wt.Clear(addonTitle):gsub("^%s*(.-)%s*$", "%1")
 
 
 --[[ DATA TABLES ]]
@@ -95,7 +30,7 @@ local csc --Cross-session character-specific data
 local dbDefault = {
 	display = {
 		position = {
-			point = "TOP",
+			anchor = "TOP",
 			offset = { x = 0, y = -120, },
 		},
 		visibility = {
@@ -110,7 +45,7 @@ local dbDefault = {
 			visible = true,
 			details = false,
 			font = {
-				family = fonts[0].path,
+				family = ns.fonts[0].path,
 				size = 11,
 				color = { r = 1, g = 1, b = 1, a = 1 },
 			},
@@ -156,11 +91,11 @@ local dbcDefault = {
 	disabled = false,
 }
 
---[ Preset data ]
+--[ Preset Data ]
 
 local presets = {
 	[0] = {
-		name = strings.misc.custom, --Custom
+		name = ns.strings.misc.custom, --Custom
 		data = {
 			position = dbDefault.display.position,
 			visibility = {
@@ -173,10 +108,10 @@ local presets = {
 		},
 	},
 	[1] = {
-		name = strings.options.display.quick.presets.list[0], --XP Bar Replacement
+		name = ns.strings.options.display.quick.presets.list[0], --XP Bar Replacement
 		data = {
 			position = {
-				point = "BOTTOM",
+				anchor = "BOTTOM",
 				offset = { x = 0, y = 40.25, },
 			},
 			visibility = {
@@ -189,10 +124,10 @@ local presets = {
 		},
 	},
 	[2] = {
-		name = strings.options.display.quick.presets.list[1], --XP Bar Left Text
+		name = ns.strings.options.display.quick.presets.list[1], --XP Bar Left Text
 		data = {
 			position = {
-				point = "BOTTOM",
+				anchor = "BOTTOM",
 				offset = { x = -485, y = 40.25, },
 			},
 			visibility = {
@@ -205,10 +140,10 @@ local presets = {
 		},
 	},
 	[3] = {
-		name = strings.options.display.quick.presets.list[2], --XP Bar Right Text
+		name = ns.strings.options.display.quick.presets.list[2], --XP Bar Right Text
 		data = {
 			position = {
-				point = "BOTTOM",
+				anchor = "BOTTOM",
 				offset = { x = 485, y = 40.25, },
 			},
 			visibility = {
@@ -221,10 +156,10 @@ local presets = {
 		},
 	},
 	[4] = {
-		name = strings.options.display.quick.presets.list[3], --Player Frame Bar Above
+		name = ns.strings.options.display.quick.presets.list[3], --Player Frame Bar Above
 		data = {
 			position = {
-				point = "TOPLEFT",
+				anchor = "TOPLEFT",
 				offset = { x = 92, y = -10, },
 			},
 			visibility = {
@@ -237,10 +172,10 @@ local presets = {
 		},
 	},
 	[5] = {
-		name = strings.options.display.quick.presets.list[4], --Player Frame Text Under
+		name = ns.strings.options.display.quick.presets.list[4], --Player Frame Text Under
 		data = {
 			position = {
-				point = "TOPLEFT",
+				anchor = "TOPLEFT",
 				offset = { x = 0, y = -85, },
 			},
 			visibility = {
@@ -253,10 +188,10 @@ local presets = {
 		},
 	},
 	[6] = {
-		name = strings.options.display.quick.presets.list[7], --Bottom-Left Chunky Bar
+		name = ns.strings.options.display.quick.presets.list[7], --Bottom-Left Chunky Bar
 		data = {
 			position = {
-				point = "BOTTOMLEFT",
+				anchor = "BOTTOMLEFT",
 				offset = { x = 63, y = 10, },
 			},
 			visibility = {
@@ -269,10 +204,10 @@ local presets = {
 		},
 	},
 	[7] = {
-		name = strings.options.display.quick.presets.list[9], --Bottom-Right Chunky Bar
+		name = ns.strings.options.display.quick.presets.list[9], --Bottom-Right Chunky Bar
 		data = {
 			position = {
-				point = "BOTTOMRIGHT",
+				anchor = "BOTTOMRIGHT",
 				offset = { x = -63, y = 10, },
 			},
 			visibility = {
@@ -285,10 +220,10 @@ local presets = {
 		},
 	},
 	[8] = {
-		name = strings.options.display.quick.presets.list[8], --Top-Center Long Bar
+		name = ns.strings.options.display.quick.presets.list[8], --Top-Center Long Bar
 		data = {
 			position = {
-				point = "TOP",
+				anchor = "TOP",
 				offset = { x = 0, y = 3, },
 			},
 			visibility = {
@@ -303,7 +238,7 @@ local presets = {
 }
 
 --Add custom preset to DB
-dbDefault.customPreset = presets[0].data
+dbDefault.customPreset = wt.Clone(presets[0].data)
 
 
 --[[ FRAMES & EVENTS ]]
@@ -338,40 +273,28 @@ end)
 local integratedDisplay = CreateFrame("Frame", remXP:GetName() .. "IntegratedDisplay", UIParent)
 local integratedDisplayText = integratedDisplay:CreateFontString(integratedDisplay:GetName() .. "Text", "OVERLAY", "TextStatusBarText")
 
+--[ Custom Tooltip ]
+
+ns.tooltip = wt.CreateGameTooltip(addonNameSpace)
+
 
 --[[ UTILITIES ]]
+
+--Current max level
+local max = MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 
 ---Find the ID of the font provided
 ---@param fontPath string
 ---@return integer
 local function GetFontID(fontPath)
 	local id = 0
-	for i = 0, #fonts do
-		if fonts[i].path == fontPath then
+	for i = 0, #ns.fonts do
+		if ns.fonts[i].path == fontPath then
 			id = i
 			break
 		end
 	end
 	return id
-end
-
----Find the ID of the anchor point provided
----@param point AnchorPoint
----@return integer
-local function GetAnchorID(point)
-	local id = 0
-	for i = 0, #anchors do
-		if anchors[i].point == point then
-			id = i
-			break
-		end
-	end
-	return id
-end
-
---Returns the current max level
-local function GetMax()
-	return MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]
 end
 
 --[ DB Management ]
@@ -393,15 +316,30 @@ end
 ---@param recoveredCharacterData? table
 local function RestoreOldData(data, characterData, recoveredData, recoveredCharacterData)
 	if recoveredData ~= nil then for k, v in pairs(recoveredData) do
-		if k == "maxReminder" then data.notifications.statusNotice.maxReminder = v
+		if k == "customPreset.position.point" then data.customPreset.position.anchor = v
+		elseif k == "position.point" or k == "display.position.point" then data.display.position.anchor = v
+		elseif k == "appearance.frameStrata" then data.display.visibility.frameStrata = v
+		elseif k == "appearance.backdrop.visible" then data.display.background.visible = v
+		elseif k == "appearance.backdrop.color.r" then data.display.background.colors.bg.r = v
+		elseif k == "appearance.backdrop.color.g" then data.display.background.colors.bg.g = v
+		elseif k == "appearance.backdrop.color.b" then data.display.background.colors.bg.b = v
+		elseif k == "appearance.backdrop.color.a" then data.display.background.colors.bg.a = v
+		elseif k == "font.family" then data.display.text.font.family = v
+		elseif k == "font.size" then data.display.text.font.size = v
+		elseif k == "font.color.r" then data.display.text.font.color.r = v
+		elseif k == "font.color.g" then data.display.text.font.color.g = v
+		elseif k == "font.color.b" then data.display.text.font.color.b = v
+		elseif k == "font.color.a" then data.display.text.font.color.a = v
+		elseif k == "notifications.maxReminder" then data.notifications.statusNotice.maxReminder = v
+		elseif k == "notifications.maxReminder" then data.notifications.statusNotice.maxReminder = v
 		-- elseif k == "" then data. = v
 		end
 	end end
-	-- if recoveredCharacterData ~= nil then for k, v in pairs(recoveredCharacterData) do
-	-- 	if k == "" then characterData. = v
+	if recoveredCharacterData ~= nil then for k, v in pairs(recoveredCharacterData) do
+		if k == "mouseover" then data.display.visibility.fade.enabled = v
 	-- 	elseif k == "" then characterData. = v
-	-- 	end
-	-- end end
+		end
+	end end
 end
 
 ---Check the display visibility values
@@ -460,9 +398,9 @@ local function SetRestedAccumulation(enabled)
 		if enabled then
 			print(
 				wt.Color(
-					strings.chat.notifications.restedXPAccumulated.feels, colors.purple[0]
+					ns.strings.chat.notifications.restedXPAccumulated.feels, ns.colors.purple[0]
 				) .. " " .. wt.Color(
-					strings.chat.notifications.restedXPAccumulated.resting, colors.blue[0]
+					ns.strings.chat.notifications.restedXPAccumulated.resting, ns.colors.blue[0]
 				)
 			)
 		end
@@ -527,14 +465,14 @@ local function UpdateIntegratedDisplay(remaining)
 		integratedDisplayText:SetText(wt.FormatThousands(csc.xp.remaining))
 	else
 		integratedDisplayText:SetText(
-			strings.xpBar.text:gsub(
+			ns.strings.xpBar.text:gsub(
 				"#CURRENT", wt.FormatThousands(csc.xp.current)
 			):gsub(
 				"#NEEDED", wt.FormatThousands(csc.xp.needed)
 			):gsub(
 				"#REMAINING", wt.FormatThousands(csc.xp.remaining)
 			) .. (
-				csc.xp.rested > 0 and " + " .. strings.xpBar.rested:gsub(
+				csc.xp.rested > 0 and " + " .. ns.strings.xpBar.rested:gsub(
 					"#RESTED", wt.FormatThousands(csc.xp.rested)
 				):gsub(
 					"#PERCENT", wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100) .. "%%"
@@ -555,98 +493,98 @@ end
 --- - **wrap**? boolean *optional* ― Allow this line to be wrapped [Default: true]
 local function GetXPTooltipDetails()
 	local textLines = {
-		[0] = { text = strings.xpTooltip.text, },
+		[0] = { text = ns.strings.xpTooltip.text, },
 		--Current XP
 		[1] = {
-			text = "\n" .. strings.xpTooltip.current:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.current), colors.purple[1])
+			text = "\n" .. ns.strings.xpTooltip.current:gsub(
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.current), ns.colors.purple[1])
 			),
-			color = colors.purple[0],
+			color = ns.colors.purple[0],
 		},
 		[2] = {
-			text = strings.xpTooltip.percentTotal:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.current / csc.xp.needed * 10000) / 100) .. "%%", colors.purple[1])
+			text = ns.strings.xpTooltip.percentTotal:gsub(
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.current / csc.xp.needed * 10000) / 100) .. "%%", ns.colors.purple[1])
 			),
-			color = colors.purple[2],
+			color = ns.colors.purple[2],
 		},
 		--Remaining XP
 		[3] = {
-			text = "\n" .. strings.xpTooltip.remaining:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.remaining), colors.rose[1])
+			text = "\n" .. ns.strings.xpTooltip.remaining:gsub(
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.remaining), ns.colors.rose[1])
 			),
-			color = colors.rose[0],
+			color = ns.colors.rose[0],
 		},
 		[4] = {
-			text = strings.xpTooltip.percentTotal:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor((csc.xp.remaining / csc.xp.needed) * 10000) / 100) .. "%%", colors.rose[1])
+			text = ns.strings.xpTooltip.percentTotal:gsub(
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor((csc.xp.remaining / csc.xp.needed) * 10000) / 100) .. "%%", ns.colors.rose[1])
 			),
-			color = colors.rose[2],
+			color = ns.colors.rose[2],
 		},
 		--Max needed XP
 		[5] = {
-			text = "\n" .. strings.xpTooltip.needed:gsub(
-				"#DATA", wt.Color(strings.xpTooltip.valueNeeded:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(csc.xp.needed), colors.peach[1])
+			text = "\n" .. ns.strings.xpTooltip.needed:gsub(
+				"#DATA", wt.Color(ns.strings.xpTooltip.valueNeeded:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(csc.xp.needed), ns.colors.peach[1])
 				):gsub(
-					"#LEVEL", wt.Color(UnitLevel("player"), colors.peach[1])
-				), colors.peach[2])
+					"#LEVEL", wt.Color(UnitLevel("player"), ns.colors.peach[1])
+				), ns.colors.peach[2])
 			),
-			color = colors.peach[0],
+			color = ns.colors.peach[0],
 		},
 		--Playtime --TODO: Add time played info
 		-- [6] = {
-		-- 	text = "\n" .. strings.xpTooltip.timeSpent:gsub("#TIME", "?") .. " (Soon™)",
+		-- 	text = "\n" .. ns.strings.xpTooltip.timeSpent:gsub("#TIME", "?") .. " (Soon™)",
 		-- },
 	}
 	--Current Rested XP
 	if csc.xp.rested > 0 then
 		textLines[#textLines + 1] = {
-			text = "\n" .. strings.xpTooltip.rested:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.rested), colors.blue[1])
+			text = "\n" .. ns.strings.xpTooltip.rested:gsub(
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.blue[1])
 			),
-			color = colors.blue[0],
+			color = ns.colors.blue[0],
 		}
 		textLines[#textLines + 1] = {
-			text = strings.xpTooltip.percentRemaining:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100) .. "%%", colors.blue[1])
+			text = ns.strings.xpTooltip.percentRemaining:gsub(
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100) .. "%%", ns.colors.blue[1])
 			),
-			color = colors.blue[2],
+			color = ns.colors.blue[2],
 		}
 		--Description
 		textLines[#textLines + 1] = {
-			text = "\n" .. strings.xpTooltip.restedStatus:gsub(
-				"#PERCENT", wt.Color("200%%", colors.blue[1])
+			text = "\n" .. ns.strings.xpTooltip.restedStatus:gsub(
+				"#PERCENT", wt.Color("200%%", ns.colors.blue[1])
 			),
-			color = colors.blue[2],
+			color = ns.colors.blue[2],
 		}
 	end
 	--Resting status
 	if IsResting() then
 		textLines[#textLines + 1] = {
-			text = "\n" .. strings.chat.notifications.restedXPAccumulated.feels,
-			color = colors.blue[0],
+			text = "\n" .. ns.strings.chat.notifications.restedXPAccumulated.feels,
+			color = ns.colors.blue[0],
 		}
 	end
 	--Accumulated Rested XP
 	if (csc.xp.accumulatedRested or 0) > 0 then
 		textLines[#textLines + 1] = {
-			text = strings.xpTooltip.accumulated:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested or 0), colors.blue[1])
+			text = ns.strings.xpTooltip.accumulated:gsub(
+				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested or 0), ns.colors.blue[1])
 			),
-			color = colors.blue[2],
+			color = ns.colors.blue[2],
 		}
 	end
 	--Hints
 	textLines[#textLines + 1] = {
-		text = "\n" .. strings.xpTooltip.hintOptions,
+		text = "\n" .. ns.strings.xpTooltip.hintOptions,
 		font = GameFontNormalTiny,
-		color = colors.grey[0],
+		color = ns.colors.grey[0],
 	}
 	if mainDisplay:IsMouseOver() then
 		textLines[#textLines + 1] = {
-			text = strings.xpTooltip.hintMove:gsub("#SHIFT", strings.keys.shift),
+			text = ns.strings.xpTooltip.hintMove:gsub("#SHIFT", ns.strings.keys.shift),
 			font = GameFontNormalTiny,
-			color = colors.grey[0],
+			color = ns.colors.grey[0],
 		}
 	end
 	return textLines
@@ -655,7 +593,14 @@ end
 --Update the text of the xp tooltip
 local function UpdateXPTooltip()
 	if not integratedDisplay:IsMouseOver() and not mainDisplay:IsMouseOver() then return end
-	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_PRESERVE", strings.xpTooltip.title, GetXPTooltipDetails())
+	wt.UpdateTooltip({
+		parent = ns.tooltip:GetOwner(),
+		tooltip = ns.tooltip,
+		title = ns.strings.xpTooltip.title,
+		lines = GetXPTooltipDetails(),
+		flipColors = true,
+		anchor = "ANCHOR_PRESERVE",
+	})
 end
 
 --[ Main XP Display ]
@@ -830,7 +775,7 @@ local function SetIntegrationVisibility(enabled, keep, remaining, cvar, notice)
 			C_CVar.SetCVar("xpBarText", 0)
 			--Reload notice
 			if notice then
-				print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.integration.notice, colors.blue[0]))
+				print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.integration.notice, ns.colors.blue[0]))
 				wt.CreateReloadNotice()
 			end
 		end
@@ -869,52 +814,52 @@ local function CreateOptionsShortcuts(parentFrame)
 	local display = wt.CreateButton({
 		parent = parentFrame,
 		name = "DisplayPage",
-		title = strings.options.display.title,
-		tooltip = { [0] = { text = strings.options.display.description:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.display.title,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.description:gsub("#ADDON", addonTitle), }, } },
 		position = { offset = { x = 10, y = -30 } },
-		width = 120,
-		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage) end,
+		size = { width = 120, },
+		events = { OnClick = function() options.displayOptions.open() end, },
 	})
 	--Button: Integration page
 	local integration = wt.CreateButton({
 		parent = parentFrame,
 		name = "IntegrationPage",
-		title = strings.options.integration.title,
-		tooltip = { [0] = { text = strings.options.integration.description:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.integration.title,
+		tooltip = { lines = { [0] = { text = ns.strings.options.integration.description:gsub("#ADDON", addonTitle), }, } },
 		position = {
 			relativeTo = display,
 			relativePoint = "TOPRIGHT",
 			offset = { x = 10, }
 		},
-		width = 120,
-		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.integrationOptionsPage) end,
+		size = { width = 120, },
+		events = { OnClick = function() options.integrationOptions.open() end, },
 	})
 	--Button: Notifications page
 	wt.CreateButton({
 		parent = parentFrame,
 		name = "NotificationsPage",
-		title = strings.options.events.title,
-		tooltip = { [0] = { text = strings.options.events.description:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.events.title,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.description:gsub("#ADDON", addonTitle), }, } },
 		position = {
 			relativeTo = integration,
 			relativePoint = "TOPRIGHT",
 			offset = { x = 10, }
 		},
-		width = 120,
-		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.notificationsOptionsPage) end,
+		size = { width = 120, },
+		events = { OnClick = function() options.notificationsOptions.open() end, },
 	})
 	--Button: Advanced page
 	wt.CreateButton({
 		parent = parentFrame,
 		name = "AdvancedPage",
-		title = strings.options.advanced.title,
-		tooltip = { [0] = { text = strings.options.advanced.description:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.advanced.title,
+		tooltip = { lines = { [0] = { text = ns.strings.options.advanced.description:gsub("#ADDON", addonTitle), }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { x = -10, y = -30 }
 		},
-		width = 120,
-		onClick = function() InterfaceOptionsFrame_OpenToCategory(options.advancedOptionsPage) end,
+		size = { width = 120, },
+		events = { OnClick = function() options.advancedOptions.open() end, },
 	})
 end
 local function CreateAboutInfo(parentFrame)
@@ -924,7 +869,7 @@ local function CreateAboutInfo(parentFrame)
 		name = "Version",
 		position = { offset = { x = 16, y = -33 } },
 		width = 84,
-		text = strings.options.main.about.version:gsub("#VERSION", WrapTextInColorCode(GetAddOnMetadata(addonNameSpace, "Version"), "FFFFFFFF")),
+		text = ns.strings.options.main.about.version:gsub("#VERSION", WrapTextInColorCode(GetAddOnMetadata(addonNameSpace, "Version"), "FFFFFFFF")),
 		justify = "LEFT",
 		template = "GameFontNormalSmall",
 	})
@@ -938,8 +883,8 @@ local function CreateAboutInfo(parentFrame)
 			offset = { x = 10, }
 		},
 		width = 102,
-		text = strings.options.main.about.date:gsub(
-			"#DATE", WrapTextInColorCode(strings.misc.date:gsub(
+		text = ns.strings.options.main.about.date:gsub(
+			"#DATE", WrapTextInColorCode(ns.strings.misc.date:gsub(
 				"#DAY", GetAddOnMetadata(addonNameSpace, "X-Day")
 			):gsub(
 				"#MONTH", GetAddOnMetadata(addonNameSpace, "X-Month")
@@ -960,7 +905,7 @@ local function CreateAboutInfo(parentFrame)
 			offset = { x = 10, }
 		},
 		width = 186,
-		text = strings.options.main.about.author:gsub("#AUTHOR", WrapTextInColorCode(GetAddOnMetadata(addonNameSpace, "Author"), "FFFFFFFF")),
+		text = ns.strings.options.main.about.author:gsub("#AUTHOR", WrapTextInColorCode(GetAddOnMetadata(addonNameSpace, "Author"), "FFFFFFFF")),
 		justify = "LEFT",
 		template = "GameFontNormalSmall",
 	})
@@ -974,7 +919,7 @@ local function CreateAboutInfo(parentFrame)
 			offset = { x = 10, }
 		},
 		width = 156,
-		text = strings.options.main.about.license:gsub("#LICENSE", WrapTextInColorCode(GetAddOnMetadata(addonNameSpace, "X-License"), "FFFFFFFF")),
+		text = ns.strings.options.main.about.license:gsub("#LICENSE", WrapTextInColorCode(GetAddOnMetadata(addonNameSpace, "X-License"), "FFFFFFFF")),
 		justify = "LEFT",
 		template = "GameFontNormalSmall",
 	})
@@ -982,8 +927,8 @@ local function CreateAboutInfo(parentFrame)
 	options.about.changelog = wt.CreateEditScrollBox({
 		parent = parentFrame,
 		name = "Changelog",
-		title = strings.options.main.about.changelog.label,
-		tooltip = { [0] = { text = strings.options.main.about.changelog.tooltip }, },
+		title = ns.strings.options.main.about.changelog.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.main.about.changelog.tooltip, }, } },
 		position = {
 			relativeTo = version,
 			relativePoint = "BOTTOMLEFT",
@@ -991,7 +936,7 @@ local function CreateAboutInfo(parentFrame)
 		},
 		size = { width = parentFrame:GetWidth() - 32, height = 139 },
 		text = ns.GetChangelog(),
-		fontObject = "GameFontDisableSmall",
+		font = "GameFontDisableSmall",
 		scrollSpeed = 45,
 		readOnly = true,
 	})
@@ -1001,9 +946,9 @@ local function CreateSupportInfo(parentFrame)
 	wt.CreateCopyBox({
 		parent = parentFrame,
 		name = "CurseForge",
-		title = strings.options.main.support.curseForge .. ":",
+		title = ns.strings.options.main.support.curseForge .. ":",
 		position = { offset = { x = 16, y = -33 } },
-		width = parentFrame:GetWidth() / 2 - 22,
+		size = { width = parentFrame:GetWidth() / 2 - 22, },
 		text = "curseforge.com/wow/addons/remaining-xp",
 		template = "GameFontNormalSmall",
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
@@ -1013,12 +958,12 @@ local function CreateSupportInfo(parentFrame)
 	wt.CreateCopyBox({
 		parent = parentFrame,
 		name = "Wago",
-		title = strings.options.main.support.wago .. ":",
+		title = ns.strings.options.main.support.wago .. ":",
 		position = {
 			anchor = "TOP",
 			offset = { x = (parentFrame:GetWidth() / 2 - 22) / 2 + 8, y = -33 }
 		},
-		width = parentFrame:GetWidth() / 2 - 22,
+		size = { width = parentFrame:GetWidth() / 2 - 22, },
 		text = "addons.wago.io/addons/remaining-xp",
 		template = "GameFontNormalSmall",
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
@@ -1028,9 +973,9 @@ local function CreateSupportInfo(parentFrame)
 	wt.CreateCopyBox({
 		parent = parentFrame,
 		name = "Repository",
-		title = strings.options.main.support.repository .. ":",
+		title = ns.strings.options.main.support.repository .. ":",
 		position = { offset = { x = 16, y = -70 } },
-		width = parentFrame:GetWidth() / 2 - 22,
+		size = { width = parentFrame:GetWidth() / 2 - 22, },
 		text = "github.com/Arxareon/RemainingXP",
 		template = "GameFontNormalSmall",
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
@@ -1040,12 +985,12 @@ local function CreateSupportInfo(parentFrame)
 	wt.CreateCopyBox({
 		parent = parentFrame,
 		name = "Issues",
-		title = strings.options.main.support.issues .. ":",
+		title = ns.strings.options.main.support.issues .. ":",
 		position = {
 			anchor = "TOP",
 			offset = { x = (parentFrame:GetWidth() / 2 - 22) / 2 + 8, y = -70 }
 		},
-		width = parentFrame:GetWidth() / 2 - 22,
+		size = { width = parentFrame:GetWidth() / 2 - 22, },
 		text = "github.com/Arxareon/RemainingXP/issues",
 		template = "GameFontNormalSmall",
 		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
@@ -1057,8 +1002,8 @@ local function CreateMainCategoryPanels(parentFrame) --Add the main page widgets
 	local shortcutsPanel = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Shortcuts",
-		title = strings.options.main.shortcuts.title,
-		description = strings.options.main.shortcuts.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.main.shortcuts.title,
+		description = ns.strings.options.main.shortcuts.description:gsub("#ADDON", addonTitle),
 		position = { offset = { x = 16, y = -82 } },
 		size = { height = 64 },
 	})
@@ -1066,8 +1011,8 @@ local function CreateMainCategoryPanels(parentFrame) --Add the main page widgets
 	--About
 	local aboutPanel = wt.CreatePanel({
 		parent = parentFrame,
-		title = strings.options.main.about.title,
-		description = strings.options.main.about.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.main.about.title,
+		description = ns.strings.options.main.about.description:gsub("#ADDON", addonTitle),
 		position = {
 			relativeTo = shortcutsPanel,
 			relativePoint = "BOTTOMLEFT",
@@ -1079,8 +1024,8 @@ local function CreateMainCategoryPanels(parentFrame) --Add the main page widgets
 	--Support
 	local supportPanel = wt.CreatePanel({
 		parent = parentFrame,
-		title = strings.options.main.support.title,
-		description = strings.options.main.support.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.main.support.title,
+		description = ns.strings.options.main.support.description:gsub("#ADDON", addonTitle),
 		position = {
 			relativeTo = aboutPanel,
 			relativePoint = "BOTTOMLEFT",
@@ -1097,10 +1042,10 @@ local function CreateQuickOptions(parentFrame)
 	options.visibility.hidden = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "Hidden",
-		title = strings.options.display.quick.hidden.label,
-		tooltip = { [0] = { text = strings.options.display.quick.hidden.tooltip:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.display.quick.hidden.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.quick.hidden.tooltip:gsub("#ADDON", addonTitle), }, } },
 		position = { offset = { x = 8, y = -30 } },
-		onClick = function(self) wt.SetVisibility(remXP, not (self:GetChecked() or dbc.disabled)) end,
+		events = { OnClick = function(_, state) wt.SetVisibility(remXP, not (state or dbc.disabled)) end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = dbc,
@@ -1118,7 +1063,7 @@ local function CreateQuickOptions(parentFrame)
 				remXP:Show()
 				remXP:SetFrameStrata(presets[i].data.visibility.frameStrata)
 				ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
-				wt.PositionFrame(remXP, presets[i].data.position.point, nil, nil, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
+				wt.SetPosition(remXP, presets[i].data.position)
 				if not presets[i].data.background.visible then wt.SetVisibility(mainDisplayText, true) end
 				SetDisplayBackdrop(presets[i].data.background.visible, {
 					bg = wt.PackColor(options.background.colors.bg.getColor()),
@@ -1128,7 +1073,7 @@ local function CreateQuickOptions(parentFrame)
 				})
 				Fade(options.visibility.fade.toggle:GetChecked())
 				--Update the options
-				options.position.anchor.setSelected(GetAnchorID(presets[i].data.position.point))
+				options.position.anchor.setSelected(presets[i].data.position.anchor)
 				options.position.xOffset:SetValue(presets[i].data.position.offset.x)
 				options.position.yOffset:SetValue(presets[i].data.position.offset.y)
 				if not presets[i].data.background.visible then
@@ -1151,154 +1096,142 @@ local function CreateQuickOptions(parentFrame)
 	options.visibility.presets = wt.CreateDropdown({
 		parent = parentFrame,
 		name = "ApplyPreset",
-		title = strings.options.display.quick.presets.label,
-		tooltip = { [0] = { text = strings.options.display.quick.presets.tooltip }, },
+		title = ns.strings.options.display.quick.presets.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.quick.presets.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -30 }
 		},
-		width = 160,
+		width = 180,
 		items = presetItems,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
-			onLoad = function(self)
-				UIDropDownMenu_SetSelectedValue(self, nil)
-				UIDropDownMenu_SetText(self, strings.options.display.quick.presets.select)
-			end,
+			onLoad = function(self) self.setSelected(nil, ns.strings.options.display.quick.presets.select) end,
 		},
 	})
 	--Button & Popup: Save Custom preset
 	local savePopup = wt.CreatePopup({
 		addon = addonNameSpace,
 		name = "SAVEPRESET",
-		text = strings.options.display.quick.savePreset.warning,
-		accept = strings.misc.override,
+		text = ns.strings.options.display.quick.savePreset.warning,
+		accept = ns.strings.misc.override,
 		onAccept = function()
 			--Update the Custom preset
-			presets[0].data.position.point, _, _, presets[0].data.position.offset.x, presets[0].data.position.offset.y = remXP:GetPoint()
+			presets[0].data.position.anchor, _, _, presets[0].data.position.offset.x, presets[0].data.position.offset.y = remXP:GetPoint()
 			presets[0].data.visibility.frameStrata = options.visibility.raise:GetChecked() and "HIGH" or "MEDIUM"
 			presets[0].data.background.visible = options.background.visible:GetChecked()
 			presets[0].data.background.size = { width = options.background.size.width:GetValue(), height = options.background.size.height:GetValue() }
 			--Save the Custom preset
 			db.customPreset = presets[0].data
 			--Response
-			print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.save.response, colors.blue[0]))
+			print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.save.response, ns.colors.blue[0]))
 		end,
 	})
 	wt.CreateButton({
 		parent = parentFrame,
 		name = "SavePreset",
-		title = strings.options.display.quick.savePreset.label,
-		tooltip = { [0] = { text = strings.options.display.quick.savePreset.tooltip }, },
+		title = ns.strings.options.display.quick.savePreset.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.quick.savePreset.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
-			offset = { x = -10, y = -50 }
+			offset = { x = -10, y = -43 }
 		},
-		width = 160,
-		onClick = function() StaticPopup_Show(savePopup) end,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+		size = { width = 160, },
+		events = { OnClick = function() StaticPopup_Show(savePopup) end, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 	})
 end
 local function CreatePositionOptions(parentFrame)
 	--Selector: Anchor point
-	local anchorItems = {}
-	for i = 0, #anchors do
-		anchorItems[i] = {}
-		anchorItems[i].title = anchors[i].name
-		anchorItems[i].onSelect = function()
-			wt.PositionFrame(remXP, anchors[i].point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue())
-			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end
-	end
-	options.position.anchor = wt.CreateSelector({
+	options.position.anchor = wt.CreateAnchorSelector({
 		parent = parentFrame,
 		name = "AnchorPoint",
-		title = strings.options.display.position.anchor.label,
-		tooltip = { [0] = { text = strings.options.display.position.anchor.tooltip }, },
+		title = ns.strings.options.display.position.anchor.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.position.anchor.tooltip, }, } },
 		position = { offset = { x = 8, y = -30 } },
-		items = anchorItems,
-		labels = false,
-		columns = 3,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+		width = 140,
+		onSelection = function(point)
+			--Update the main display position
+			wt.SetPosition(remXP, wt.PackPosition(point, nil, nil, options.position.xOffset:GetValue(), options.position.yOffset:GetValue()))
+			--Clear the presets dropdown selection
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end,
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.position,
-			storageKey = "point",
-			convertSave = function(value) return anchors[value].point end,
-			convertLoad = function(point) return GetAnchorID(point) end,
+			storageKey = "anchor",
 		},
 	})
 	--Slider: X offset
 	options.position.xOffset = wt.CreateSlider({
 		parent = parentFrame,
 		name = "OffsetX",
-		title = strings.options.display.position.xOffset.label,
-		tooltip = { [0] = { text = strings.options.display.position.xOffset.tooltip }, },
+		title = ns.strings.options.display.position.xOffset.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.position.xOffset.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -30 }
 		},
 		value = { min = -500, max = 500, fractional = 2 },
-		onValueChanged = function(_, value)
-			wt.PositionFrame(remXP, anchors[options.position.anchor.getSelected()].point, nil, nil, value, options.position.yOffset:GetValue())
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
+			--Update the main display position
+			wt.SetPosition(remXP, wt.PackPosition(options.position.anchor.getSelected(), nil, nil, value, options.position.yOffset:GetValue()))
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.position.offset,
 			storageKey = "x",
 		},
-	})
+	}).slider
 	--Slider: Y offset
 	options.position.yOffset = wt.CreateSlider({
 		parent = parentFrame,
 		name = "OffsetY",
-		title = strings.options.display.position.yOffset.label,
-		tooltip = { [0] = { text = strings.options.display.position.yOffset.tooltip }, },
+		title = ns.strings.options.display.position.yOffset.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.position.yOffset.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { x = -14, y = -30 }
 		},
 		value = { min = -500, max = 500, fractional = 2 },
-		onValueChanged = function(_, value)
-			wt.PositionFrame(remXP, anchors[options.position.anchor.getSelected()].point, nil, nil, options.position.xOffset:GetValue(), value)
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
+			--Update the main display position
+			wt.SetPosition(remXP, wt.PackPosition(options.position.anchor.getSelected(), nil, nil, options.position.xOffset:GetValue(), value))
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.position.offset,
 			storageKey = "y",
 		},
-	})
+	}).slider
 end
 local function CreateTextOptions(parentFrame)
 	--Checkbox: Visible
 	options.text.visible = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "Visible",
-		title = strings.options.display.text.visible.label,
-		tooltip = { [0] = { text = strings.options.display.text.visible.tooltip }, },
+		title = ns.strings.options.display.text.visible.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.text.visible.tooltip, }, } },
 		position = { offset = { x = 8, y = -30 } },
-		onClick = function(self)
-			local value = self:GetChecked()
+		events = { OnClick = function(_, state)
 			--Flip the background visibility on if it was hidden
-			if not value and not options.background.visible:GetChecked() then options.background.visible:Click() end
+			if not state and not options.background.visible:GetChecked() then options.background.visible:Click() end
 			--Update the text visibility
-			wt.SetVisibility(mainDisplayText, value)
+			wt.SetVisibility(mainDisplayText, state)
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.text,
@@ -1309,20 +1242,20 @@ local function CreateTextOptions(parentFrame)
 	options.text.details = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "Details",
-		title = strings.options.display.text.details.label,
-		tooltip = { [0] = { text = strings.options.display.text.details.tooltip }, },
+		title = ns.strings.options.display.text.details.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.text.details.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -30 }
 		},
 		autoOffset = true,
-		onClick = function(self)
-			db.display.text.details = self:GetChecked()
+		events = { OnClick = function(_, state)
+			db.display.text.details = state
 			UpdateXPDisplayText()
-		end,
+		end, },
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.text.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.text.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1332,11 +1265,11 @@ local function CreateTextOptions(parentFrame)
 	})
 	--Dropdown: Font family
 	local fontItems = {}
-	for i = 0, #fonts do
+	for i = 0, #ns.fonts do
 		fontItems[i] = {}
-		fontItems[i].title = fonts[i].name
+		fontItems[i].title = ns.fonts[i].name
 		fontItems[i].onSelect = function()
-			mainDisplayText:SetFont(fonts[i].path, options.text.font.size:GetValue(), "THINOUTLINE")
+			mainDisplayText:SetFont(ns.fonts[i].path, options.text.font.size:GetValue(), "THINOUTLINE")
 			--Refresh the text so the font will be applied even the first time as well not just subsequent times
 			local text = mainDisplayText:GetText()
 			mainDisplayText:SetText("")
@@ -1346,26 +1279,26 @@ local function CreateTextOptions(parentFrame)
 	options.text.font.family = wt.CreateDropdown({
 		parent = parentFrame,
 		name = "FontFamily",
-		title = strings.options.display.text.font.family.label,
-		tooltip = {
-			[0] = { text = strings.options.display.text.font.family.tooltip[0] },
-			[1] = { text = strings.options.display.text.font.family.tooltip[1] },
-			[2] = { text = "\n" .. strings.options.display.text.font.family.tooltip[2]:gsub("#OPTION_CUSTOM", strings.misc.custom):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
+		title = ns.strings.options.display.text.font.family.label,
+		tooltip = { lines = {
+			[0] = { text = ns.strings.options.display.text.font.family.tooltip[0], },
+			[1] = { text = ns.strings.options.display.text.font.family.tooltip[1], },
+			[2] = { text = "\n" .. ns.strings.options.display.text.font.family.tooltip[2]:gsub("#OPTION_CUSTOM", ns.strings.misc.custom):gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
 			[3] = { text = "[WoW]\\Interface\\AddOns\\" .. addonNameSpace .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
-			[4] = { text = strings.options.display.text.font.family.tooltip[3]:gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
-			[5] = { text = strings.options.display.text.font.family.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 } },
-		},
-		position = { offset = { x = -6, y = -60 } },
+			[4] = { text = ns.strings.options.display.text.font.family.tooltip[3]:gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
+			[5] = { text = ns.strings.options.display.text.font.family.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+		} },
+		position = { offset = { x = 8, y = -60 } },
 		items = fontItems,
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.text.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.text.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.text.font,
 			storageKey = "family",
-			convertSave = function(value) return fonts[value].path end,
+			convertSave = function(value) return ns.fonts[value].path end,
 			convertLoad = function(font) return GetFontID(font) end,
 		},
 	})
@@ -1373,29 +1306,34 @@ local function CreateTextOptions(parentFrame)
 	options.text.font.size = wt.CreateSlider({
 		parent = parentFrame,
 		name = "FontSize",
-		title = strings.options.display.text.font.size.label,
-		tooltip = { [0] = { text = strings.options.display.text.font.size.tooltip .. "\n\n" .. strings.misc.default .. ": " .. dbDefault.display.text.font.size }, },
+		title = ns.strings.options.display.text.font.size.label,
+		tooltip = { lines = {
+			[0] = { text = ns.strings.options.display.text.font.size.tooltip .. "\n\n" .. ns.strings.misc.default .. ": " .. dbDefault.display.text.font.size, },
+		} },
 		position = {
 			anchor = "TOP",
 			offset = { y = -60 }
 		},
 		value = { min = 8, max = 64, step = 1 },
-		onValueChanged = function(_, value) mainDisplayText:SetFont(mainDisplayText:GetFont(), value, "THINOUTLINE") end,
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
+			mainDisplayText:SetFont(mainDisplayText:GetFont(), value, "THINOUTLINE") end,
+		},
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.text.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.text.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.text.font,
 			storageKey = "size",
 		},
-	})
+	}).slider
 	--Color Picker: Font color
 	options.text.font.color = wt.CreateColorPicker({
 		parent = parentFrame,
 		name = "FontColor",
-		title = strings.options.display.text.font.color.label,
+		title = ns.strings.options.display.text.font.color.label,
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { x = -12, y = -60 }
@@ -1412,8 +1350,8 @@ local function CreateTextOptions(parentFrame)
 			Fade()
 		end,
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.text.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.text.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1427,15 +1365,14 @@ local  function CreateBackgroundOptions(parentFrame)
 	options.background.visible = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "Visible",
-		title = strings.options.display.background.visible.label,
-		tooltip = { [0] = { text = strings.options.display.background.visible.tooltip }, },
+		title = ns.strings.options.display.background.visible.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.background.visible.tooltip, }, } },
 		position = { offset = { x = 8, y = -30 } },
-		onClick = function(self)
-			local value = self:GetChecked()
+		events = { OnClick = function(_, state)
 			--Flip the text visibility on if it was hidden
-			if not value and not options.text.visible:GetChecked() then options.text.visible:Click() end
-			--Update the display backdrop
-			SetDisplayBackdrop(value, {
+			if not state and not options.text.visible:GetChecked() then options.text.visible:Click() end
+			--Update the main display backdrop
+			SetDisplayBackdrop(state, {
 				bg = wt.PackColor(options.background.colors.bg.getColor()),
 				xp = wt.PackColor(options.background.colors.xp.getColor()),
 				rested = wt.PackColor(options.background.colors.rested.getColor()),
@@ -1443,10 +1380,9 @@ local  function CreateBackgroundOptions(parentFrame)
 			})
 			Fade()
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.background,
@@ -1457,61 +1393,63 @@ local  function CreateBackgroundOptions(parentFrame)
 	options.background.size.width = wt.CreateSlider({
 		parent = parentFrame,
 		name = "Width",
-		title = strings.options.display.background.size.width.label,
-		tooltip = { [0] = { text = strings.options.display.background.size.width.tooltip }, },
+		title = ns.strings.options.display.background.size.width.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.background.size.width.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -32 }
 		},
 		value = { min = 64, max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1) , step = 2 },
-		onValueChanged = function(_, value)
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
+			--Update the main display size
 			ResizeDisplay(value, options.background.size.height:GetValue())
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.background.size,
 			storageKey = "width",
 		},
-	})
+	}).slider
 	--Slider: Background height
 	options.background.size.height = wt.CreateSlider({
 		parent = parentFrame,
 		name = "Height",
-		title = strings.options.display.background.size.height.label,
-		tooltip = { [0] = { text = strings.options.display.background.size.height.tooltip }, },
+		title = ns.strings.options.display.background.size.height.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.background.size.height.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { x = -14, y = -32 }
 		},
 		value = { min = 2, max = 80, step = 2 },
-		onValueChanged = function(_, value)
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
+			--Update the main display size
 			ResizeDisplay(options.background.size.width:GetValue(), value)
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.background.size,
 			storageKey = "height",
 		},
-	})
+	}).slider
 	--Color Picker: Background color
 	options.background.colors.bg = wt.CreateColorPicker({
 		parent = parentFrame,
 		name = "Color",
-		title = strings.options.display.background.colors.bg.label,
+		title = ns.strings.options.display.background.colors.bg.label,
 		position = { offset = { x = 12, y = -90 } },
 		opacity = true,
 		setColors = function()
@@ -1528,8 +1466,8 @@ local  function CreateBackgroundOptions(parentFrame)
 			Fade()
 		end,
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1541,7 +1479,7 @@ local  function CreateBackgroundOptions(parentFrame)
 	options.background.colors.border = wt.CreateColorPicker({
 		parent = parentFrame,
 		name = "BorderColor",
-		title = strings.options.display.background.colors.border.label,
+		title = ns.strings.options.display.background.colors.border.label,
 		position = {
 			anchor = "TOP",
 			offset = { x = -71, y = -90 }
@@ -1561,8 +1499,8 @@ local  function CreateBackgroundOptions(parentFrame)
 			Fade()
 		end,
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1574,7 +1512,7 @@ local  function CreateBackgroundOptions(parentFrame)
 	options.background.colors.xp = wt.CreateColorPicker({
 		parent = parentFrame,
 		name = "XPColor",
-		title = strings.options.display.background.colors.xp.label,
+		title = ns.strings.options.display.background.colors.xp.label,
 		position = {
 			anchor = "TOP",
 			offset = { x = 71, y = -90 }
@@ -1594,8 +1532,8 @@ local  function CreateBackgroundOptions(parentFrame)
 			Fade()
 		end,
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1607,7 +1545,7 @@ local  function CreateBackgroundOptions(parentFrame)
 	options.background.colors.rested = wt.CreateColorPicker({
 		parent = parentFrame,
 		name = "RestedColor",
-		title = strings.options.display.background.colors.rested.label,
+		title = ns.strings.options.display.background.colors.rested.label,
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { x = -12, y = -90 }
@@ -1627,8 +1565,8 @@ local  function CreateBackgroundOptions(parentFrame)
 			Fade()
 		end,
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1642,17 +1580,16 @@ local function CreateVisibilityOptions(parentFrame)
 	options.visibility.raise = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "Raise",
-		title = strings.options.display.visibility.raise.label,
-		tooltip = { [0] = { text = strings.options.display.visibility.raise.tooltip }, },
+		title = ns.strings.options.display.visibility.raise.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.visibility.raise.tooltip, }, } },
 		position = { offset = { x = 8, y = -30 } },
 		autoOffset = true,
-		onClick = function(self)
-			remXP:SetFrameStrata(self:GetChecked() and "HIGH" or "MEDIUM")
+		events = { OnClick = function(_, state)
+			remXP:SetFrameStrata(state and "HIGH" or "MEDIUM")
 			--Clear the presets dropdown selection
-			UIDropDownMenu_SetSelectedValue(options.visibility.presets, nil)
-			UIDropDownMenu_SetText(options.visibility.presets, strings.options.display.quick.presets.select)
-		end,
-		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, }, },
+			options.visibility.presets.setSelected(nil, ns.strings.options.display.quick.presets.select)
+		end, },
+		dependencies = { [0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility,
@@ -1665,21 +1602,21 @@ local function CreateVisibilityOptions(parentFrame)
 	options.visibility.fade.toggle = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "FadeToggle",
-		title = strings.options.display.visibility.fade.label,
-		tooltip = { [0] = { text = strings.options.display.visibility.fade.tooltip }, },
+		title = ns.strings.options.display.visibility.fade.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.visibility.fade.tooltip, }, } },
 		position = {
 			relativeTo = options.visibility.raise,
 			relativePoint = "BOTTOMLEFT",
 			offset = { y = -4 }
 		},
-		onClick = function(self)
-			db.display.visibility.fade.enabled = self:GetChecked()
+		events = { OnClick = function(_, state)
+			db.display.visibility.fade.enabled = state
 			Fade()
-		end,
+		end, },
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.text.visible, evaluate = function(state) return state or options.background.visible:GetChecked() end, },
-			[2] = { frame = options.background.visible, evaluate = function(state) return state or options.text.visible:GetChecked() end, },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.text.visible, evaluate = function(state) return state or options.background.visible:GetChecked() end },
+			[2] = { frame = options.background.visible, evaluate = function(state) return state or options.text.visible:GetChecked() end },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1691,72 +1628,74 @@ local function CreateVisibilityOptions(parentFrame)
 	options.visibility.fade.text = wt.CreateSlider({
 		parent = parentFrame,
 		name = " TextFade",
-		title = strings.options.display.visibility.fade.text.label,
-		tooltip = { [0] = { text = strings.options.display.visibility.fade.text.tooltip }, },
+		title = ns.strings.options.display.visibility.fade.text.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.visibility.fade.text.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -60 }
 		},
 		value = { min = 0, max = 1, step = 0.05 },
-		onValueChanged = function(_, value)
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
 			db.display.visibility.fade.text = value
 			Fade()
-		end,
+		end, },
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.text.visible },
-			[2] = { frame = options.visibility.fade.toggle },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.text.visible, },
+			[2] = { frame = options.visibility.fade.toggle, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility.fade,
 			storageKey = "text",
 		},
-	})
+	}).slider
 	--Slider: Background fade intensity
 	options.visibility.fade.background = wt.CreateSlider({
 		parent = parentFrame,
 		name = "BackgroundFade",
-		title = strings.options.display.visibility.fade.background.label,
-		tooltip = { [0] = { text = strings.options.display.visibility.fade.background.tooltip }, },
+		title = ns.strings.options.display.visibility.fade.background.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.display.visibility.fade.background.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { x = -14, y = -60 }
 		},
 		value = { min = 0, max = 1, step = 0.05 },
-		onValueChanged = function(_, value)
+		events = { OnValueChanged = function(_, value, user)
+			if not user then return end
 			db.display.visibility.fade.background = value
 			Fade()
-		end,
+		end, },
 		dependencies = {
-			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end, },
-			[1] = { frame = options.background.visible },
-			[2] = { frame = options.visibility.fade.toggle },
+			[0] = { frame = options.visibility.hidden, evaluate = function(state) return not state end },
+			[1] = { frame = options.background.visible, },
+			[2] = { frame = options.visibility.fade.toggle, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.display.visibility.fade,
 			storageKey = "background",
 		},
-	})
+	}).slider
 end
 local function CreateDisplayCategoryPanels(parentFrame) --Add the display page widgets to the category panel frame
 	--Quick settings
 	local quickOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "QuickSettings",
-		title = strings.options.display.quick.title,
-		description = strings.options.display.quick.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.display.quick.title,
+		description = ns.strings.options.display.quick.description:gsub("#ADDON", addonTitle),
 		position = { offset = { x = 16, y = -78 } },
-		size = { height = 84 },
+		size = { height = 77 },
 	})
 	CreateQuickOptions(quickOptions)
 	--Position
 	local positionOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Position",
-		title = strings.options.display.position.title,
-		description = strings.options.display.position.description:gsub("#SHIFT", strings.keys.shift),
+		title = ns.strings.options.display.position.title,
+		description = ns.strings.options.display.position.description:gsub("#SHIFT", ns.strings.keys.shift),
 		position = {
 			relativeTo = quickOptions,
 			relativePoint = "BOTTOMLEFT",
@@ -1769,8 +1708,8 @@ local function CreateDisplayCategoryPanels(parentFrame) --Add the display page w
 	local textOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Text",
-		title = strings.options.display.text.title,
-		description = strings.options.display.text.description,
+		title = ns.strings.options.display.text.title,
+		description = ns.strings.options.display.text.description,
 		position = {
 			relativeTo = positionOptions,
 			relativePoint = "BOTTOMLEFT",
@@ -1783,8 +1722,8 @@ local function CreateDisplayCategoryPanels(parentFrame) --Add the display page w
 	local backgroundOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Background",
-		title = strings.options.display.background.title,
-		description = strings.options.display.background.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.display.background.title,
+		description = ns.strings.options.display.background.description:gsub("#ADDON", addonTitle),
 		position = {
 			relativeTo = textOptions,
 			relativePoint = "BOTTOMLEFT",
@@ -1797,8 +1736,8 @@ local function CreateDisplayCategoryPanels(parentFrame) --Add the display page w
 	local visibilityOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Visibility",
-		title = strings.options.display.visibility.title,
-		description = strings.options.display.visibility.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.display.visibility.title,
+		description = ns.strings.options.display.visibility.description:gsub("#ADDON", addonTitle),
 		position = {
 			relativeTo = backgroundOptions,
 			relativePoint = "BOTTOMLEFT",
@@ -1815,14 +1754,13 @@ local function CreateEnhancementOptions(parentFrame)
 	options.enhancement.toggle = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "EnableIntegration",
-		title = strings.options.integration.enhancement.toggle.label,
-		tooltip = { [0] = { text = strings.options.integration.enhancement.toggle.tooltip }, },
+		title = ns.strings.options.integration.enhancement.toggle.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.integration.enhancement.toggle.tooltip, }, } },
 		position = { offset = { x = 8, y = -30 } },
-		onClick = function(self)
-			local value = self:GetChecked()
-			SetIntegrationVisibility(value, options.enhancement.keep:GetChecked(), options.enhancement.remaining:GetChecked(), false, false)
-			db.enhancement.enabled = value
-		end,
+		events = { OnClick = function(_, state)
+			SetIntegrationVisibility(state, options.enhancement.keep:GetChecked(), options.enhancement.remaining:GetChecked(), false, false)
+			db.enhancement.enabled = state
+		end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.enhancement,
@@ -1833,19 +1771,18 @@ local function CreateEnhancementOptions(parentFrame)
 	options.enhancement.keep = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "KeepText",
-		title = strings.options.integration.enhancement.keep.label,
-		tooltip = { [0] = { text = strings.options.integration.enhancement.keep.tooltip }, },
+		title = ns.strings.options.integration.enhancement.keep.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.integration.enhancement.keep.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -30 }
 		},
 		autoOffset = true,
-		onClick = function(self)
-			local value = self:GetChecked()
-			SetIntegrationTextVisibility(value, options.enhancement.remaining:GetChecked())
-			db.enhancement.keep = value
-		end,
-		dependencies = { [0] = { frame = options.enhancement.toggle }, },
+		events = { OnClick = function(_, state)
+			SetIntegrationTextVisibility(state, options.enhancement.remaining:GetChecked())
+			db.enhancement.keep = state
+		end, },
+		dependencies = { [0] = { frame = options.enhancement.toggle, }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.enhancement,
@@ -1856,21 +1793,20 @@ local function CreateEnhancementOptions(parentFrame)
 	options.enhancement.remaining = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "RemainingOnly",
-		title = strings.options.integration.enhancement.remaining.label,
-		tooltip = { [0] = { text = strings.options.integration.enhancement.remaining.tooltip }, },
+		title = ns.strings.options.integration.enhancement.remaining.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.integration.enhancement.remaining.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { y = -30 }
 		},
 		autoOffset = true,
-		onClick = function(self)
-			local value = self:GetChecked()
-			SetIntegrationTextVisibility(options.enhancement.keep:GetChecked(), value)
-			db.enhancement.remaining = value
-		end,
+		events = { OnClick = function(_, state)
+			SetIntegrationTextVisibility(options.enhancement.keep:GetChecked(), state)
+			db.enhancement.remaining = state
+		end, },
 		dependencies = {
-			[0] = { frame = options.enhancement.toggle },
-			[1] = { frame = options.enhancement.keep },
+			[0] = { frame = options.enhancement.toggle, },
+			[1] = { frame = options.enhancement.keep, },
 		},
 		optionsData = {
 			optionsKey = addonNameSpace,
@@ -1884,11 +1820,11 @@ local function CreateRemovalsOptions(parentFrame)
 	options.removals.statusBars = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "HideStatusBars",
-		title = strings.options.integration.removals.statusBars.label,
-		tooltip = { [0] = { text = strings.options.integration.removals.statusBars.tooltip:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.integration.removals.statusBars.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.integration.removals.statusBars.tooltip[0]:gsub("#ADDON", addonTitle), }, } },
 		position = { offset = { x = 8, y = -30 } },
 		autoOffset = true,
-		onClick = function(self) wt.SetVisibility(StatusTrackingBarManager, not self:GetChecked()) end,
+		events = { OnClick = function(_, state) wt.SetVisibility(MainMenuExpBar, not state) end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.removals,
@@ -1901,8 +1837,8 @@ local function CreateIntegrationCategoryPanels(parentFrame) --Add the notificati
 	local enhancementOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Enhancement",
-		title = strings.options.integration.enhancement.title,
-		description = strings.options.integration.enhancement.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.integration.enhancement.title,
+		description = ns.strings.options.integration.enhancement.description:gsub("#ADDON", addonTitle),
 		position = { offset = { x = 16, y = -82 } },
 		size = { height = 64 },
 	})
@@ -1911,8 +1847,8 @@ local function CreateIntegrationCategoryPanels(parentFrame) --Add the notificati
 	local removalsOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Removals",
-		title = strings.options.integration.removals.title,
-		description = strings.options.integration.removals.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.integration.removals.title,
+		description = ns.strings.options.integration.removals.description:gsub("#ADDON", addonTitle),
 		position = {
 			relativeTo = enhancementOptions,
 			relativePoint = "BOTTOMLEFT",
@@ -1929,10 +1865,10 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.xpGained = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "XPGained",
-		title = strings.options.events.notifications.xpGained.label,
-		tooltip = { [0] = { text = strings.options.events.notifications.xpGained.tooltip }, },
+		title = ns.strings.options.events.notifications.xpGained.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.xpGained.tooltip, }, } },
 		position = { offset = { x = 8, y = -30 } },
-		onClick = function(self) db.notifications.xpGained = self:GetChecked() end,
+		events = { OnClick = function(_, state) db.notifications.xpGained = state end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.notifications,
@@ -1943,14 +1879,14 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.restedXPGained = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "RestedXPGained",
-		title = strings.options.events.notifications.restedXPGained.label,
-		tooltip = { [0] = { text = strings.options.events.notifications.restedXPGained.tooltip }, },
+		title = ns.strings.options.events.notifications.restedXPGained.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.restedXPGained.tooltip, }, } },
 		position = {
 			relativeTo = options.notifications.xpGained,
 			relativePoint = "BOTTOMLEFT",
 			offset = { y = -4 }
 		},
-		onClick = function(self) db.notifications.restedXP.gained = self:GetChecked() end,
+		events = { OnClick = function(_, state) db.notifications.restedXP.gained = state end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.notifications.restedXP,
@@ -1961,15 +1897,15 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.significantRestedOnly = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "SignificantRestedOnly",
-		title = strings.options.events.notifications.restedXPGained.significantOnly.label,
-		tooltip = { [0] = { text = strings.options.events.notifications.restedXPGained.significantOnly.tooltip }, },
+		title = ns.strings.options.events.notifications.restedXPGained.significantOnly.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.restedXPGained.significantOnly.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -60 }
 		},
 		autoOffset = true,
-		onClick = function(self) db.notifications.restedXP.significantOnly = self:GetChecked() end,
-		dependencies = { [0] = { frame = options.notifications.restedXPGained }, },
+		events = { OnClick = function(_, state) db.notifications.restedXP.significantOnly = state end, },
+		dependencies = { [0] = { frame = options.notifications.restedXPGained, }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.notifications.restedXP,
@@ -1980,25 +1916,24 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.restedXPAccumulated = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "AccumulatedRestedXP",
-		title = strings.options.events.notifications.restedXPGained.accumulated.label,
-		tooltip = {
-			[0] = { text = strings.options.events.notifications.restedXPGained.accumulated.tooltip[0] },
+		title = ns.strings.options.events.notifications.restedXPGained.accumulated.label,
+		tooltip = { lines = {
+			[0] = { text = ns.strings.options.events.notifications.restedXPGained.accumulated.tooltip[0], },
 			[1] = {
-				text = strings.options.events.notifications.restedXPGained.accumulated.tooltip[1]:gsub("#ADDON", addonTitle),
-				color = { r = 0.89, g = 0.65, b = 0.40 }
+				text = ns.strings.options.events.notifications.restedXPGained.accumulated.tooltip[1]:gsub("#ADDON", addonTitle),
+				color = { r = 0.89, g = 0.65, b = 0.40 },
 			},
-		},
+		} },
 		position = {
 			anchor = "TOPRIGHT",
 			offset = { y = -60 }
 		},
 		autoOffset = true,
-		onClick = function(self)
-			local value = self:GetChecked()
-			SetRestedAccumulation(options.notifications.restedXPGained:GetChecked() and value and dbc.disabled)
-			db.notifications.restedXP.accumulated = value
-		end,
-		dependencies = { [0] = { frame = options.notifications.restedXPGained }, },
+		events = { OnClick = function(_, state)
+			SetRestedAccumulation(options.notifications.restedXPGained:GetChecked() and state and dbc.disabled)
+			db.notifications.restedXP.accumulated = state
+		end, },
+		dependencies = { [0] = { frame = options.notifications.restedXPGained, }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.notifications.restedXP,
@@ -2014,9 +1949,9 @@ local function CreateNotificationsOptions(parentFrame)
 			relativePoint = "BOTTOMLEFT",
 			offset = { y = -4 }
 		},
-		label = strings.options.events.notifications.lvlUp.label,
-		tooltip = { [0] = { text = strings.options.events.notifications.lvlUp.tooltip }, },
-		onClick = function(self) db.notifications.lvlUp.congrats = self:GetChecked() end,
+		label = ns.strings.options.events.notifications.lvlUp.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.lvlUp.tooltip, }, } },
+		events = { OnClick = function(_, state) db.notifications.lvlUp.congrats = state end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.notifications.lvlUp,
@@ -2027,18 +1962,16 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.timePlayed = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "TimePlayed",
-		title = strings.options.events.notifications.lvlUp.timePlayed.label .. " (Soon™)",
-		tooltip = { [0] = { text = strings.options.events.notifications.lvlUp.timePlayed.tooltip }, },
+		title = ns.strings.options.events.notifications.lvlUp.timePlayed.label .. " (Soon™)",
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.lvlUp.timePlayed.tooltip, }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -90 }
 		},
 		autoOffset = true,
-		onClick = function(self) db.notifications.lvlUp.timePlayed = self:GetChecked() end,
+		events = { OnClick = function(_, state) db.notifications.lvlUp.timePlayed = state end, },
 		disabled = true --TODO: Add time played notifications
-		-- dependencies = {
-		-- 	[0] = { frame = options.notifications.lvlUp },
-		-- },
+		-- dependencies = { [0] = { frame = options.notifications.lvlUp, }, },
 		-- optionsData = {
 		-- 	optionsKey = addonNameSpace,
 		-- 	storageTable = db.notifications.lvlUp,
@@ -2049,8 +1982,8 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.status = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = " StatusNotice",
-		title = strings.options.events.notifications.statusNotice.label,
-		tooltip = { [0] = { text = strings.options.events.notifications.statusNotice.tooltip:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.events.notifications.statusNotice.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.statusNotice.tooltip:gsub("#ADDON", addonTitle), }, } },
 		position = {
 			relativeTo = options.notifications.lvlUp,
 			relativePoint = "BOTTOMLEFT",
@@ -2066,14 +1999,14 @@ local function CreateNotificationsOptions(parentFrame)
 	options.notifications.maxReminder = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "MaxReminder",
-		title = strings.options.events.notifications.statusNotice.maxReminder.label,
-		tooltip = { [0] = { text = strings.options.events.notifications.statusNotice.maxReminder.tooltip:gsub("#ADDON", addonTitle) }, },
+		title = ns.strings.options.events.notifications.statusNotice.maxReminder.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.events.notifications.statusNotice.maxReminder.tooltip:gsub("#ADDON", addonTitle), }, } },
 		position = {
 			anchor = "TOP",
 			offset = { y = -120 }
 		},
 		autoOffset = true,
-		dependencies = { [0] = { frame = options.notifications.status }, },
+		dependencies = { [0] = { frame = options.notifications.status, }, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = db.notifications.statusNotice,
@@ -2089,8 +2022,8 @@ local function CreateEventsCategoryPanels(parentFrame) --Add the events page wid
 	local notificationsOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "ChatNotifications",
-		title = strings.options.events.notifications.title,
-		description = strings.options.events.notifications.description,
+		title = ns.strings.options.events.notifications.title,
+		description = ns.strings.options.events.notifications.description,
 		position = { offset = { x = 16, y = -82 } },
 		size = { height = 154 },
 	})
@@ -2099,8 +2032,8 @@ local function CreateEventsCategoryPanels(parentFrame) --Add the events page wid
 	local logsOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Logs",
-		title = strings.options.events.logs.title,
-		description = strings.options.events.logs.description,
+		title = ns.strings.options.events.logs.title,
+		description = ns.strings.options.events.logs.description,
 		position = {
 			relativeTo = notificationsOptions,
 			relativePoint = "BOTTOMLEFT",
@@ -2120,8 +2053,8 @@ local function CreateBackupOptions(parentFrame)
 	local importPopup = wt.CreatePopup({
 		addon = addonNameSpace,
 		name = "IMPORT",
-		text = strings.options.advanced.backup.warning,
-		accept = strings.options.advanced.backup.import,
+		text = ns.strings.options.advanced.backup.warning,
+		accept = ns.strings.options.advanced.backup.import,
 		onAccept = function()
 			--Load from string to a temporary table
 			local success, t = pcall(loadstring("return " .. wt.Clear(options.backup.string:GetText())))
@@ -2137,38 +2070,40 @@ local function CreateBackupOptions(parentFrame)
 				wt.CopyValues(t.account, db)
 				wt.CopyValues(t.character, dbc)
 				--Update the Custom preset
-				presets[0].data = db.customPreset
+				presets[0].data = wt.Clone(db.customPreset)
 				--Main display
-				wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
+				wt.SetPosition(remXP, db.display.position)
 				SetDisplayValues(db, dbc)
 				--Enhancement
 				SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
 				--Removals
-				if t.account.removals.statusBars then MainMenuExpBar:Hide() else MainMenuExpBar:Show() end
+				wt.SetVisibility(MainMenuExpBar, t.account.removals.statusBars)
 				--Update the interface options
 				wt.LoadOptionsData(addonNameSpace)
-			else print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.options.advanced.backup.error, colors.blue[0])) end
+			else print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.options.advanced.backup.error, ns.colors.blue[0])) end
 		end
 	})
 	local backupBox
 	options.backup.string, backupBox = wt.CreateEditScrollBox({
 		parent = parentFrame,
 		name = "ImportExport",
-		title = strings.options.advanced.backup.backupBox.label,
-		tooltip = {
-			[0] = { text = strings.options.advanced.backup.backupBox.tooltip[0] },
-			[1] = { text = strings.options.advanced.backup.backupBox.tooltip[1] },
-			[2] = { text = "\n" .. strings.options.advanced.backup.backupBox.tooltip[2]:gsub("#ENTER", strings.keys.enter) },
-			[3] = { text = strings.options.advanced.backup.backupBox.tooltip[3], color = { r = 0.89, g = 0.65, b = 0.40 } },
-			[4] = { text = "\n" .. strings.options.advanced.backup.backupBox.tooltip[4], color = { r = 0.92, g = 0.34, b = 0.23 } },
-		},
+		title = ns.strings.options.advanced.backup.backupBox.label,
+		tooltip = { lines = {
+			[0] = { text = ns.strings.options.advanced.backup.backupBox.tooltip[0], },
+			[1] = { text = ns.strings.options.advanced.backup.backupBox.tooltip[1], },
+			[2] = { text = "\n" .. ns.strings.options.advanced.backup.backupBox.tooltip[2]:gsub("#ENTER", ns.strings.keys.enter), },
+			[3] = { text = ns.strings.options.advanced.backup.backupBox.tooltip[3], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+			[4] = { text = "\n" .. ns.strings.options.advanced.backup.backupBox.tooltip[4], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+		} },
 		position = { offset = { x = 16, y = -30 } },
 		size = { width = parentFrame:GetWidth() - 32, height = 276 },
 		maxLetters = 5400,
-		fontObject = "GameFontWhiteSmall",
+		font = "GameFontWhiteSmall",
 		scrollSpeed = 60,
-		onEnterPressed = function() StaticPopup_Show(importPopup) end,
-		onEscapePressed = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
+		events = {
+			OnEnterPressed = function() StaticPopup_Show(importPopup) end,
+			OnEscapePressed = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
+		},
 		optionsData = {
 			optionsKey = addonNameSpace,
 			onLoad = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true)) end,
@@ -2178,19 +2113,19 @@ local function CreateBackupOptions(parentFrame)
 	options.backup.compact = wt.CreateCheckbox({
 		parent = parentFrame,
 		name = "Compact",
-		title = strings.options.advanced.backup.compact.label,
-		tooltip = { [0] = { text = strings.options.advanced.backup.compact.tooltip }, },
+		title = ns.strings.options.advanced.backup.compact.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.advanced.backup.compact.tooltip, }, } },
 		position = {
 			relativeTo = backupBox,
 			relativePoint = "BOTTOMLEFT",
 			offset = { x = -8, y = -13 }
 		},
-		onClick = function(self)
-			options.backup.string:SetText(wt.TableToString({ account = db, character = dbc }, self:GetChecked(), true))
+		events = { OnClick = function(_, state)
+			options.backup.string:SetText(wt.TableToString({ account = db, character = dbc }, state, true))
 			--Set focus after text change to set the scroll to the top and refresh the position character counter
 			options.backup.string:SetFocus()
 			options.backup.string:ClearFocus()
-		end,
+		end, },
 		optionsData = {
 			optionsKey = addonNameSpace,
 			storageTable = cs,
@@ -2201,37 +2136,35 @@ local function CreateBackupOptions(parentFrame)
 	local load = wt.CreateButton({
 		parent = parentFrame,
 		name = "Load",
-		title = strings.options.advanced.backup.load.label,
-		tooltip = { [0] = { text = strings.options.advanced.backup.load.tooltip }, },
+		title = ns.strings.options.advanced.backup.load.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.advanced.backup.load.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			relativeTo = backupBox,
 			relativePoint = "BOTTOMRIGHT",
 			offset = { x = 6, y = -13 }
 		},
-		width = 80,
-		onClick = function() StaticPopup_Show(importPopup) end,
+		events = { OnClick = function() StaticPopup_Show(importPopup) end, },
 	})
 	--Button: Reset
 	wt.CreateButton({
 		parent = parentFrame,
 		name = "Reset",
-		title = strings.options.advanced.backup.reset.label,
-		tooltip = { [0] = { text = strings.options.advanced.backup.reset.tooltip }, },
+		title = ns.strings.options.advanced.backup.reset.label,
+		tooltip = { lines = { [0] = { text = ns.strings.options.advanced.backup.reset.tooltip, }, } },
 		position = {
 			anchor = "TOPRIGHT",
 			relativeTo = load,
 			relativePoint = "TOPLEFT",
 			offset = { x = -10, }
 		},
-		width = 80,
-		onClick = function()
+		events = { OnClick = function()
 			options.backup.string:SetText("") --Remove text to make sure OnTextChanged will get called
 			options.backup.string:SetText(wt.TableToString({ account = db, character = dbc }, options.backup.compact:GetChecked(), true))
 			--Set focus after text change to set the scroll to the top and refresh the position character counter
 			options.backup.string:SetFocus()
 			options.backup.string:ClearFocus()
-		end,
+		end, },
 	})
 end
 local function CreateAdvancedCategoryPanels(parentFrame) --Add the advanced page widgets to the category panel frame
@@ -2239,8 +2172,8 @@ local function CreateAdvancedCategoryPanels(parentFrame) --Add the advanced page
 	local profilesPanel = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Profiles",
-		title = strings.options.advanced.profiles.title,
-		description = strings.options.advanced.profiles.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.advanced.profiles.title,
+		description = ns.strings.options.advanced.profiles.description:gsub("#ADDON", addonTitle),
 		position = { offset = { x = 16, y = -82 } },
 		size = { height = 64 },
 	})
@@ -2249,8 +2182,8 @@ local function CreateAdvancedCategoryPanels(parentFrame) --Add the advanced page
 	local backupOptions = wt.CreatePanel({
 		parent = parentFrame,
 		name = "Backup",
-		title = strings.options.advanced.backup.title,
-		description = strings.options.advanced.backup.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.advanced.backup.title,
+		description = ns.strings.options.advanced.backup.description:gsub("#ADDON", addonTitle),
 		position = {
 			relativeTo = profilesPanel,
 			relativePoint = "BOTTOMLEFT",
@@ -2275,18 +2208,18 @@ end
 local function CancelChanges()
 	LoadDBs()
 	--Display
-	wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
+	wt.SetPosition(remXP, db.display.position)
 	SetDisplayValues(db, dbc)
 	--Enhancement
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, false)
 	--Removals
-	if db.removals.statusBars then MainMenuExpBar:Hide() else MainMenuExpBar:Show() end
+	wt.SetVisibility(MainMenuExpBar, db.removals.statusBars)
 end
 --Restore all the settings under the main option category to their default values
 local function DefaultOptions()
 	if db.enhancement.enabled ~= dbDefault.enhancement.enabled then
 		wt.CreateReloadNotice()
-		print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.integration.notice, colors.blue[0]))
+		print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.integration.notice, ns.colors.blue[0]))
 	end
 	--Reset the DBs
 	RemainingXPDB = wt.Clone(dbDefault)
@@ -2294,90 +2227,107 @@ local function DefaultOptions()
 	wt.CopyValues(dbDefault, db)
 	wt.CopyValues(dbcDefault, dbc)
 	--Reset the Custom preset
-	presets[0].data = db.customPreset
+	presets[0].data = wt.Clone(db.customPreset)
 	--Reset the main display
-	wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
+	wt.SetPosition(remXP, db.display.position)
 	SetDisplayValues(db, dbc)
 	--Update the enhancement
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
 	--Update the removals
-	if db.removals.statusBars then MainMenuExpBar:Hide() else MainMenuExpBar:Show() end
+	wt.SetVisibility(MainMenuExpBar, db.removals.statusBars)
 	--Initiate or remove the cross-session Rested XP accumulation tracking variable
 	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and dbc.disabled)
 	--Update the interface options
 	wt.LoadOptionsData(addonNameSpace)
 	--Set the preset selection to Custom
-	UIDropDownMenu_SetSelectedValue(options.visibility.presets, 0)
-	UIDropDownMenu_SetText(options.visibility.presets, presets[0].name)
+	options.visibility.presets.setSelected(0)
 	--Notification
-	print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.options.defaults, colors.blue[0]))
+	print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.options.defaults, ns.colors.blue[0]))
 end
 
 --Create and add the options category panel frames to the WoW Interface Options
 local function LoadInterfaceOptions()
 	--Main options panel
-	options.mainOptionsPage = wt.CreateOptionsPanel({
+	options.mainOptions = wt.CreateOptionsCategory({
 		addon = addonNameSpace,
 		name = "Main",
-		title = addonTitle,
-		description = strings.options.main.description:gsub("#ADDON", addonTitle):gsub("#KEYWORD", strings.chat.keyword),
-		logo = textures.logo,
+		description = ns.strings.options.main.description:gsub("#ADDON", addonTitle):gsub("#KEYWORD", ns.strings.chat.keyword),
+		logo = ns.textures.logo,
 		titleLogo = true,
-		okay = SaveOptions,
+		save = SaveOptions,
 		cancel = CancelChanges,
 		default = DefaultOptions,
 		optionsKey = addonNameSpace,
 	})
-	CreateMainCategoryPanels(options.mainOptionsPage) --Add categories & GUI elements to the panel
+	CreateMainCategoryPanels(options.mainOptions.canvas) --Add categories & GUI elements to the panel
 	--Display options panel
-	local displayOptionsScrollFrame
-	options.displayOptionsPage, displayOptionsScrollFrame = wt.CreateOptionsPanel({
-		parent = options.mainOptionsPage.name,
+	options.displayOptions = wt.CreateOptionsCategory({
+		parent = options.mainOptions.category,
 		addon = addonNameSpace,
 		name = "Display",
-		title = strings.options.display.title,
-		description = strings.options.display.description:gsub("#ADDON", addonTitle),
-		logo = textures.logo,
+		title = ns.strings.options.display.title,
+		description = ns.strings.options.display.description:gsub("#ADDON", addonTitle),
+		logo = ns.textures.logo,
 		scroll = {
-			height = 782,
-			speed = 45,
+			height = 695,
+			speed = 75,
 		},
+		save = SaveOptions,
+		cancel = CancelChanges,
 		default = DefaultOptions,
+		optionsKey = addonNameSpace,
+		autoSave = false,
+		autoLoad = false,
 	})
-	CreateDisplayCategoryPanels(displayOptionsScrollFrame) --Add categories & GUI elements to the panel
+	CreateDisplayCategoryPanels(options.displayOptions.scrollChild) --Add categories & GUI elements to the panel
 	--Integration options panel
-	options.integrationOptionsPage = wt.CreateOptionsPanel({
-		parent = options.mainOptionsPage.name,
+	options.integrationOptions = wt.CreateOptionsCategory({
+		parent = options.mainOptions.category,
 		addon = addonNameSpace,
 		name = "Integration",
-		title = strings.options.integration.title,
-		description = strings.options.integration.description:gsub("#ADDON", addonTitle),
-		logo = textures.logo,
+		title = ns.strings.options.integration.title,
+		description = ns.strings.options.integration.description:gsub("#ADDON", addonTitle),
+		logo = ns.textures.logo,
+		save = SaveOptions,
+		cancel = CancelChanges,
 		default = DefaultOptions,
+		optionsKey = addonNameSpace,
+		autoSave = false,
+		autoLoad = false,
 	})
-	CreateIntegrationCategoryPanels(options.integrationOptionsPage) --Add categories & GUI elements to the panel
+	CreateIntegrationCategoryPanels(options.integrationOptions.canvas) --Add categories & GUI elements to the panel
 	--Notifications options panel
-	options.notificationsOptionsPage = wt.CreateOptionsPanel({
-		parent = options.mainOptionsPage.name,
+	options.notificationsOptions = wt.CreateOptionsCategory({
+		parent = options.mainOptions.category,
 		addon = addonNameSpace,
 		name = "Notifications",
-		title = strings.options.events.title,
-		description = strings.options.events.description:gsub("#ADDON", addonTitle),
-		logo = textures.logo,
+		title = ns.strings.options.events.title,
+		description = ns.strings.options.events.description:gsub("#ADDON", addonTitle),
+		logo = ns.textures.logo,
+		save = SaveOptions,
+		cancel = CancelChanges,
 		default = DefaultOptions,
+		optionsKey = addonNameSpace,
+		autoSave = false,
+		autoLoad = false,
 	})
-	CreateEventsCategoryPanels(options.notificationsOptionsPage) --Add categories & GUI elements to the panel
+	CreateEventsCategoryPanels(options.notificationsOptions.canvas) --Add categories & GUI elements to the panel
 	--Advanced options panel
-	options.advancedOptionsPage = wt.CreateOptionsPanel({
-		parent = options.mainOptionsPage.name,
+	options.advancedOptions = wt.CreateOptionsCategory({
+		parent = options.mainOptions.category,
 		addon = addonNameSpace,
 		name = "Advanced",
-		title = strings.options.advanced.title,
-		description = strings.options.advanced.description:gsub("#ADDON", addonTitle),
-		logo = textures.logo,
+		title = ns.strings.options.advanced.title,
+		description = ns.strings.options.advanced.description:gsub("#ADDON", addonTitle),
+		logo = ns.textures.logo,
+		save = SaveOptions,
+		cancel = CancelChanges,
 		default = DefaultOptions,
+		optionsKey = addonNameSpace,
+		autoSave = false,
+		autoLoad = false,
 	})
-	CreateAdvancedCategoryPanels(options.advancedOptionsPage) --Add categories & GUI elements to the panel
+	CreateAdvancedCategoryPanels(options.advancedOptions.canvas) --Add categories & GUI elements to the panel
 end
 
 
@@ -2389,93 +2339,104 @@ end
 ---@param load boolean [Default: false]
 local function PrintStatus(load)
 	if load == true and not db.notifications.statusNotice.enabled then return end
-	local status = wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(
-		remXP:IsVisible() and strings.chat.status.visible or strings.chat.status.hidden, colors.blue[0]
+	local status = wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(
+		remXP:IsVisible() and ns.strings.chat.status.visible or ns.strings.chat.status.hidden, ns.colors.blue[0]
 	):gsub(
-		"#FADE", wt.Color(strings.chat.status.fade:gsub(
-			"#STATE", wt.Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
-		), colors.blue[1])
+		"#FADE", wt.Color(ns.strings.chat.status.fade:gsub(
+			"#STATE", wt.Color(db.display.visibility.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[1])
+		), ns.colors.blue[1])
 	)
 	if dbc.disabled then
 		if db.notifications.statusNotice.maxReminder then
-			status = wt.Color(strings.chat.status.disabled:gsub(
-				"#ADDON", wt.Color(addonTitle, colors.purple[0])
-			) .." " ..  wt.Color(strings.chat.status.max:gsub(
-				"#MAX", wt.Color(GetMax(), colors.purple[1])
-			), colors.blue[1]), colors.blue[0])
+			status = wt.Color(ns.strings.chat.status.disabled:gsub(
+				"#ADDON", wt.Color(addonTitle, ns.colors.purple[0])
+			) .." " ..  wt.Color(ns.strings.chat.status.max:gsub(
+				"#MAX", wt.Color(max, ns.colors.purple[1])
+			), ns.colors.blue[1]), ns.colors.blue[0])
 		else return end
 	end
 	print(status)
 end
 --Print help info
 local function PrintInfo()
-	print(wt.Color(strings.chat.help.thanks:gsub("#ADDON", wt.Color(addonTitle, colors.purple[0])), colors.blue[0]))
+	print(wt.Color(ns.strings.chat.help.thanks:gsub("#ADDON", wt.Color(addonTitle, ns.colors.purple[0])), ns.colors.blue[0]))
 	PrintStatus()
-	print(wt.Color(strings.chat.help.hint:gsub( "#HELP_COMMAND", wt.Color(strings.chat.keyword .. " " .. strings.chat.help.command, colors.purple[2])), colors.blue[2]))
-	print(wt.Color(strings.chat.help.move:gsub("#SHIFT", wt.Color(strings.keys.shift, colors.purple[2])):gsub("#ADDON", addonTitle), colors.blue[2]))
+	print(wt.Color(ns.strings.chat.help.hint:gsub( "#HELP_COMMAND", wt.Color(ns.strings.chat.keyword .. " " .. ns.strings.chat.help.command, ns.colors.purple[2])), ns.colors.blue[2]))
+	print(wt.Color(ns.strings.chat.help.move:gsub("#SHIFT", wt.Color(ns.strings.keys.shift, ns.colors.purple[2])):gsub("#ADDON", addonTitle), ns.colors.blue[2]))
 end
 --Print the command list with basic functionality info
 local function PrintCommands()
-	print(wt.Color(addonTitle, colors.purple[0]) .. " ".. wt.Color(strings.chat.help.list .. ":", colors.blue[0]))
+	print(wt.Color(addonTitle, ns.colors.purple[0]) .. " ".. wt.Color(ns.strings.chat.help.list .. ":", ns.colors.blue[0]))
 	--Index the commands (skipping the help command) and put replacement code segments in place
 	local commands = {
 		[0] = {
-			command = strings.chat.options.command,
-			description = strings.chat.options.description:gsub("#ADDON", addonTitle)
+			command = ns.strings.chat.options.command,
+			description = ns.strings.chat.options.description:gsub("#ADDON", addonTitle)
 		},
 		[1] = {
-			command = strings.chat.save.command,
-			description = strings.chat.save.description
+			command = ns.strings.chat.save.command,
+			description = ns.strings.chat.save.description
 		},
 		[2] = {
-			command = strings.chat.preset.command,
-			description = strings.chat.preset.description:gsub(
-				"#INDEX", wt.Color(strings.chat.preset.command .. " " .. 0, colors.purple[2])
+			command = ns.strings.chat.preset.command,
+			description = ns.strings.chat.preset.description:gsub(
+				"#INDEX", wt.Color(ns.strings.chat.preset.command .. " " .. 0, ns.colors.purple[2])
 			)
 		},
 		[3] = {
-			command = strings.chat.toggle.command,
-			description = strings.chat.toggle.description:gsub(
-				"#HIDDEN", wt.Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[2])
+			command = ns.strings.chat.toggle.command,
+			description = ns.strings.chat.toggle.description:gsub(
+				"#HIDDEN", wt.Color(dbc.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.shown, ns.colors.purple[2])
 			)
 		},
 		[4] = {
-			command = strings.chat.fade.command,
-			description = strings.chat.fade.description:gsub(
-				"#STATE", wt.Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[2])
+			command = ns.strings.chat.fade.command,
+			description = ns.strings.chat.fade.description:gsub(
+				"#STATE", wt.Color(db.display.visibility.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 			)
 		},
 		[5] = {
-			command = strings.chat.size.command,
-			description =  strings.chat.size.description:gsub(
-				"#SIZE", wt.Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[2])
+			command = ns.strings.chat.size.command,
+			description =  ns.strings.chat.size.description:gsub(
+				"#SIZE", wt.Color(ns.strings.chat.size.command .. " " .. dbDefault.display.text.font.size, ns.colors.purple[2])
 			)
 		},
 		[6] = {
-			command = strings.chat.integration.command,
-			description =  strings.chat.integration.description
+			command = ns.strings.chat.integration.command,
+			description =  ns.strings.chat.integration.description
+		},
+		[7] = {
+			command = ns.strings.chat.reset.command,
+			description =  ns.strings.chat.reset.description
 		},
 	}
 	--Print the list
 	for i = 0, #commands do
-		print("    " .. wt.Color(strings.chat.keyword .. " " .. commands[i].command, colors.purple[2]) .. wt.Color(" - " .. commands[i].description, colors.blue[2]))
+		print("    " .. wt.Color(ns.strings.chat.keyword .. " " .. commands[i].command, ns.colors.purple[2]) .. wt.Color(" - " .. commands[i].description, ns.colors.blue[2]))
 	end
 end
+--Reset to defaults confirmation
+local resetPopup = wt.CreatePopup({
+	addon = addonNameSpace,
+	name = "DefaultOptions",
+	text = (wt.GetStrings("warning") or ""):gsub("#TITLE", wt.Clear(addonTitle)),
+	onAccept = DefaultOptions,
+})
 
 --[ Slash Command Handlers ]
 
 local function SaveCommand()
 	--Update the custom preset
-	presets[0].data.position.point, _, _, presets[0].data.position.offset.x, presets[0].data.position.offset.y = remXP:GetPoint()
+	presets[0].data.position.anchor, _, _, presets[0].data.position.offset.x, presets[0].data.position.offset.y = remXP:GetPoint()
 	presets[0].data.visibility.frameStrata = options.visibility.raise:GetChecked() and "HIGH" or "MEDIUM"
 	presets[0].data.background.visible = options.background.visible:GetChecked()
 	presets[0].data.background.size = { width = options.background.size.width:GetValue(), height = options.background.size.height:GetValue() }
 	--Save the Custom preset
-	db.customPreset = presets[0].data
+	wt.CopyValues(presets[0].data, db.customPreset)
 	--Update in the SavedVariabes DB
 	RemainingXPDB.customPreset = wt.Clone(db.customPreset)
 	--Response
-	print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.save.response, colors.blue[0]))
+	print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.save.response, ns.colors.blue[0]))
 end
 local function PresetCommand(parameter)
 	local i = tonumber(parameter)
@@ -2485,14 +2446,14 @@ local function PresetCommand(parameter)
 			remXP:Show()
 			remXP:SetFrameStrata(presets[i].data.visibility.frameStrata)
 			ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
-			wt.PositionFrame(remXP, presets[i].data.position.point, nil, nil, presets[i].data.position.offset.x, presets[i].data.position.offset.y)
+			wt.SetPosition(remXP, presets[i].data.position)
 			if not presets[i].data.background.visible then wt.SetVisibility(mainDisplayText, true) end
 			SetDisplayBackdrop(presets[i].data.background.visible, db.display.background.colors)
 			Fade(db.display.visibility.fade.enable)
 			--Update the GUI options in case the window was open
 			options.visibility.hidden:SetChecked(false)
 			options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
-			options.position.anchor.setSelected(GetAnchorID(presets[i].data.position.point))
+			options.position.anchor.setSelected(presets[i].data.position.anchor)
 			options.position.xOffset:SetValue(presets[i].data.position.offset.x)
 			options.position.yOffset:SetValue(presets[i].data.position.offset.y)
 			if not presets[i].data.background.visible then
@@ -2506,7 +2467,7 @@ local function PresetCommand(parameter)
 			options.visibility.raise:SetChecked(presets[i].data.visibility.frameStrata == "HIGH")
 			--Update the DBs
 			dbc.hidden = false
-			db.display.position = presets[i].data.position
+			wt.CopyValues(presets[i].data.position, db.display.position)
 			if not presets[i].data.background.visible then db.display.text.visible = true end
 			db.display.background.visible = presets[i].data.background.visible
 			db.display.background.size = presets[i].data.background.size
@@ -2519,110 +2480,107 @@ local function PresetCommand(parameter)
 			RemainingXPDB.display.background.size = wt.Clone(db.display.background.size)
 			RemainingXPDB.display.visibility.frameStrata = db.display.visibility.frameStrata
 			--Response
-			print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.preset.response:gsub(
-				"#PRESET", wt.Color(presets[i].name, colors.purple[1])
-			), colors.blue[0]))
+			print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.preset.response:gsub(
+				"#PRESET", wt.Color(presets[i].name, ns.colors.purple[1])
+			), ns.colors.blue[0]))
 		else
 			PrintStatus()
 		end
 	else
 		--Error
-		print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.preset.unchanged, colors.blue[0]))
-		print(wt.Color(strings.chat.preset.error:gsub("#INDEX", wt.Color(strings.chat.preset.command .. " " .. 0, colors.purple[1])), colors.blue[1]))
-		print(wt.Color(strings.chat.preset.list, colors.purple[2]))
-		for i = 0, #presets, 2 do
-			local list = "    " .. wt.Color(i, colors.purple[2]) .. wt.Color(" - " .. presets[i].name, colors.blue[2])
-			if i + 1 <= #presets then list = list .. "    " .. wt.Color(i + 1, colors.purple[2]) .. wt.Color(" - " .. presets[i + 1].name, colors.blue[2]) end
+		print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.preset.unchanged, ns.colors.blue[0]))
+		print(wt.Color(ns.strings.chat.preset.error:gsub("#INDEX", wt.Color(ns.strings.chat.preset.command .. " " .. 0, ns.colors.purple[1])), ns.colors.blue[1]))
+		print(wt.Color(ns.strings.chat.preset.list, ns.colors.purple[2]))
+		for j = 0, #presets, 2 do
+			local list = "    " .. wt.Color(j, ns.colors.purple[2]) .. wt.Color(" - " .. presets[j].name, ns.colors.blue[2])
+			if j + 1 <= #presets then list = list .. "    " .. wt.Color(j + 1, ns.colors.purple[2]) .. wt.Color(" - " .. presets[j + 1].name, ns.colors.blue[2]) end
 			print(list)
 		end
 	end
 end
 local function ToggleCommand()
+	--Update the DBs
 	dbc.hidden = not dbc.hidden
-	wt.SetVisibility(remXP, not (dbc.hidden or dbc.disabled))
+	RemainingXPDBC.hidden = dbc.hidden
 	--Update the GUI option in case it was open
 	options.visibility.hidden:SetChecked(dbc.hidden)
 	options.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
+	--Update the visibility
+	wt.SetVisibility(remXP, not (dbc.hidden or dbc.disabled))
 	--Response
-	print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.toggle.response:gsub(
-		"#STATE", wt.Color(dbc.hidden and strings.chat.toggle.hidden or strings.chat.toggle.shown, colors.purple[1])
-	), colors.blue[0]))
+	print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.toggle.response:gsub(
+		"#STATE", wt.Color(dbc.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.shown, ns.colors.purple[1])
+	), ns.colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
-	--Update in the SavedVariabes DB
-	RemainingXPDBC.hidden = dbc.hidden
 end
 local function FadeCommand()
+	--Update the DBs
 	db.display.visibility.fade.enabled = not db.display.visibility.fade.enabled
-	Fade(db.display.visibility.fade.enabled)
+	RemainingXPDB.display.visibility.fade.enabled = db.display.visibility.fade.enabled
 	--Update the GUI option in case it was open
 	options.visibility.fade.toggle:SetChecked(db.display.visibility.fade.enabled)
 	options.visibility.fade.toggle:SetAttribute("loaded", true) --Update dependent widgets
+	--Update the main display fade
+	Fade(db.display.visibility.fade.enabled)
 	--Response
-	print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.fade.response:gsub(
-		"#STATE", wt.Color(db.display.visibility.fade.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
-	), colors.blue[0]))
+	print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.fade.response:gsub(
+		"#STATE", wt.Color(db.display.visibility.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[1])
+	), ns.colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
-	--Update in the SavedVariabes DB
-	RemainingXPDB.display.visibility.fade.enabled = db.display.visibility.fade.enabled
 end
 local function SizeCommand(parameter)
 	local size = tonumber(parameter)
 	if size ~= nil then
+		--Update the DBs
 		db.display.text.font.size = size
-		mainDisplayText:SetFont(db.display.text.font.family, db.display.text.font.size, "THINOUTLINE")
+		RemainingXPDB.display.text.font.size = db.display.text.font.size
 		--Update the GUI option in case it was open
 		options.text.font.size:SetValue(size)
+		--Update the font
+		mainDisplayText:SetFont(db.display.text.font.family, db.display.text.font.size, "THINOUTLINE")
 		--Response
-		print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.size.response:gsub("#VALUE", wt.Color(size, colors.purple[1])), colors.blue[0]))
+		print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.size.response:gsub("#VALUE", wt.Color(size, ns.colors.purple[1])), ns.colors.blue[0]))
 	else
 		--Error
-		print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.size.unchanged, colors.blue[0]))
-		print(wt.Color(strings.chat.size.error:gsub(
-			"#SIZE", wt.Color(strings.chat.size.command .. " " .. dbDefault.display.text.font.size, colors.purple[1])
-		), colors.blue[1]))
+		print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.size.unchanged, ns.colors.blue[0]))
+		print(wt.Color(ns.strings.chat.size.error:gsub(
+			"#SIZE", wt.Color(ns.strings.chat.size.command .. " " .. dbDefault.display.text.font.size, ns.colors.purple[1])
+		), ns.colors.blue[1]))
 	end
 	if dbc.disabled then PrintStatus() end
-	--Update in the SavedVariabes DB
-	RemainingXPDB.display.text.font.size = db.display.text.font.size
 end
 local function IntegrationCommand()
+	--Update the DBs
 	db.enhancement.enabled = not db.enhancement.enabled
-	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
+	RemainingXPDB.enhancement.enabled = db.enhancement.enabled
 	--Update the GUI option in case it was open
 	options.enhancement.toggle:SetChecked(db.enhancement.enabled)
 	options.enhancement.toggle:SetAttribute("loaded", true) --Update dependent widgets
+	--Update the integration
+	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, true)
 	--Response
-	print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.integration.response:gsub(
-		"#STATE", wt.Color(db.enhancement.enabled and strings.misc.enabled or strings.misc.disabled, colors.purple[1])
-	), colors.blue[0]))
+	print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.integration.response:gsub(
+		"#STATE", wt.Color(db.enhancement.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[1])
+	), ns.colors.blue[0]))
 	if dbc.disabled then PrintStatus() end
-	--Update in the SavedVariabes DB
-	RemainingXPDB.enhancement.enabled = db.enhancement.enabled
+end
+local function ResetCommand()
+	StaticPopup_Show(resetPopup)
 end
 
-SLASH_REMXP1 = strings.chat.keyword
+SLASH_REMXP1 = ns.strings.chat.keyword
 function SlashCmdList.REMXP(line)
 	local command, parameter = strsplit(" ", line)
-	if command == strings.chat.help.command then
-		PrintCommands()
-	elseif command == strings.chat.options.command then
-		InterfaceOptionsFrame_OpenToCategory(options.mainOptionsPage)
-		InterfaceOptionsFrame_OpenToCategory(options.mainOptionsPage) --Load twice to make sure the proper page and category is loaded
-	elseif command == strings.chat.save.command then
-		SaveCommand()
-	elseif command == strings.chat.preset.command then
-		PresetCommand(parameter)
-	elseif command == strings.chat.toggle.command then
-		ToggleCommand()
-	elseif command == strings.chat.fade.command then
-		FadeCommand()
-	elseif command == strings.chat.size.command then
-		SizeCommand(parameter)
-	elseif command == strings.chat.integration.command then
-		IntegrationCommand()
-	else
-		PrintInfo()
-	end
+	if command == ns.strings.chat.help.command then PrintCommands()
+	elseif command == ns.strings.chat.options.command then options.mainOptions.open()
+	elseif command == ns.strings.chat.save.command then SaveCommand()
+	elseif command == ns.strings.chat.preset.command then PresetCommand(parameter)
+	elseif command == ns.strings.chat.toggle.command then ToggleCommand()
+	elseif command == ns.strings.chat.fade.command then FadeCommand()
+	elseif command == ns.strings.chat.size.command then SizeCommand(parameter)
+	elseif command == ns.strings.chat.integration.command then IntegrationCommand()
+	elseif command == ns.strings.chat.reset.command then ResetCommand()
+	else PrintInfo() end
 end
 
 
@@ -2631,49 +2589,34 @@ end
 local function CreateContextMenuItems()
 	return {
 		{
-			text = strings.options.name:gsub("#ADDON", addonTitle),
+			text = ns.strings.options.name:gsub("#ADDON", addonTitle),
 			isTitle = true,
 			notCheckable = true,
 		},
 		{
-			text = strings.options.main.name,
+			text = ns.strings.options.main.name,
 			notCheckable = true,
-			func = function()
-				InterfaceOptionsFrame_OpenToCategory(options.mainOptionsPage)
-				InterfaceOptionsFrame_OpenToCategory(options.mainOptionsPage) --Load twice to make sure the proper page and category is loaded
-			end,
+			func = function() options.mainOptions.open() end,
 		},
 		{
-			text = strings.options.display.title,
+			text = ns.strings.options.display.title,
 			notCheckable = true,
-			func = function()
-				InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage)
-				InterfaceOptionsFrame_OpenToCategory(options.displayOptionsPage) --Load twice to make sure the proper page and category is loaded
-			end,
+			func = function() options.displayOptions.open() end,
 		},
 		{
-			text = strings.options.integration.title,
+			text = ns.strings.options.integration.title,
 			notCheckable = true,
-			func = function()
-				InterfaceOptionsFrame_OpenToCategory(options.integrationOptionsPage)
-				InterfaceOptionsFrame_OpenToCategory(options.integrationOptionsPage) --Load twice to make sure the proper page and category is loaded
-			end,
+			func = function() options.integrationOptions.open() end,
 		},
 		{
-			text = strings.options.events.title,
+			text = ns.strings.options.events.title,
 			notCheckable = true,
-			func = function()
-				InterfaceOptionsFrame_OpenToCategory(options.notificationsOptionsPage)
-				InterfaceOptionsFrame_OpenToCategory(options.notificationsOptionsPage) --Load twice to make sure the proper page and category is loaded
-			end,
+			func = function() options.notificationsOptions.open() end,
 		},
 		{
-			text = strings.options.advanced.title,
+			text = ns.strings.options.advanced.title,
 			notCheckable = true,
-			func = function()
-				InterfaceOptionsFrame_OpenToCategory(options.advancedOptionsPage)
-				InterfaceOptionsFrame_OpenToCategory(options.advancedOptionsPage) --Load twice to make sure the proper page and category is loaded
-			end,
+			func = function() options.advancedOptions.open() end,
 		},
 	}
 end
@@ -2685,72 +2628,63 @@ local function SetUpMainDisplayFrame()
 	--Main frame
 	remXP:SetToplevel(true)
 	remXP:SetSize(114, 14)
-	wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
-	--Main display
+	wt.SetPosition(remXP, db.display.position)
+	--Main display elements
 	mainDisplay:SetPoint("CENTER")
 	mainDisplayXP:SetPoint("LEFT")
 	mainDisplayRested:SetPoint("LEFT", mainDisplayXP, "RIGHT")
 	mainDisplayOverlay:SetPoint("CENTER")
 	mainDisplayText:SetPoint("CENTER") --TODO: Add font offset option to fine-tune the position (AND/OR, ad pre-tested offsets to keep each font in the center)
 	SetDisplayValues(db, dbc)
+	--Make movable
+	wt.SetMovability(remXP, true, "SHIFT", mainDisplay, {
+		onStop = function()
+			--Save the position (for account-wide use)
+			db.display.position.anchor, _, _, db.display.position.offset.x, db.display.position.offset.y = remXP:GetPoint()
+			--Update in the SavedVariabes DB
+			RemainingXPDB.display.position = wt.Clone(db.display.position)
+			--Update the GUI options in case the window was open
+			options.position.anchor.setSelected(db.display.position.anchor)
+			options.position.xOffset:SetValue(db.display.position.offset.x)
+			options.position.yOffset:SetValue(db.display.position.offset.y)
+			--Chat response
+			print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.position.save, ns.colors.blue[0]))
+		end,
+		onCancel = function()
+			--Reset the position
+			wt.SetPosition(remXP, db.display.position)
+			--Chat response
+			print(wt.Color(addonTitle .. ":", ns.colors.purple[0]) .. " " .. wt.Color(ns.strings.chat.position.cancel, ns.colors.blue[0]))
+			print(wt.Color(ns.strings.chat.position.error:gsub("#SHIFT", ns.strings.keys.shift), ns.colors.blue[1]))
+		end
+	})
 	--Context menu
-	wt.CreateContextMenu({
+	wt.CreateClassicContextMenu({
 		parent = mainDisplay,
 		menu = CreateContextMenuItems(),
 	})
+	--Tooltip
+	wt.AddTooltip({
+		parent = mainDisplay,
+		tooltip = ns.tooltip,
+		title = ns.strings.xpTooltip.title,
+		lines = GetXPTooltipDetails(),
+		flipColors = true,
+		anchor = "ANCHOR_BOTTOMRIGHT",
+		offset = { y = mainDisplay:GetHeight() },
+	})
+	--Toggling the main display fade on mouseover
+	mainDisplay:HookScript('OnEnter', function() if db.display.visibility.fade.enabled then Fade(false) end end)
+	mainDisplay:HookScript('OnLeave', function() if db.display.visibility.fade.enabled then Fade(true) end end)
 end
 
---Making the frame moveable
-remXP:SetMovable(true)
-mainDisplay:SetScript("OnMouseDown", function()
-	if IsShiftKeyDown() and not remXP.isMoving then
-		remXP:StartMoving()
-		remXP.isMoving = true
-		--Stop moving when SHIFT is released
-		mainDisplay:SetScript("OnUpdate", function ()
-			if IsShiftKeyDown() then return end
-			remXP:StopMovingOrSizing()
-			remXP.isMoving = false
-			--Reset the position
-			wt.PositionFrame(remXP, db.display.position.point, nil, nil, db.display.position.offset.x, db.display.position.offset.y)
-			--Chat response
-			print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.position.cancel, colors.blue[0]))
-			print(wt.Color(strings.chat.position.error:gsub("#SHIFT", strings.keys.shift), colors.blue[1]))
-			--Stop checking if SHIFT is pressed
-			mainDisplay:SetScript("OnUpdate", nil)
-		end)
-	end
-end)
-mainDisplay:SetScript("OnMouseUp", function()
-	if not remXP.isMoving then return end
-	remXP:StopMovingOrSizing()
-	remXP.isMoving = false
-	--Save the position (for account-wide use)
-	db.display.position.point, _, _, db.display.position.offset.x, db.display.position.offset.y = remXP:GetPoint()
-	RemainingXPDB.display.position = wt.Clone(db.display.position) --Update in the SavedVariabes DB
-	--Update the GUI options in case the window was open
-	options.position.anchor.setSelected(GetAnchorID(db.display.position.point))
-	options.position.xOffset:SetValue(db.display.position.offset.x)
-	options.position.yOffset:SetValue(db.display.position.offset.y)
-	--Chat response
-	print(wt.Color(addonTitle .. ":", colors.purple[0]) .. " " .. wt.Color(strings.chat.position.save, colors.blue[0]))
-	--Stop checking if SHIFT is pressed
-	mainDisplay:SetScript("OnUpdate", nil)
-end)
-
---Toggling the main display tooltip and fade on mouseover
-mainDisplay:SetScript('OnEnter', function()
-	--Show tooltip
-	ns.tooltip = wt.AddTooltip(nil, mainDisplay, "ANCHOR_BOTTOMRIGHT", strings.xpTooltip.title, GetXPTooltipDetails(), 0, mainDisplay:GetHeight())
-	--Fade toggle
-	if db.display.visibility.fade.enabled then Fade(false) end
-end)
-mainDisplay:SetScript('OnLeave', function()
-	--Hide tooltip
-	ns.tooltip:Hide()
-	--Fade toggle
-	if db.display.visibility.fade.enabled then Fade(true) end
-end)
+--Hide during Pet Battle
+function remXP:PET_BATTLE_OPENING_START()
+	mainDisplay:Hide()
+end
+function remXP:PET_BATTLE_CLOSE()
+	mainDisplay:Show()
+end
 
 --[ Integrated Display Setup ]
 
@@ -2765,7 +2699,7 @@ local function SetUpIntegratedFrame()
 	integratedDisplay:SetSize(MainMenuExpBar:GetWidth(), MainMenuExpBar:GetHeight())
 	SetIntegrationVisibility(db.enhancement.enabled, db.enhancement.keep, db.enhancement.remaining, true, false)
 	--Context menu
-	wt.CreateContextMenu({
+	wt.CreateClassicContextMenu({
 		parent = integratedDisplay,
 		menu = CreateContextMenuItems(),
 	})
@@ -2777,14 +2711,20 @@ integratedDisplay:SetScript("OnEnter", function()
 	integratedDisplayText:Show()
 	UpdateIntegratedDisplay(false)
 	--Show the custom tooltip
-	ns.tooltip = wt.AddTooltip(nil, integratedDisplay, "ANCHOR_NONE", strings.xpTooltip.title, GetXPTooltipDetails())
-	ns.tooltip:SetPoint("BOTTOMRIGHT", -11, 115)
+	wt.AddTooltip({
+		parent = integratedDisplay,
+		tooltip = ns.tooltip,
+		title = ns.strings.xpTooltip.title,
+		lines = GetXPTooltipDetails(),
+		flipColors = true,
+		anchor = "ANCHOR_NONE",
+		offset = { x = -11, y = 115 },
+		position = { anchor = "BOTTOMRIGHT" },
+	})
 end)
 integratedDisplay:SetScript("OnLeave", function()
 	--Hide the enhanced XP text on the default XP bar
 	SetIntegrationTextVisibility(db.enhancement.keep, db.enhancement.remaining)
-	--Hide the custom tooltip
-	ns.tooltip:Hide()
 end)
 
 --[ Loading ]
@@ -2798,12 +2738,11 @@ function remXP:ADDON_LOADED(name)
 	if csc.xp == nil then csc.xp = {} end
 	if cs.compactBackup == nil then cs.compactBackup = true end
 	--Load the custom preset
-	presets[0].data = db.customPreset
+	presets[0].data = wt.Clone(db.customPreset)
 	--Set up the interface options
 	LoadInterfaceOptions()
 end
 function remXP:PLAYER_ENTERING_WORLD()
-	dbc.disabled = UnitLevel("player") >= GetMax()
 	--Update the XP values
 	csc.xp.needed = UnitXPMax("player")
 	csc.xp.current = UnitXP("player")
@@ -2814,6 +2753,7 @@ function remXP:PLAYER_ENTERING_WORLD()
 	--Set up the integrated frame & text
 	SetUpIntegratedFrame()
 	--Check max level, update XP texts
+	dbc.disabled = UnitLevel("player") >= max
 	if not dbc.disabled then
 		--Main display
 		UpdateXPDisplayText()
@@ -2844,15 +2784,15 @@ function remXP:PLAYER_XP_UPDATE(unit)
 	UpdateIntegratedDisplay(db.enhancement.remaining)
 	--Notification
 	if db.notifications.xpGained then
-		print(wt.Color(strings.chat.notifications.xpGained.text:gsub(
-			"#AMOUNT", wt.Color(wt.FormatThousands(gainedXP), colors.purple[0])
+		print(wt.Color(ns.strings.chat.notifications.xpGained.text:gsub(
+			"#AMOUNT", wt.Color(wt.FormatThousands(gainedXP), ns.colors.purple[0])
 		):gsub(
-			"#REMAINING", wt.Color(strings.chat.notifications.xpGained.remaining:gsub(
-				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.remaining), colors.purple[2])
+			"#REMAINING", wt.Color(ns.strings.chat.notifications.xpGained.remaining:gsub(
+				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.remaining), ns.colors.purple[2])
 			):gsub(
 				"#NEXT", UnitLevel("player") + 1
-			), colors.blue[2])
-		), colors.blue[0]))
+			), ns.colors.blue[2])
+		), ns.colors.blue[0]))
 	end
 	--Tooltip
 	UpdateXPTooltip()
@@ -2860,26 +2800,25 @@ end
 
 --Level up update
 function remXP:PLAYER_LEVEL_UP(newLevel)
-	local max = GetMax()
 	dbc.disabled = newLevel >= max
 	if dbc.disabled then
 		--Hide the displays
 		remXP:hide()
 		integratedDisplay:hide()
 		--Notification
-		print(wt.Color(strings.chat.notifications.lvlUp.disabled.text:gsub(
-			"#ADDON", wt.Color(addonTitle, colors.purple[0])
+		print(wt.Color(ns.strings.chat.notifications.lvlUp.disabled.text:gsub(
+			"#ADDON", wt.Color(addonTitle, ns.colors.purple[0])
 		):gsub(
-			"#REASON", wt.Color(strings.chat.notifications.lvlUp.disabled.reason:gsub(
+			"#REASON", wt.Color(ns.strings.chat.notifications.lvlUp.disabled.reason:gsub(
 				"#MAX", max
-			), colors.blue[2])
-		) .. " " .. strings.chat.notifications.lvlUp.congrats, colors.blue[0]))
+			), ns.colors.blue[2])
+		) .. " " .. ns.strings.chat.notifications.lvlUp.congrats, ns.colors.blue[0]))
 	else
 		--Notification
 		if db.notifications.lvlUp.congrats then
-			print(wt.Color(strings.chat.notifications.lvlUp.text:gsub(
-				"#LEVEL", wt.Color(newLevel, colors.purple[0])
-			) .. " " .. wt.Color(strings.chat.notifications.lvlUp.congrats, colors.purple[2]), colors.blue[0]))
+			print(wt.Color(ns.strings.chat.notifications.lvlUp.text:gsub(
+				"#LEVEL", wt.Color(newLevel, ns.colors.purple[0])
+			) .. " " .. wt.Color(ns.strings.chat.notifications.lvlUp.congrats, ns.colors.purple[2]), ns.colors.blue[0]))
 			if db.notifications.lvlUp.timePlayed then RequestTimePlayed() end
 		end
 		--Tooltip
@@ -2898,15 +2837,15 @@ function remXP:UPDATE_EXHAUSTION()
 	UpdateIntegratedDisplay(db.enhancement.remaining)
 	--Notification
 	if db.notifications.restedXP.gained and not (db.notifications.restedXP.significantOnly and gainedRestedXP < 10) then
-		print(wt.Color(strings.chat.notifications.restedXPGained.text:gsub(
-				"#AMOUNT", wt.Color(gainedRestedXP, colors.purple[0])
+		print(wt.Color(ns.strings.chat.notifications.restedXPGained.text:gsub(
+				"#AMOUNT", wt.Color(gainedRestedXP, ns.colors.purple[0])
 			):gsub(
-				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), colors.purple[0])
+				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.purple[0])
 			):gsub(
-				"#PERCENT", wt.Color(strings.chat.notifications.restedXPGained.percent:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 100000) / 1000, 3) .. "%%%%", colors.purple[2])
-				), colors.blue[2])
-			), colors.blue[0])
+				"#PERCENT", wt.Color(ns.strings.chat.notifications.restedXPGained.percent:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[2])
+				), ns.colors.blue[2])
+			), ns.colors.blue[0])
 		)
 	end
 	--Tooltip
@@ -2918,19 +2857,19 @@ function remXP:PLAYER_UPDATE_RESTING()
 	if dbc.disabled then return end
 	--Notification
 	if db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and not IsResting() then
-		local s = wt.Color(strings.chat.notifications.restedXPAccumulated.leave, colors.purple[0])
-		if (csc.xp.accumulatedRested or 0) > 0 then s = s .. " " .. wt.Color(strings.chat.notifications.restedXPAccumulated.accumulated:gsub(
-				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested), colors.purple[0])
+		local s = wt.Color(ns.strings.chat.notifications.restedXPAccumulated.leave, ns.colors.purple[0])
+		if (csc.xp.accumulatedRested or 0) > 0 then s = s .. " " .. wt.Color(ns.strings.chat.notifications.restedXPAccumulated.accumulated:gsub(
+				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested), ns.colors.purple[0])
 			):gsub(
-				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), colors.purple[0])
+				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.purple[0])
 			):gsub(
-				"#PERCENT", wt.Color(strings.chat.notifications.restedXPAccumulated.percent:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%", colors.purple[2])
+				"#PERCENT", wt.Color(ns.strings.chat.notifications.restedXPAccumulated.percent:gsub(
+					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[2])
 				):gsub(
-					"#NEXT", wt.Color(UnitLevel("player") + 1, colors.purple[2])
-				), colors.blue[2])
-			), colors.blue[0])
-		else s = s .. " " .. wt.Color(strings.chat.notifications.restedXPAccumulated.noAccumulation, colors.blue[0]) end
+					"#NEXT", wt.Color(UnitLevel("player") + 1, ns.colors.purple[2])
+				), ns.colors.blue[2])
+			), ns.colors.blue[0])
+		else s = s .. " " .. wt.Color(ns.strings.chat.notifications.restedXPAccumulated.noAccumulation, ns.colors.blue[0]) end
 		print(s)
 	end
 	--Initiate or remove the cross-session Rested XP accumulation tracking variable

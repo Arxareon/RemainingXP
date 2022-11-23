@@ -1,15 +1,16 @@
 ## Interface: 11403
-## Title: Remaining XP
-## Version: 2.0.6
-## X-Day: 21
-## X-Month: 8
+## Title: Remaining XP |TInterface/AddOns/RemainingXP/Textures/Logo.tga:0|t
+## Version: 2.1
+## X-Day: 28
+## X-Month: 11
 ## X-Year: 2022
 ## Author: Barnabas Nagy (Arxareon)
 ## X-License: All Rights Reserved
 ## Notes: Shows the amount of XP needed to reach the next level & much more.
 ## SavedVariables: RemainingXPDB, RemainingXPCS
 ## SavedVariablesPerCharacter: RemainingXPDBC, RemainingXPCSC
+## Dependencies: WidgetTools
 
-WidgetTools/WidgetTools.lua
-RemainingXPLocalizations.lua
+Resources.lua
+WidgetToolbox.lua
 RemainingXPClassic.lua

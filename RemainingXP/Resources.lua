@@ -1,5 +1,10 @@
---Addon namespace
-local _, ns = ...
+--[[ ADDON INFO ]]
+
+--Addon namespace string & table
+local addonNameSpace, ns = ...
+
+--Addon root folder
+local root = "Interface/AddOns/" .. addonNameSpace .. "/"
 
 
 --[[ CHANGELOG ]]
@@ -162,6 +167,15 @@ local changelogDB = {
 		[3] = "Under the hood changes & improvements.",
 		[4] = "#C_Change:_#",
 		[5] = "Remaining XP has moved from Bitbucket to GitHub. Links to the Repository & Issues have been updated.\n#H_There is now an opportunity to Sponsor my work on GitHub to support and justify the continued development of my addons should you wish and have the means to do so. Every bit of help is appreciated!_#",
+	},
+	[15] = {
+		[0] = "#V_Version 2.1_# #H_(11/28/2022)_#",
+		[1] = "#N_Update:_#",
+		[2] = "Added Dragonflight (Retail 10.0) support.",
+		[3] = "Significant under the hood changes & improvements, including new UI widgets and more functionality.",
+		[4] = "Apply quick display presets right from the context menu (Dragonflight only, for now).",
+		[5] = "Other smaller changes like an updated logo or improved data restoration from older versions of the addon.",
+		[6] = "#H_If you encounter any issues, do not hesitate reporting them! Try including when & how they occur, and which other addons are you using to give me the best chance to be able to reproduce and fix them. If you know how, try proving taint logs as well if relevant. Thanks for helping!_#",
 	},
 }
 
@@ -392,7 +406,10 @@ local english = {
 				description = "Choose to hide related elements of the default UI to remove or replace them.",
 				statusBars = {
 					label = "Hide default status bars",
-					tooltip = "Turn off the default status bars: experience, reputation or other progression bars below the action bar so you may replace them with the custom #ADDON bar.", --# flags will be replaced with code
+					tooltip = {
+						[0] = "Turn off the default experience bar so you may replace them with the custom #ADDON bar.", --# flags will be replaced with code
+						[1] = "This will also remove the Reputation, Honor or other progression bars along with the experience bar!",
+					},
 					labelClassic = "Hide default XP bar",
 					tooltipClassic = "Turn off the default experience bar so you may replace it with the custom #ADDON bar.", --# flags will be replaced with code
 				},
@@ -571,6 +588,11 @@ local english = {
 			cancel = "The repositioning of the XP display was cancelled.",
 			error = "Hold #SHIFT until the mouse button is released to save the position.", --# flags will be replaced with code
 		},
+		reset = {
+			command = "reset",
+			description = "reset everything to defaults",
+			response = "The default options and the Custom preset have been reset.",
+		},
 	},
 	xpTooltip = {
 		title = "XP details:",
@@ -616,6 +638,7 @@ local english = {
 	},
 	misc = {
 		date = "#MONTH/#DAY/#YEAR", --# flags will be replaced with code
+		options = "Options",
 		default = "Default",
 		custom = "Custom",
 		override = "Override",
@@ -627,9 +650,6 @@ local english = {
 		seconds = "seconds",
 	},
 }
-
-
---[[ Load Localization ]]
 
 --Load the proper localization table based on the client language
 ns.LoadLocale = function()
@@ -643,3 +663,58 @@ ns.LoadLocale = function()
 	end
 	return strings
 end
+
+
+--[[ ASSETS ]]
+
+--Strings
+ns.strings = ns.LoadLocale()
+ns.strings.chat.keyword = "/remxp"
+
+--Colors
+ns.colors = {
+	grey = {
+		[0] = { r = 0.54, g = 0.54, b = 0.54 },
+		[1] = { r = 0.69, g = 0.69, b = 0.69 },
+		[2] = { r = 0.79, g = 0.79, b = 0.79 },
+	},
+	purple = {
+		[0] = { r = 0.83, g = 0.11, b = 0.79 },
+		[1] = { r = 0.82, g = 0.34, b = 0.80 },
+		[2] = { r = 0.88, g = 0.56, b = 0.86 },
+	},
+	blue = {
+		[0] = { r = 0.06, g = 0.54, b = 1 },
+		[1] = { r = 0.46, g = 0.70, b = 0.94 },
+		[2] = { r = 0.64, g = 0.80, b = 0.96 },
+	},
+	rose = {
+		[0] = { r = 0.69, g = 0.21, b = 0.47 },
+		[1] = { r = 0.84, g = 0.25, b = 0.58 },
+		[2] = { r = 0.80, g = 0.47, b = 0.65 },
+	},
+	peach = {
+		[0] = { r = 0.95, g = 0.58, b = 0.52 },
+		[1] = { r = 0.96, g = 0.72, b = 0.68 },
+		[2] = { r = 0.98, g = 0.81, b = 0.78 },
+	}
+}
+
+--Fonts
+ns.fonts = {
+	[0] = { name = ns.strings.misc.default, path = ns.strings.options.display.text.font.family.default },
+	[1] = { name = "Arbutus Slab", path = root .. "Fonts/ArbutusSlab.ttf" },
+	[2] = { name = "Caesar Dressing", path = root .. "Fonts/CaesarDressing.ttf" },
+	[3] = { name = "Germania One", path = root .. "Fonts/GermaniaOne.ttf" },
+	[4] = { name = "Mitr", path = root .. "Fonts/Mitr.ttf" },
+	[5] = { name = "Oxanium", path = root .. "Fonts/Oxanium.ttf" },
+	[6] = { name = "Pattaya", path = root .. "Fonts/Pattaya.ttf" },
+	[7] = { name = "Reem Kufi", path = root .. "Fonts/ReemKufi.ttf" },
+	[8] = { name = "Source Code Pro", path = root .. "Fonts/SourceCodePro.ttf" },
+	[9] = { name = ns.strings.misc.custom, path = root .. "Fonts/CUSTOM.ttf" },
+}
+
+--Textures
+ns.textures = {
+	logo = root .. "Textures/Logo.tga",
+}
