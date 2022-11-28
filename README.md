@@ -1,4 +1,4 @@
-# <img src="https://wago-addons.ams3.digitaloceanspaces.com/thumbnails/FWxJtQUjJe24aWsbIwEUeN4ga6hHKkmB5UUci5AW.png" alt="Remaining XP Logo" width="40" height="40" align="top"> Remaining XP
+# <img src="https://wago-addons.ams3.digitaloceanspaces.com/thumbnails/JmYhfPLmyAFRdMQE7iiyCM5lFom6kixGAZCRoT14.png" alt="Remaining XP Logo" width="40" height="40" align="top"> Remaining XP
 
 ***A simple solution to a simple problem:*** Remaining XP tracks your XP gains & calculates the remaining XP value. It also offers a customizable display & XP bar, text integration for the default XP bar, chat notifications tracking your Rested XP accumulation & more in a minimalistic package - use only what you need.
 
@@ -14,7 +14,7 @@
 
 | Addons | Description | Links |
 |-|-|:-:|
-| <img src="https://wago-addons.ams3.digitaloceanspaces.com/thumbnails/Ejl21mndIAdtw5Dg1QPGxcC0qGgzkaeV0mpLoXop.png" alt="Movement Speed Logo" width="20" height="20" align="top"> **Movement Speed** | View the movement speed of anyone, track yours in a<br>customizable display with fast updates. | [GitHub](https://github.com/Arxareon/MovementSpeed) • [CurseForge](https://www.curseforge.com/wow/addons/movement-speed) • [Wago](https://addons.wago.io/addons/movement-speed) |
+| <img src="https://wago-addons.ams3.digitaloceanspaces.com/thumbnails/h0X1zDHgMB6xDOFicjSfOsrq6JkMXQS2K3x9KYI3.png" alt="Movement Speed Logo" width="20" height="20" align="top"> **Movement Speed** | View the movement speed of anyone, track yours in a<br>customizable display with fast updates. | [GitHub](https://github.com/Arxareon/MovementSpeed) • [CurseForge](https://www.curseforge.com/wow/addons/movement-speed) • [Wago](https://addons.wago.io/addons/movement-speed) |
 | *Coming soon™:* <br><img src="https://wago-addons.ams3.digitaloceanspaces.com/thumbnails/CmtzQg7JfpeZBchDcOx4qF7mUz5QaCCJrf22knx4.png" alt="Party Targets Logo" width="20" height="20" align="top"> **Party Targets** | See who all of your party or raid members are targeting<br>simultaneously. Useful for PvP! | [GitHub](https://github.com/Arxareon/PartyTargets) • [CurseForge](https://www.curseforge.com/wow/addons/party-targets-addon) • [Wago](https://addons.wago.io/addons/party-targets) |
 | *Coming soon™:* <br><img src="https://wago-addons.ams3.digitaloceanspaces.com/thumbnails/ItNTG9RkclzoxYCape4RAavnM9s3TePvcwMz4u1p.png" alt="RP Keyboard Logo" width="20" height="20" align="top"> **RP Keyboard** | Type with fantasy fonts, runes & symbols in chat to talk<br>to other RP Keyboard users in style! | [GitHub](https://github.com/Arxareon/RPKeyboard) • [CurseForge](https://www.curseforge.com/wow/addons/rp-keyboard) • [Wago](https://addons.wago.io/addons/rp-keyboard) |
 
