@@ -1,10 +1,12 @@
-## Interface: 100002
-## Title: Remaining XP |TInterface/AddOns/RemainingXP/Textures/Logo.tga:0|t
-## Version: 2.1
-## X-Day: 28
-## X-Month: 11
-## X-Year: 2022
+## Interface: 100105
+## Title: Remaining XP
+## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
+## Version: 2.2
+## X-Day: 15
+## X-Month: 6
+## X-Year: 2023
 ## Author: Barnabas Nagy (Arxareon)
+## X-Sponsors: Celierra
 ## X-License: All Rights Reserved
 ## Notes: Shows the amount of XP needed to reach the next level & much more.
 ## SavedVariables: RemainingXPDB, RemainingXPCS
