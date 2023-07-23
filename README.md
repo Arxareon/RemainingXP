@@ -20,7 +20,7 @@ Alongside the one-time & monthly donation options featured above, watching ads o
 Celierra
 
 ## Other Addons
-*If you like minimalistic solutions, you might want to check out these Addons as well:*
+*If you like minimalistic but customizable solutions, you might want to check out these Addons as well:*
 
 | Addons | Description | Links |
 |-|-|:-:|
