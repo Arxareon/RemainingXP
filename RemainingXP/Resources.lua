@@ -210,6 +210,23 @@ local changelogDB = {
 		"Many other under the hood fixes & improvements. Phew.",
 		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any LUA script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	},
+	{
+		"#V_Version 2.3_# #H_(7/23/2023)_#",
+		"#C_Changes:_#",
+		"The \"Objective Tracker Bar\" (Watch Frame) preset has been added to WotLK Classic as well.",
+		"Several Preset values have been adjusted. Presets positioning the XP Display next to other frames will now dynamically be updated to follow those frames instead of being assigned to a static position. #H_After you move a frame, reapply the desired updated preset to move the XP Display back next to it._#",
+		"The \"Menu & Bags Small Bar\" has been replaced by the \"Bottom-Right Chunky Bar\" (same as in Classic).",
+		"Added more value step options to the other sliders as well. The default step value is now 1 for the offset values.",
+		"Rested XP Accumulation notification filter has been further adjusted to skip any amount gained no greater than 0.1% of the total Required XP amount.",
+		"The XP Displays will be hidden when entering most vehicles with custom UIs.",
+		"The settings category page shortcuts have been removed in WotLK Classic (because the new Settings window broke the feature - I may readd them when the issue gets resolved). The shortcuts have been replaced by an Options button in the right-click menu of the XP Displays.",
+		"The custom context menus have been replaced with the basic menu until their quirks are ironed out.",
+		"Scrolling has been improved in WotLK Classic.",
+		"#F_Fixes:_#",
+		"The XP Display size will now properly be able to be set again via Settings after applying a preset.",
+		"The default XP Status Bar will now be hidden again after exiting Edit Mode if the \"Hide default XP bar\" option is enabled.",
+		"Other small fixes, changes & improvements.",
+	},
 }
 
 ---Get an assembled & formatted string of the full changelog
@@ -325,10 +342,9 @@ local english = {
 						"Player Frame Bar Above",
 						"Player Frame Text Under",
 						"Objective Tracker Bar",
-						"Menu & Bags Small Bar",
 						"Bottom-Left Chunky Bar",
+						"Bottom-Right Chunky Bar",
 						"Top-Center Long Bar",
-						"Bottom-Right Chunky Bar", --Classic
 					},
 					select = "Select a preset…",
 				},
@@ -489,7 +505,7 @@ local english = {
 					},
 					significantOnly = {
 						label = "Significant values only",
-						tooltip = "Send Rested XP notifications only when a significant amount was gained (more than 0.001% of the total Required XP amount), skipping constant updates of the passive Rested XP accumulation when staying inside a Rested Area.",
+						tooltip = "Send Rested XP notifications only when a significant amount was gained (more than 0.1% of the total Required XP amount rounded up), skipping constant updates of the passive Rested XP accumulation when staying inside a Rested Area.",
 					},
 					accumulated = {
 						label = "Passive gain as summary",
@@ -733,7 +749,6 @@ local LoadLocale = function()
 	strings.options.main.description = strings.options.main.description:gsub("#KEYWORD", "/" .. ns.chat.keyword)
 	-- strings.options.display.position.xOffset.tooltip = strings.options.display.position.xOffset.tooltip:gsub("#ANCHOR", strings.options.display.position.anchor.label)
 	-- strings.options.display.position.yOffset.tooltip = strings.options.display.position.yOffset.tooltip:gsub("#ANCHOR", strings.options.display.position.anchor.label)
-	-- strings.options.display.update.throttle.tooltip = strings.options.display.update.throttle.tooltip:gsub("#FREQUENCY", strings.options.display.update.frequency.label)
 	-- strings.options.display.font.color.tooltip = strings.options.display.font.color.tooltip:gsub("#VALUE_COLORING", strings.options.display.font.valueColoring.label)
 
 	return strings

@@ -1,8 +1,8 @@
 ## Interface: 20504
 ## Title: Remaining XP |TInterface/AddOns/RemainingXP/Textures/Logo.tga:0|t
-## Version: 2.2
-## X-Day: 15
-## X-Month: 6
+## Version: 2.3
+## X-Day: 23
+## X-Month: 7
 ## X-Year: 2023
 ## Author: Barnabas Nagy (Arxareon)
 ## X-Sponsors: Celierra
@@ -14,4 +14,4 @@
 
 Resources.lua
 WidgetToolbox.lua
-RemainingXPClassic.lua
+Main_Classic.lua

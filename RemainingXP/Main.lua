@@ -110,14 +110,14 @@ local presets = {
 		data = {
 			position = {
 				anchor = "BOTTOM",
-				offset = { x = 0, y = 0, },
+				offset = { x = 0, y = 0 }
 			},
 			layer = {
-				strata = "MEDIUM"
+				strata = "LOW"
 			},
 			background = {
 				visible = true,
-				size = { width = 562, height = 14, },
+				size = { width = 562, height = 16 },
 			},
 		},
 	},
@@ -126,14 +126,14 @@ local presets = {
 		data = {
 			position = {
 				anchor = "BOTTOM",
-				offset = { x = -256, y = 0, },
+				offset = { x = -256, y = 0 }
 			},
 			layer = {
 				strata = "HIGH"
 			},
 			background = {
 				visible = false,
-				size = { width = 68, height = 16, },
+				size = { width = 68, height = 16 },
 			},
 		},
 	},
@@ -142,14 +142,14 @@ local presets = {
 		data = {
 			position = {
 				anchor = "BOTTOM",
-				offset = { x = 252, y = 0, },
+				offset = { x = 252, y = 0 }
 			},
 			layer = {
 				strata = "HIGH"
 			},
 			background = {
 				visible = false,
-				size = { width = 68, height = 16, },
+				size = { width = 68, height = 16 },
 			},
 		},
 	},
@@ -157,15 +157,17 @@ local presets = {
 		name = ns.strings.options.display.position.presets.list[4], --Player Frame Bar Above
 		data = {
 			position = {
-				anchor = "TOPLEFT",
-				offset = { x = 91, y = -10, },
+				anchor = "TOPRIGHT",
+				relativeTo = PlayerFrame,
+				relativePoint = "TOPRIGHT",
+				offset = { x = -27, y = -11 }
 			},
 			layer = {
 				strata = "MEDIUM"
 			},
 			background = {
 				visible = true,
-				size = { width = 126, height = 16, },
+				size = { width = 126, height = 16 },
 			},
 		},
 	},
@@ -173,15 +175,17 @@ local presets = {
 		name = ns.strings.options.display.position.presets.list[5], --Player Frame Text Under
 		data = {
 			position = {
-				anchor = "TOPLEFT",
-				offset = { x = 0, y = -84, },
+				anchor = "BOTTOMLEFT",
+				relativeTo = PlayerFrame,
+				relativePoint = "BOTTOMLEFT",
+				offset = { y = 2 }
 			},
 			layer = {
 				strata = "MEDIUM"
 			},
 			background = {
 				visible = false,
-				size = { width = 104, height = 16, },
+				size = { width = 104, height = 16 },
 			},
 		},
 	},
@@ -189,47 +193,49 @@ local presets = {
 		name = ns.strings.options.display.position.presets.list[6], --Objective Tracker Bar
 		data = {
 			position = {
-				anchor = "TOPRIGHT",
-				offset = { x = -92, y = -286, },
+				anchor = "TOPLEFT",
+				relativeTo = ObjectiveTrackerFrame,
+				relativePoint = "TOPLEFT",
+				offset = { x = 34, y = -5 }
 			},
 			layer = {
 				strata = "MEDIUM"
 			},
 			background = {
 				visible = true,
-				size = { width = 232, height = 22, },
+				size = { width = 232, height = 22 },
 			},
 		},
 	},
 	{
-		name = ns.strings.options.display.position.presets.list[7], --Menu & Bags Small Bar
-		data = {
-			position = {
-				anchor = "BOTTOMRIGHT",
-				offset = { x = -78, y = 32, },
-			},
-			layer = {
-				strata = "MEDIUM"
-			},
-			background = {
-				visible = true,
-				size = { width = 178, height = 8, },
-			},
-		},
-	},
-	{
-		name = ns.strings.options.display.position.presets.list[8], --Bottom-Left Chunky Bar
+		name = ns.strings.options.display.position.presets.list[7], --Bottom-Left Chunky Bar
 		data = {
 			position = {
 				anchor = "BOTTOMLEFT",
-				offset = { x = 183, y = 12, },
+				offset = { x = 188, y = 12 }
 			},
 			layer = {
 				strata = "MEDIUM"
 			},
 			background = {
 				visible = true,
-				size = { width = 480, height = 38, },
+				size = { width = 490, height = 38 },
+			},
+		},
+	},
+	{
+		name = ns.strings.options.display.position.presets.list[8], --Bottom-Right Chunky Bar
+		data = {
+			position = {
+				anchor = "BOTTOMRIGHT",
+				offset = { x = -188, y = 12 }
+			},
+			layer = {
+				strata = "MEDIUM"
+			},
+			background = {
+				visible = true,
+				size = { width = 490, height = 38 },
 			},
 		},
 	},
@@ -238,14 +244,14 @@ local presets = {
 		data = {
 			position = {
 				anchor = "TOP",
-				offset = { x = 0, y = 3, },
+				offset = { x = 0, y = 3 }
 			},
 			layer = {
 				strata = "MEDIUM"
 			},
 			background = {
 				visible = true,
-				size = { width = 1248, height = 8, },
+				size = { width = 1248, height = 8 },
 			},
 		},
 	},
@@ -328,47 +334,47 @@ local function CheckValidity(k, v)
 	end return true
 end
 
----Restore old data to an account-wide and character-specific DB by matching removed items to known old keys
----@param data table
----@param characterData table
----@param recoveredData? table
----@param recoveredCharacterData? table
-local function RestoreOldData(data, characterData, recoveredData, recoveredCharacterData)
-	if recoveredData ~= nil then for k, v in pairs(recoveredData) do
-		if k == "customPreset.position.point" then data.customPreset.position.anchor = v
-		elseif k == "position.point" or k == "display.position.point" then data.display.position.anchor = v
-		elseif k == "appearance.frameStrata" or k == "display.visibility.frameStrata" then data.display.layer.strata = v
-		elseif k == "display.visibility.fade" then data.display.fade = v
-		elseif k == "appearance.backdrop.visible" then data.display.background.visible = v
-		elseif k == "appearance.backdrop.color.r" then data.display.background.colors.bg.r = v
-		elseif k == "appearance.backdrop.color.g" then data.display.background.colors.bg.g = v
-		elseif k == "appearance.backdrop.color.b" then data.display.background.colors.bg.b = v
-		elseif k == "appearance.backdrop.color.a" then data.display.background.colors.bg.a = v
-		elseif k == "font.family" then data.display.text.font.family = v
-		elseif k == "font.size" then data.display.text.font.size = v
-		elseif k == "font.color.r" then data.display.text.font.color.r = v
-		elseif k == "font.color.g" then data.display.text.font.color.g = v
-		elseif k == "font.color.b" then data.display.text.font.color.b = v
-		elseif k == "font.color.a" then data.display.text.font.color.a = v
-		elseif k == "removals.statusBars" then data.removals.xpBar = v
-		elseif k == "notifications.maxReminder" then data.notifications.statusNotice.maxReminder = v
-		elseif k == "notifications.maxReminder" then data.notifications.statusNotice.maxReminder = v
-		end
-	end end
-	if recoveredCharacterData ~= nil then for k, v in pairs(recoveredCharacterData) do
-		if k == "mouseover" then data.display.fade.enabled = v
-		end
-	end end
-end
+--Check & fix the account-wide & character-specific DBs
+---@param dbCheck table
+---@param dbSample table
+---@param dbcCheck table
+---@param dbcSample table
+local function CheckDBs(dbCheck, dbSample, dbcCheck, dbcSample)
+	wt.RemoveEmpty(dbCheck, CheckValidity)
+	wt.RemoveEmpty(dbcCheck, CheckValidity)
+	wt.AddMissing(dbCheck, dbSample)
+	wt.AddMissing(dbcCheck, dbcSample)
+	wt.RemoveMismatch(dbCheck, dbSample, {
+		["customPreset.position.point"] = { saveTo = dbSample.customPreset.position, saveKey = "anchor" },
+		["position.point"] = { saveTo = dbSample.display.position, saveKey = "anchor" },
+		["display.position.point"] = { saveTo = dbSample.display.position, saveKey = "anchor" },
+		["appearance.frameStrata"] = { saveTo = dbSample.display.layer, saveKey = "strata" },
+		["display.visibility.frameStrata"] = { saveTo = dbSample.display.layer, saveKey = "strata" },
+		["display.visibility.fade"] = { saveTo = dbSample.display, saveKey = "fade" },
+		["appearance.backdrop.visible"] = { saveTo = dbSample.display.background, saveKey = "visible" },
+		["appearance.backdrop.color.r"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "r" },
+		["appearance.backdrop.color.g"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "g" },
+		["appearance.backdrop.color.b"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "b" },
+		["appearance.backdrop.color.a"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "a" },
+		["font.family"] = { saveTo = dbSample.display.text.font, saveKey = "family" },
+		["font.size"] = { saveTo = dbSample.display.text.font, saveKey = "size" },
+		["font.color.r"] = { saveTo = dbSample.display.text.font.color, saveKey = "r" },
+		["font.color.g"] = { saveTo = dbSample.display.text.font.color, saveKey = "g" },
+		["font.color.b"] = { saveTo = dbSample.display.text.font.color, saveKey = "b" },
+		["font.color.a"] = { saveTo = dbSample.display.text.font.color, saveKey = "a" },
+		["removals.statusBars"] = { saveTo = dbSample.removals, saveKey = "xpBar" },
+		["notifications.maxReminder"] = { saveTo = dbSample.notifications.statusNotice, saveKey = "maxReminder" },
+		["mouseover"] = { saveTo = dbSample.display.fade, saveKey = "enabled" },
+	})
+	wt.RemoveMismatch(dbcCheck, dbcSample, {
+		["mouseover"] = { saveTo = dbSample.display.fade, saveKey = "enabled" },
+	})
 
----Check the display visibility values
----@param data table
----@param characterData table
-local function VisibilityCheckup(data, characterData)
-	if not data.display.text.visible and not data.display.background.visible then
-		data.display.text.visible = true
-		data.display.background.visible = true
-		characterData.hidden = true
+	--Check the display visibility values
+	if not dbCheck.display.text.visible and not dbCheck.display.background.visible then
+		dbCheck.display.text.visible = true
+		dbCheck.display.background.visible = true
+		dbcCheck.hidden = true
 	end
 end
 
@@ -844,29 +850,32 @@ local function ApplyPreset(i)
 	SetDisplayBackdrop(presets[i].data.background.visible, db.display.background.colors)
 	Fade(db.display.fade.enable)
 
+	--Convert to absolute position
+	wt.ConvertToAbsolutePosition(frames.main)
+
 	--Update the DBs
 	dbc.hidden = false
-	wt.CopyValues(presets[i].data.position, db.display.position)
+	wt.CopyValues(wt.PackPosition(frames.main:GetPoint()), db.display.position)
 	db.display.layer.strata = presets[i].data.layer.strata
 	if not presets[i].data.background.visible then db.display.text.visible = true end
 	db.display.background.visible = presets[i].data.background.visible
-	db.display.background.size = presets[i].data.background.size
+	wt.CopyValues(presets[i].data.background.size, db.display.background.size)
 
 	--Update the options widgets
 	frames.options.display.visibility.hidden.setState(false)
 	frames.options.display.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
-	frames.options.display.position.anchor.setSelected(presets[i].data.position.anchor)
-	frames.options.display.position.xOffset.setValue(presets[i].data.position.offset.x)
-	frames.options.display.position.yOffset.setValue(presets[i].data.position.offset.y)
-	frames.options.display.position.frameStrata.setSelected(presets[i].data.layer.strata)
-	if not presets[i].data.background.visible then
+	frames.options.display.position.anchor.setSelected(db.display.position.anchor)
+	frames.options.display.position.xOffset.setValue(db.display.position.offset.x)
+	frames.options.display.position.yOffset.setValue(db.display.position.offset.y)
+	frames.options.display.position.frameStrata.setSelected(db.display.layer.strata)
+	if not db.display.background.visible then
 		frames.options.display.text.visible.setState(true)
 		frames.options.display.text.visible:SetAttribute("loaded", true) --Update dependent widgets
 	end
-	frames.options.display.background.visible.setState(presets[i].data.background.visible)
+	frames.options.display.background.visible.setState(db.display.background.visible)
 	frames.options.display.background.visible:SetAttribute("loaded", true) --Update dependent widgets
-	frames.options.display.background.size.width.setValue(presets[i].data.background.size.width)
-	frames.options.display.background.size.height.setValue(presets[i].data.background.size.height)
+	frames.options.display.background.size.width.setValue(db.display.background.size.width)
+	frames.options.display.background.size.height.setValue(db.display.background.size.height)
 end
 
 --Save the current display position & visibility to the custom preset
@@ -1162,6 +1171,7 @@ local function CreateAboutInfo(panel)
 		font = { normal = "GameFontDisableSmall", },
 		color = ns.colors.grey[2],
 		readOnly = true,
+		scrollSpeed = 0.2,
 	})
 
 	--Button: Full changelog
@@ -1372,7 +1382,7 @@ local function CreateVisibilityOptions(panel)
 			optionsKey = addonNameSpace .. "Display",
 			workingTable = db.notifications.statusNotice,
 			storageKey = "enabled",
-		},
+		}
 	})
 
 	--Checkbox: Max reminder
@@ -1388,7 +1398,7 @@ local function CreateVisibilityOptions(panel)
 			optionsKey = addonNameSpace .. "Display",
 			workingTable = db.notifications.statusNotice,
 			storageKey = "maxReminder",
-		},
+		}
 	})
 end
 local function CreatePositionOptions(panel)
@@ -1411,7 +1421,7 @@ local function CreatePositionOptions(panel)
 		optionsData = {
 			optionsKey = addonNameSpace .. "Display",
 			onLoad = function(self) self.setSelected(nil, ns.strings.options.display.position.presets.select) end,
-		},
+		}
 	})
 
 	--Button & Popup: Save Custom preset
@@ -1482,7 +1492,7 @@ local function CreatePositionOptions(panel)
 			workingTable = db.display.position,
 			storageKey = "anchor",
 			onChange = { UpdateDisplayPosition = function() wt.SetPosition(frames.main, db.display.position) end, }
-		},
+		}
 	})
 
 	--Slider: X offset
@@ -1494,7 +1504,8 @@ local function CreatePositionOptions(panel)
 		tooltip = { lines = { { text = ns.strings.options.display.position.xOffset.tooltip, }, } },
 		arrange = { newRow = false, },
 		value = { min = -500, max = 500, fractional = 2 },
-		altValue = 1,
+		step = 1,
+		altStep = 25,
 		events = { OnValueChanged = function(_, _, user) if user then
 			frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
 		end end, },
@@ -1504,7 +1515,7 @@ local function CreatePositionOptions(panel)
 			workingTable = db.display.position.offset,
 			storageKey = "x",
 			onChange = { "UpdateDisplayPosition", }
-		},
+		}
 	})
 
 	--Slider: Y offset
@@ -1516,7 +1527,8 @@ local function CreatePositionOptions(panel)
 		tooltip = { lines = { { text = ns.strings.options.display.position.yOffset.tooltip, }, } },
 		arrange = { newRow = false, },
 		value = { min = -500, max = 500, fractional = 2 },
-		altValue = 1,
+		step = 1,
+		altStep = 25,
 		events = { OnValueChanged = function(_, _, user) if user then
 			frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
 		end end, },
@@ -1546,7 +1558,7 @@ local function CreatePositionOptions(panel)
 			workingTable = db.display.layer,
 			storageKey = "strata",
 			onChange = { UpdateDisplayFrameStrata = function() frames.main:SetFrameStrata(db.display.layer.strata) end, }
-		},
+		}
 	})
 end
 local function CreateTextOptions(panel)
@@ -1568,7 +1580,7 @@ local function CreateTextOptions(panel)
 				ToggleDisplayText = function() wt.SetVisibility(frames.display.text, db.display.text.visible) end,
 				"EnsureVisibility",
 			}
-		},
+		}
 	})
 
 	--Checkbox: Details
@@ -1588,7 +1600,7 @@ local function CreateTextOptions(panel)
 			workingTable = db.display.text,
 			storageKey = "details",
 			onChange = { UpdateDisplayText = function() UpdateXPDisplayText() end, }
-		},
+		}
 	})
 
 	--Dropdown: Font family
@@ -1660,7 +1672,8 @@ local function CreateTextOptions(panel)
 		title = ns.strings.options.display.text.font.size.label,
 		tooltip = { lines = { { text = ns.strings.options.display.text.font.size.tooltip .. "\n\n" .. ns.strings.misc.default .. ": " .. dbDefault.display.text.font.size, }, } },
 		arrange = { newRow = false, },
-		value = { min = 8, max = 64, step = 1 },
+		value = { min = 8, max = 64, increment = 1 },
+		altStep = 3,
 		dependencies = {
 			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
 			{ frame = frames.options.display.text.visible, },
@@ -1670,7 +1683,7 @@ local function CreateTextOptions(panel)
 			workingTable = db.display.text.font,
 			storageKey = "size",
 			onChange = { "UpdateDisplayFont", }
-		},
+		}
 	})
 
 	--Selector: Text alignment
@@ -1717,7 +1730,7 @@ local function CreateTextOptions(panel)
 				UpdateDisplayFontColor = function() frames.display.text:SetTextColor(wt.UnpackColor(db.display.text.font.color)) end,
 				UpdateFade = Fade,
 			}
-		},
+		}
 	})
 end
 local  function CreateBackgroundOptions(panel)
@@ -1740,7 +1753,7 @@ local  function CreateBackgroundOptions(panel)
 				"EnsureVisibility",
 				"UpdateFade",
 			}
-		},
+		}
 	})
 
 	--Slider: Background width
@@ -1751,7 +1764,8 @@ local  function CreateBackgroundOptions(panel)
 		title = ns.strings.options.display.background.size.width.label,
 		tooltip = { lines = { { text = ns.strings.options.display.background.size.width.tooltip, }, } },
 		arrange = { newRow = false, },
-		value = { min = 64, max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1) , step = 2 },
+		value = { min = 64, max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1) , increment = 2 },
+		altStep = 8,
 		events = { OnValueChanged = function() frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
 		dependencies = {
 			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1762,7 +1776,7 @@ local  function CreateBackgroundOptions(panel)
 			workingTable = db.display.background.size,
 			storageKey = "width",
 			onChange = { UpdateDisplaySize = function() ResizeDisplay(db.display.background.size.width, db.display.background.size.height) end, }
-		},
+		}
 	})
 
 	--Slider: Background height
@@ -1773,7 +1787,8 @@ local  function CreateBackgroundOptions(panel)
 		title = ns.strings.options.display.background.size.height.label,
 		tooltip = { lines = { { text = ns.strings.options.display.background.size.height.tooltip, }, } },
 		arrange = { newRow = false, },
-		value = { min = 2, max = 80, step = 2 },
+		value = { min = 2, max = 80, increment = 2 },
+		altStep = 8,
 		events = { OnValueChanged = function() frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
 		dependencies = {
 			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1784,7 +1799,7 @@ local  function CreateBackgroundOptions(panel)
 			workingTable = db.display.background.size,
 			storageKey = "height",
 			onChange = { "UpdateDisplaySize", }
-		},
+		}
 	})
 
 	--Color Picker: Background color
@@ -1808,7 +1823,7 @@ local  function CreateBackgroundOptions(panel)
 				end,
 				"UpdateFade",
 			}
-		},
+		}
 	})
 	--Color Picker: Border color
 	---@type colorPicker
@@ -1831,7 +1846,7 @@ local  function CreateBackgroundOptions(panel)
 				end,
 				"UpdateFade",
 			}
-		},
+		}
 	})
 
 	--Color Picker: XP color
@@ -1855,7 +1870,7 @@ local  function CreateBackgroundOptions(panel)
 				end,
 				"UpdateFade",
 			}
-		},
+		}
 	})
 
 	--Color Picker: Rested color
@@ -1879,7 +1894,7 @@ local  function CreateBackgroundOptions(panel)
 				end,
 				"UpdateFade",
 			}
-		},
+		}
 	})
 end
 local function CreateFadeOptions(panel)
@@ -1908,7 +1923,8 @@ local function CreateFadeOptions(panel)
 		title = ns.strings.options.display.fade.text.label,
 		tooltip = { lines = { { text = ns.strings.options.display.fade.text.tooltip, }, } },
 		arrange = { newRow = false, },
-		value = { min = 0, max = 1, step = 0.05 },
+		value = { min = 0, max = 1, increment = 0.05 },
+		altStep = 0.2,
 		dependencies = {
 			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
 			{ frame = frames.options.display.fade.toggle, },
@@ -1919,7 +1935,7 @@ local function CreateFadeOptions(panel)
 			workingTable = db.display.fade,
 			storageKey = "text",
 			onChange = { "UpdateFade", }
-		},
+		}
 	})
 
 	--Slider: Background fade intensity
@@ -1930,7 +1946,8 @@ local function CreateFadeOptions(panel)
 		title = ns.strings.options.display.fade.background.label,
 		tooltip = { lines = { { text = ns.strings.options.display.fade.background.tooltip, }, } },
 		arrange = { newRow = false, },
-		value = { min = 0, max = 1, step = 0.05 },
+		value = { min = 0, max = 1, increment = 0.05 },
+		altStep = 0.2,
 		dependencies = {
 			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
 			{ frame = frames.options.display.fade.toggle, },
@@ -1941,7 +1958,7 @@ local function CreateFadeOptions(panel)
 			workingTable = db.display.fade,
 			storageKey = "background",
 			onChange = { "UpdateFade", }
-		},
+		}
 	})
 end
 
@@ -1955,7 +1972,7 @@ local function CreateDisplayOptions()
 		title = ns.strings.options.display.title,
 		description = ns.strings.options.display.description:gsub("#ADDON", addonTitle),
 		logo = ns.textures.logo,
-		scroll = { speed = 0.25 },
+		scroll = {},
 		optionsKeys = { addonNameSpace .. "Display" },
 		storage = {
 			{
@@ -2063,7 +2080,7 @@ local function CreateEnhancementOptions(panel)
 				SetIntegrationVisibility(db.enhancement.enabled)
 				UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
 			end, }
-		},
+		}
 	})
 
 	--Checkbox: Keep text
@@ -2080,7 +2097,7 @@ local function CreateEnhancementOptions(panel)
 			workingTable = db.enhancement,
 			storageKey = "keep",
 			onChange = { UpdateIntegrationText = function() UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining) end, }
-		},
+		}
 	})
 
 	--Checkbox: Keep only remaining XP text
@@ -2100,7 +2117,7 @@ local function CreateEnhancementOptions(panel)
 			workingTable = db.enhancement,
 			storageKey = "remaining",
 			onChange = { "UpdateIntegrationText", }
-		},
+		}
 	})
 end
 local function CreateRemovalsOptions(panel)
@@ -2117,7 +2134,7 @@ local function CreateRemovalsOptions(panel)
 			workingTable = db.removals,
 			storageKey = "xpBar",
 			onChange = { ToggleXPBar = function() wt.SetVisibility(MainStatusTrackingBarContainer, not db.removals.xpBar) end, }
-		},
+		}
 	})
 end
 
@@ -2196,7 +2213,7 @@ local function CreateNotificationsOptions(panel)
 			optionsKey = addonNameSpace .. "Events",
 			workingTable = db.notifications,
 			storageKey = "xpGained",
-		},
+		}
 	})
 
 	--Checkbox: Rested XP gained
@@ -2211,7 +2228,7 @@ local function CreateNotificationsOptions(panel)
 			optionsKey = addonNameSpace .. "Events",
 			workingTable = db.notifications.restedXP,
 			storageKey = "gained",
-		},
+		}
 	})
 
 	--Checkbox: Significant Rested XP updates only
@@ -2227,7 +2244,7 @@ local function CreateNotificationsOptions(panel)
 			optionsKey = addonNameSpace .. "Events",
 			workingTable = db.notifications.restedXP,
 			storageKey = "significantOnly",
-		},
+		}
 	})
 
 	--Checkbox: Accumulated Rested XP
@@ -2250,7 +2267,7 @@ local function CreateNotificationsOptions(panel)
 			workingTable = db.notifications.restedXP,
 			storageKey = "accumulated",
 			onChange = { UpdateRestedAccumulation = function() SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and max) end, }
-		},
+		}
 	})
 
 	--Checkbox: Rested status update
@@ -2265,7 +2282,7 @@ local function CreateNotificationsOptions(panel)
 			optionsKey = addonNameSpace .. "Events",
 			workingTable = db.notifications.restedStatus,
 			storageKey = "update",
-		},
+		}
 	})
 
 	--Checkbox: Max Rested XP reminder
@@ -2281,7 +2298,7 @@ local function CreateNotificationsOptions(panel)
 			optionsKey = addonNameSpace .. "Events",
 			workingTable = db.notifications.restedStatus,
 			storageKey = "maxReminder",
-		},
+		}
 	})
 
 	--Checkbox: Level up
@@ -2296,7 +2313,7 @@ local function CreateNotificationsOptions(panel)
 			optionsKey = addonNameSpace .. "Events",
 			workingTable = db.notifications.lvlUp,
 			storageKey = "congrats",
-		},
+		}
 	})
 
 	--Checkbox: Time played
@@ -2313,7 +2330,7 @@ local function CreateNotificationsOptions(panel)
 		-- 	optionsKey = addonNameSpace .. "Events",
 		-- 	workingTable = db.notifications.lvlUp,
 		-- 	storageKey = "timePlayed",
-		-- },
+		-- }
 	})
 end
 local function CreateLogsOptions(panel)
@@ -2389,12 +2406,7 @@ local function CreateBackupOptions(panel)
 			local success, t = pcall(loadstring("return " .. wt.Clear(frames.options.advanced.backup.string.getText())))
 			if success and type(t) == "table" then
 				--Run DB checkup on the loaded table
-				wt.RemoveEmpty(t.account, CheckValidity)
-				wt.RemoveEmpty(t.character, CheckValidity)
-				wt.AddMissing(t.account, db)
-				wt.AddMissing(t.character, dbc)
-				RestoreOldData(t.account, t.character, wt.RemoveMismatch(t.account, db), wt.RemoveMismatch(t.character, dbc))
-				VisibilityCheckup(t.account, t.character)
+				CheckDBs(t.account, db, t.character, dbc)
 
 				--Copy values from the loaded DBs to the addon DBs
 				wt.CopyValues(t.account, db)
@@ -2426,7 +2438,6 @@ local function CreateBackupOptions(panel)
 		size = { width = panel:GetWidth() - 24, height = panel:GetHeight() - 76 },
 		font = { normal = "GameFontWhiteSmall", },
 		maxLetters = 5500,
-		scrollSpeed = 0.25,
 		events = {
 			OnEnterPressed = function() StaticPopup_Show(importPopup) end,
 			OnEscapePressed = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, frames.options.advanced.backup.compact.getState(), true)) end,
@@ -2434,7 +2445,7 @@ local function CreateBackupOptions(panel)
 		optionsData = {
 			optionsKey = addonNameSpace .. "Advanced",
 			onLoad = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, frames.options.advanced.backup.compact.getState(), true)) end,
-		},
+		}
 	})
 
 	--Checkbox: Compact
@@ -2459,7 +2470,7 @@ local function CreateBackupOptions(panel)
 			optionsKey = addonNameSpace .. "Advanced",
 			storageTable = cs,
 			storageKey = "compactBackup",
-		},
+		}
 	})
 
 	--Button: Load
@@ -2828,12 +2839,7 @@ local AddonLoaded = function(self, addon)
 	RemainingXPDBC = RemainingXPDBC or wt.Clone(dbcDefault)
 
 	--DB checkup & fix
-	wt.RemoveEmpty(RemainingXPDB, CheckValidity)
-	wt.RemoveEmpty(RemainingXPDBC, CheckValidity)
-	wt.AddMissing(RemainingXPDB, dbDefault)
-	wt.AddMissing(RemainingXPDBC, dbcDefault)
-	RestoreOldData(RemainingXPDB, RemainingXPDBC, wt.RemoveMismatch(RemainingXPDB, dbDefault), wt.RemoveMismatch(RemainingXPDBC, dbcDefault))
-	VisibilityCheckup(RemainingXPDB, RemainingXPDBC)
+	CheckDBs(RemainingXPDB, dbDefault, RemainingXPDBC, dbcDefault)
 
 	--Load working DBs
 	db = wt.Clone(RemainingXPDB)
@@ -2917,17 +2923,16 @@ local AddonLoaded = function(self, addon)
 	--Visibility notice
 	if not self:IsVisible() then PrintStatus(true) end
 end
-local PlayerEnteringWorld = function()
+local PlayerEnteringWorld = function(self)
+	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+
 	--XP update
 	UpdateXPValues()
 
-	--Set up UI elements
+	--Set up displays
 	ResizeDisplay(db.display.background.size.width, db.display.background.size.height)
 	UpdateXPDisplayText()
 	UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
-
-	--Removals
-	if db.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
 
 	--Initialize display tooltips
 	wt.AddTooltip(frames.display.overlay, {
@@ -2947,6 +2952,15 @@ local PlayerEnteringWorld = function()
 		flipColors = true,
 	})
 	frames.integration.frame:HookScript("OnEnter", UpdateXPTooltip)
+
+	--Removals
+	if db.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
+
+	--Set up Edit Mode exit updates
+	EditModeManagerFrame:HookScript("OnHide", function()
+		--Removals
+		if db.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
+	end)
 end
 local PlayerXPUpdate = function(_, unit)
 	if unit ~= "player" then return end
@@ -3017,7 +3031,7 @@ local UpdateExhaustion = function()
 	UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
 
 	--Notification
-	if db.notifications.restedXP.gained and not (db.notifications.restedXP.significantOnly and gainedRestedXP < (csc.xp.needed / 100000)) then
+	if db.notifications.restedXP.gained and not (db.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(csc.xp.needed / 1000)) then
 		print(wt.Color(ns.strings.chat.restedXPGained.text:gsub(
 				"#AMOUNT", wt.Color(gainedRestedXP, ns.colors.purple[1])
 			):gsub(
@@ -3043,7 +3057,7 @@ local PlayerUpdateResting = function()
 				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.purple[1])
 			):gsub(
 				"#PERCENT", wt.Color(ns.strings.chat.restedXPAccumulated.percent:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%%%%%", ns.colors.purple[3])
+					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
 				):gsub(
 					"#NEXT", wt.Color(UnitLevel("player") + 1, ns.colors.purple[3])
 				), ns.colors.blue[3])
@@ -3061,7 +3075,7 @@ end
 --[ Frames ]
 
 --Set up a display context menu
-local function CreateContextMenu(parent)
+local function _CreateContextMenu(parent)
 	---@type contextMenu
 	local contextMenu = wt.CreateContextMenu({ parent = parent, })
 
@@ -3112,6 +3126,38 @@ local function CreateContextMenu(parent)
 		title = presets[i].name,
 		events = { OnClick = function() commandManager.handleCommand(ns.chat.commands.preset, i) end, },
 	}) end
+end --TODO: Reinstate after fix or delete
+local function CreateContextMenu(parent)
+	local menu = {
+		{
+			text = addonTitle,
+			isTitle = true,
+			notCheckable = true,
+		},
+		{
+			text = ns.strings.misc.options,
+			func = function() frames.options.main.page.open() end,
+			notCheckable = true,
+		},
+		{
+			text = ns.strings.options.display.position.presets.label,
+			hasArrow = true,
+			menuList = {},
+			notCheckable = true,
+		},
+	}
+
+	--Insert presets
+	for i = 1, #presets do table.insert(menu[3].menuList, {
+		text = presets[i].name,
+		func = function() commandManager.handleCommand(ns.chat.commands.preset, i) end,
+		notCheckable = true,
+	}) end
+
+	wt.CreateClassicContextMenu({
+		parent = parent,
+		menu = menu
+	})
 end
 
 --Create main addon frame & display frames
@@ -3128,6 +3174,14 @@ frames.main = wt.CreateFrame({
 		PLAYER_LEVEL_UP = PlayerLevelUp,
 		UPDATE_EXHAUSTION = UpdateExhaustion,
 		PLAYER_UPDATE_RESTING = PlayerUpdateResting,
+		UNIT_ENTERING_VEHICLE = function(self, unit, swapUI) if unit == "player" and swapUI then
+			frames.integration.frame:Hide()
+			self:Hide()
+		end end,
+		UNIT_EXITING_VEHICLE = function(self, unit) if unit == "player" then
+			if db.enhancement.enabled then frames.integration.frame:Show() end
+			if not dbc.hidden then self:Show() end
+		end end,
 		PET_BATTLE_OPENING_START = function(self)
 			frames.integration.frame:Hide()
 			self:Hide()
