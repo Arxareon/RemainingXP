@@ -26,7 +26,7 @@ local dbDefault = {
 	display = {
 		position = {
 			anchor = "TOP",
-			offset = { x = 0, y = -58, },
+			offset = { x = 0, y = -58 }
 		},
 		layer = {
 			strata = "HIGH",
@@ -345,29 +345,29 @@ local function CheckDBs(dbCheck, dbSample, dbcCheck, dbcSample)
 	wt.AddMissing(dbCheck, dbSample)
 	wt.AddMissing(dbcCheck, dbcSample)
 	wt.RemoveMismatch(dbCheck, dbSample, {
-		["customPreset.position.point"] = { saveTo = dbSample.customPreset.position, saveKey = "anchor" },
-		["position.point"] = { saveTo = dbSample.display.position, saveKey = "anchor" },
-		["display.position.point"] = { saveTo = dbSample.display.position, saveKey = "anchor" },
-		["appearance.frameStrata"] = { saveTo = dbSample.display.layer, saveKey = "strata" },
-		["display.visibility.frameStrata"] = { saveTo = dbSample.display.layer, saveKey = "strata" },
-		["display.visibility.fade"] = { saveTo = dbSample.display, saveKey = "fade" },
-		["appearance.backdrop.visible"] = { saveTo = dbSample.display.background, saveKey = "visible" },
-		["appearance.backdrop.color.r"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "r" },
-		["appearance.backdrop.color.g"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "g" },
-		["appearance.backdrop.color.b"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "b" },
-		["appearance.backdrop.color.a"] = { saveTo = dbSample.display.background.colors.bg, saveKey = "a" },
-		["font.family"] = { saveTo = dbSample.display.text.font, saveKey = "family" },
-		["font.size"] = { saveTo = dbSample.display.text.font, saveKey = "size" },
-		["font.color.r"] = { saveTo = dbSample.display.text.font.color, saveKey = "r" },
-		["font.color.g"] = { saveTo = dbSample.display.text.font.color, saveKey = "g" },
-		["font.color.b"] = { saveTo = dbSample.display.text.font.color, saveKey = "b" },
-		["font.color.a"] = { saveTo = dbSample.display.text.font.color, saveKey = "a" },
-		["removals.statusBars"] = { saveTo = dbSample.removals, saveKey = "xpBar" },
-		["notifications.maxReminder"] = { saveTo = dbSample.notifications.statusNotice, saveKey = "maxReminder" },
-		["mouseover"] = { saveTo = dbSample.display.fade, saveKey = "enabled" },
+		["customPreset.position.point"] = { saveTo = dbCheck.customPreset.position, saveKey = "anchor" },
+		["position.point"] = { saveTo = dbCheck.display.position, saveKey = "anchor" },
+		["display.position.point"] = { saveTo = dbCheck.display.position, saveKey = "anchor" },
+		["appearance.frameStrata"] = { saveTo = dbCheck.display.layer, saveKey = "strata" },
+		["display.visibility.frameStrata"] = { saveTo = dbCheck.display.layer, saveKey = "strata" },
+		["display.visibility.fade"] = { saveTo = dbCheck.display, saveKey = "fade" },
+		["appearance.backdrop.visible"] = { saveTo = dbCheck.display.background, saveKey = "visible" },
+		["appearance.backdrop.color.r"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "r" },
+		["appearance.backdrop.color.g"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "g" },
+		["appearance.backdrop.color.b"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "b" },
+		["appearance.backdrop.color.a"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "a" },
+		["font.family"] = { saveTo = dbCheck.display.text.font, saveKey = "family" },
+		["font.size"] = { saveTo = dbCheck.display.text.font, saveKey = "size" },
+		["font.color.r"] = { saveTo = dbCheck.display.text.font.color, saveKey = "r" },
+		["font.color.g"] = { saveTo = dbCheck.display.text.font.color, saveKey = "g" },
+		["font.color.b"] = { saveTo = dbCheck.display.text.font.color, saveKey = "b" },
+		["font.color.a"] = { saveTo = dbCheck.display.text.font.color, saveKey = "a" },
+		["removals.statusBars"] = { saveTo = dbCheck.removals, saveKey = "xpBar" },
+		["notifications.maxReminder"] = { saveTo = dbCheck.notifications.statusNotice, saveKey = "maxReminder" },
+		["mouseover"] = { saveTo = dbCheck.display.fade, saveKey = "enabled" },
 	})
 	wt.RemoveMismatch(dbcCheck, dbcSample, {
-		["mouseover"] = { saveTo = dbSample.display.fade, saveKey = "enabled" },
+		["mouseover"] = { saveTo = dbCheck.display.fade, saveKey = "enabled" },
 	})
 
 	--Check the display visibility values

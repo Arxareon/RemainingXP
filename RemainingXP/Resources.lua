@@ -226,6 +226,8 @@ local changelogDB = {
 		"The XP Display size will now properly be able to be set again via Settings after applying a preset.",
 		"The default XP Status Bar will now be hidden again after exiting Edit Mode if the \"Hide default XP bar\" option is enabled.",
 		"Other small fixes, changes & improvements.",
+		"#F_Hotfix (2.3.1 7/24/2023):_#",
+		"Addon data recovery will now work properly when loading old data.",
 	},
 }
 

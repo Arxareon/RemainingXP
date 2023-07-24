@@ -1,8 +1,8 @@
 ## Interface: 100105
 ## Title: Remaining XP
 ## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
-## Version: 2.3
-## X-Day: 23
+## Version: 2.3.1
+## X-Day: 24
 ## X-Month: 7
 ## X-Year: 2023
 ## Author: Barnabas Nagy (Arxareon)
