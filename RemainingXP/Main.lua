@@ -868,14 +868,22 @@ local function ApplyPreset(i)
 	frames.options.display.position.xOffset.setValue(db.display.position.offset.x)
 	frames.options.display.position.yOffset.setValue(db.display.position.offset.y)
 	frames.options.display.position.frameStrata.setSelected(db.display.layer.strata)
-	if not db.display.background.visible then
-		frames.options.display.text.visible.setState(true)
-		frames.options.display.text.visible:SetAttribute("loaded", true) --Update dependent widgets
-	end
+	frames.options.display.text.visible.setState(true)
+	frames.options.display.text.visible:SetAttribute("loaded", true) --Update dependent widgets
 	frames.options.display.background.visible.setState(db.display.background.visible)
 	frames.options.display.background.visible:SetAttribute("loaded", true) --Update dependent widgets
 	frames.options.display.background.size.width.setValue(db.display.background.size.width)
 	frames.options.display.background.size.height.setValue(db.display.background.size.height)
+
+	--Check the visibility options widgets
+	if not db.display.background.visible then
+		frames.options.display.text.visible.checkbox:SetButtonState("DISABLED")
+		frames.options.display.text.visible.checkbox:UnlockHighlight()
+		frames.options.display.text.visible:SetAlpha(0.4)
+	else
+		frames.options.display.text.visible.checkbox:SetButtonState("NORMAL")
+		frames.options.display.text.visible:SetAlpha(1)
+	end
 end
 
 --Save the current display position & visibility to the custom preset
