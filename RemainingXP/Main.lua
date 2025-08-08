@@ -1,110 +1,62 @@
---[[ RESOURCES ]]
+--[[ NAMESPACE ]]
 
----Addon namespace
----@class ns
-local addonNameSpace, ns = ...
+---@class RemainingXPNamespace
+local ns = select(2, ...)
 
----WidgetTools toolbox
+
+--[[ REFERENCES ]]
+
 ---@class wt
 local wt = ns.WidgetToolbox
 
---Addon title
-local addonTitle = wt.Clear(select(2, GetAddOnInfo(addonNameSpace))):gsub("^%s*(.-)%s*$", "%1")
+local frames = {
+	display = { bg = {} },
+	integration = {},
+}
 
---Custom Tooltip
-ns.tooltip = wt.CreateGameTooltip(addonNameSpace)
-
---[ Data Tables ]
-
-local db = {} --Account-wide options
-local dbc = {} --Character-specific options
-local cs --Cross-session account-wide data
-local csc --Cross-session character-specific data
-
---Default values
-local dbDefault = {
+local options = {
+	main = {},
 	display = {
-		position = {
-			anchor = "TOP",
-			offset = { x = 0, y = -58 }
-		},
-		layer = {
-			strata = "HIGH",
-		},
-		fade = {
-			enabled = false,
-			text = 1,
-			background = 0.6,
-		},
+		position = {},
+		visibility = {},
 		text = {
-			visible = true,
-			details = false,
-			font = {
-				family = ns.fonts[1].path,
-				size = 11,
-				color = { r = 1, g = 1, b = 1, a = 1 },
-			},
-			alignment = "CENTER",
+			font = {},
 		},
 		background = {
-			visible = true,
-			size = { width = 116, height = 16, },
-			colors = {
-				bg = { r = 0, g = 0, b = 0, a = 0.8 },
-				xp = { r = 0.8, g = 0.1, b = 0.8, a = 0.8 },
-				rested = { r = 0.1, g = 0.5, b = 1, a = 0.8 },
-				border = { r = 1, g = 1, b = 1, a = 0.4 },
-			},
+			colors = {},
+			size = {},
 		},
+		fade = {},
 	},
-	enhancement = {
-		enabled = true,
-		keep = false,
-		remaining = true,
+	integration = {
+		enhancement = {},
+		removals = {},
 	},
-	removals = {
-		xpBar = false,
+	events = {
+		notifications = {},
 	},
-	notifications = {
-		xpGained = true,
-		restedXP = {
-			gained = true,
-			significantOnly = true,
-			accumulated = true,
-		},
-		restedStatus = {
-			update = true,
-			maxReminder = true,
-		},
-		lvlUp = {
-			congrats = true,
-			timePlayed = false,
-		},
-		statusNotice = {
-			enabled = true,
-			maxReminder = true,
-		},
+	dataManagement = {
+		backup = {},
 	},
-}
-local dbcDefault = {
-	hidden = false,
 }
 
+--Custom Tooltip
+ns.tooltip = wt.CreateGameTooltip(ns.name)
+
+---@type chatCommandManager
+local chatCommands
+
+--Check max level
+local maxLevel = GetMaxLevelForPlayerExpansion()
+local max = UnitLevel("player") >= maxLevel
+
+local alwaysShow = C_CVar.GetCVar("xpBarText")
+
+
+
+
 --Preset data
-local presets = {
-	{
-		name = ns.strings.misc.custom, --Custom
-		data = {
-			position = dbDefault.display.position,
-			layer = {
-				strata = dbDefault.display.layer.strata,
-			},
-			background = {
-				visible = dbDefault.display.background.visible,
-				size = dbDefault.display.background.size,
-			},
-		},
-	},
+local presets = { --REPLACE with position preset manager
 	{
 		name = ns.strings.options.display.position.presets.list[1], --XP Bar Replacement
 		data = {
@@ -115,7 +67,7 @@ local presets = {
 			layer = {
 				strata = "LOW"
 			},
-			background = {
+			background = { --ADD custom way of handling background preset data via position preset manager
 				visible = true,
 				size = { width = 562, height = 16 },
 			},
@@ -257,47 +209,7 @@ local presets = {
 	},
 }
 
---Add custom preset to DB
-dbDefault.customPreset = wt.Clone(presets[1].data)
 
---[ References ]
-
---Local frame references
-local frames = {
-	display = { bg = {} },
-	integration = {},
-	options = {
-		main = {},
-		display = {
-			position = {},
-			visibility = {},
-			text = {
-				font = {},
-			},
-			background = {
-				colors = {},
-				size = {},
-			},
-			fade = {},
-		},
-		integration = {
-			enhancement = {},
-			removals = {},
-		},
-		events = {
-			notifications = {},
-		},
-		advanced = {
-			backup = {},
-		},
-	}
-}
-
---Check max level
-local maxLevel = GetMaxLevelForPlayerExpansion()
-local max = UnitLevel("player") >= maxLevel
-
-local alwaysShow = C_CVar.GetCVar("xpBarText")
 
 
 --[[ UTILITIES ]]
@@ -306,7 +218,7 @@ local alwaysShow = C_CVar.GetCVar("xpBarText")
 
 ---Find the ID of the font provided
 ---@param fontPath string
----@return integer
+---@return integer id ***Default:*** 1 *(if* **fontPath** *isn't found)*
 local function GetFontID(fontPath)
 	local id = 1
 
@@ -322,7 +234,10 @@ end
 
 --[ DB Management ]
 
---Check the validity of the provided key value pair
+---Check the validity of the provided key value pair
+---@param k string
+---@param v any
+---@return boolean
 local function CheckValidity(k, v)
 	if type(v) == "number" then
 		--Non-negative
@@ -334,49 +249,51 @@ local function CheckValidity(k, v)
 	end return true
 end
 
---Check & fix the account-wide & character-specific DBs
----@param dbCheck table
----@param dbSample table
----@param dbcCheck table
----@param dbcSample table
-local function CheckDBs(dbCheck, dbSample, dbcCheck, dbcSample)
-	wt.RemoveEmpty(dbCheck, CheckValidity)
-	wt.RemoveEmpty(dbcCheck, CheckValidity)
-	wt.AddMissing(dbCheck, dbSample)
-	wt.AddMissing(dbcCheck, dbcSample)
-	wt.RemoveMismatch(dbCheck, dbSample, {
-		["customPreset.position.point"] = { saveTo = dbCheck.customPreset.position, saveKey = "anchor" },
-		["position.point"] = { saveTo = dbCheck.display.position, saveKey = "anchor" },
-		["display.position.point"] = { saveTo = dbCheck.display.position, saveKey = "anchor" },
-		["appearance.frameStrata"] = { saveTo = dbCheck.display.layer, saveKey = "strata" },
-		["display.visibility.frameStrata"] = { saveTo = dbCheck.display.layer, saveKey = "strata" },
-		["display.visibility.fade"] = { saveTo = dbCheck.display, saveKey = "fade" },
-		["appearance.backdrop.visible"] = { saveTo = dbCheck.display.background, saveKey = "visible" },
-		["appearance.backdrop.color.r"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "r" },
-		["appearance.backdrop.color.g"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "g" },
-		["appearance.backdrop.color.b"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "b" },
-		["appearance.backdrop.color.a"] = { saveTo = dbCheck.display.background.colors.bg, saveKey = "a" },
-		["font.family"] = { saveTo = dbCheck.display.text.font, saveKey = "family" },
-		["font.size"] = { saveTo = dbCheck.display.text.font, saveKey = "size" },
-		["font.color.r"] = { saveTo = dbCheck.display.text.font.color, saveKey = "r" },
-		["font.color.g"] = { saveTo = dbCheck.display.text.font.color, saveKey = "g" },
-		["font.color.b"] = { saveTo = dbCheck.display.text.font.color, saveKey = "b" },
-		["font.color.a"] = { saveTo = dbCheck.display.text.font.color, saveKey = "a" },
-		["removals.statusBars"] = { saveTo = dbCheck.removals, saveKey = "xpBar" },
-		["notifications.maxReminder"] = { saveTo = dbCheck.notifications.statusNotice, saveKey = "maxReminder" },
-		["mouseover"] = { saveTo = dbCheck.display.fade, saveKey = "enabled" },
-	})
-	wt.RemoveMismatch(dbcCheck, dbcSample, {
-		["mouseover"] = { saveTo = dbCheck.display.fade, saveKey = "enabled" },
-	})
 
-	--Check the display visibility values
-	if not dbCheck.display.text.visible and not dbCheck.display.background.visible then
-		dbCheck.display.text.visible = true
-		dbCheck.display.background.visible = true
-		dbcCheck.hidden = true
-	end
+
+local function GetRecoveryMap(data)
+	return {
+		["customPreset.position.point"] = { saveTo = data.customPreset.position, saveKey = "anchor" },
+		["position.point"] = { saveTo = data.display.position, saveKey = "anchor" },
+		["display.position.point"] = { saveTo = data.display.position, saveKey = "anchor" },
+		["appearance.frameStrata"] = { saveTo = data.display.layer, saveKey = "strata" },
+		["display.visibility.frameStrata"] = { saveTo = data.display.layer, saveKey = "strata" },
+		["display.visibility.fade"] = { saveTo = data.display, saveKey = "fade" },
+		["appearance.backdrop.visible"] = { saveTo = data.display.background, saveKey = "visible" },
+		["appearance.backdrop.color.r"] = { saveTo = data.display.background.colors.bg, saveKey = "r" },
+		["appearance.backdrop.color.g"] = { saveTo = data.display.background.colors.bg, saveKey = "g" },
+		["appearance.backdrop.color.b"] = { saveTo = data.display.background.colors.bg, saveKey = "b" },
+		["appearance.backdrop.color.a"] = { saveTo = data.display.background.colors.bg, saveKey = "a" },
+		["font.family"] = { saveTo = data.display.text.font, saveKey = "family" },
+		["font.size"] = { saveTo = data.display.text.font, saveKey = "size" },
+		["font.color.r"] = { saveTo = data.display.text.font.color, saveKey = "r" },
+		["font.color.g"] = { saveTo = data.display.text.font.color, saveKey = "g" },
+		["font.color.b"] = { saveTo = data.display.text.font.color, saveKey = "b" },
+		["font.color.a"] = { saveTo = data.display.text.font.color, saveKey = "a" },
+		["removals.statusBars"] = { saveTo = data.removals, saveKey = "xpBar" },
+		["notifications.maxReminder"] = { saveTo = data.notifications.statusNotice, saveKey = "maxReminder" },
+		["mouseover"] = { saveTo = data.display.fade, saveKey = "enabled" },
+	}
 end
+
+
+
+
+
+wt.RemoveMismatch(dbcCheck, dbcSample, {
+	["mouseover"] = { saveTo = data.display.fade, saveKey = "enabled" },
+})
+
+--Check the display visibility values
+if not data.display.text.visible and not data.display.background.visible then
+	data.display.text.visible = true
+	data.display.background.visible = true
+	dbcCheck.hidden = true
+end
+
+
+
+
 
 --[ XP Update ]
 
@@ -385,24 +302,24 @@ end
 local function SetRestedAccumulation(enabled)
 	if not IsResting() then
 		--Remove cross-session variable
-		csc.xp.accumulatedRested = nil
+		RemainingXPCSC.xp.accumulatedRested = nil
 	else
 		--Initiate cross-session variable
-		if csc.xp.accumulatedRested == nil then csc.xp.accumulatedRested = 0 end
+		if RemainingXPCSC.xp.accumulatedRested == nil then RemainingXPCSC.xp.accumulatedRested = 0 end
 
 		--Chat notification
 		if enabled then
-			local atMax = wt.Round(csc.xp.rested / csc.xp.needed, 3) >= 1.5
-			local atMaxLast = UnitLevel("player") == maxLevel - 1 and wt.Round(csc.xp.rested / csc.xp.remaining, 3) >= 1
+			local atMax = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+			local atMaxLast = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
 
 			--Stared resting status update
-			if db.notifications.restedStatus.update then
+			if RemainingXPDB.notifications.restedStatus.update then
 				print(wt.Color(ns.strings.chat.restedStatus.resting, ns.colors.purple[1]) .. " " .. wt.Color(
 					(atMax or atMaxLast) and ns.strings.chat.restedStatus.notAccumulating or ns.strings.chat.restedStatus.accumulating, ns.colors.blue[1]
 				))
 
 				--Max Rested XP reminder
-				if db.notifications.restedStatus.maxReminder then if atMax then
+				if RemainingXPDB.notifications.restedStatus.maxReminder then if atMax then
 					print(wt.Color(ns.strings.chat.restedStatus.atMax:gsub("#PERCENT", wt.Color("150%%", ns.colors.purple[2])), ns.colors.blue[2]))
 				elseif atMaxLast then
 					print(wt.Color(ns.strings.chat.restedStatus.atMaxLast:gsub("#PERCENT", wt.Color("100%%", ns.colors.purple[2])), ns.colors.blue[2]))
@@ -420,50 +337,50 @@ end
 ---@return integer oldNeededXP
 local function UpdateXPValues()
 	--Save old XP values
-	local oldXP = csc.xp.current or UnitXP("player")
-	local oldNeededXP = csc.xp.needed or UnitXPMax("player")
-	local oldRestedXP = csc.xp.rested or GetXPExhaustion() or 0
+	local oldXP = RemainingXPCSC.xp.current or UnitXP("player")
+	local oldNeededXP = RemainingXPCSC.xp.needed or UnitXPMax("player")
+	local oldRestedXP = RemainingXPCSC.xp.rested or GetXPExhaustion() or 0
 
 	--Update the XP values
-	csc.xp.current = UnitXP("player")
-	csc.xp.needed = UnitXPMax("player")
-	csc.xp.rested = GetXPExhaustion() or 0
-	csc.xp.remaining = csc.xp.needed - csc.xp.current
+	RemainingXPCSC.xp.current = UnitXP("player")
+	RemainingXPCSC.xp.needed = UnitXPMax("player")
+	RemainingXPCSC.xp.rested = GetXPExhaustion() or 0
+	RemainingXPCSC.xp.remaining = RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current
 
 	--Trial account
 	if GameLimitedMode_IsActive() then
-		csc.xp.banked = UnitTrialXP("player")
-		csc.xp.bankedLevels = UnitTrialBankedLevels("player")
+		RemainingXPCSC.xp.banked = UnitTrialXP("player")
+		RemainingXPCSC.xp.bankedLevels = UnitTrialBankedLevels("player")
 	end
 
 	--Calculate the gained XP values
-	local gainedXP = oldXP < csc.xp.current and csc.xp.current - oldXP or oldNeededXP - oldXP + csc.xp.current
-	local gainedRestedXP = csc.xp.rested - oldRestedXP
+	local gainedXP = oldXP < RemainingXPCSC.xp.current and RemainingXPCSC.xp.current - oldXP or oldNeededXP - oldXP + RemainingXPCSC.xp.current
+	local gainedRestedXP = RemainingXPCSC.xp.rested - oldRestedXP
 
 	--Accumulating Rested XP
-	if gainedRestedXP > 0 and csc.xp.accumulatedRested ~= nil and IsResting() then csc.xp.accumulatedRested = csc.xp.accumulatedRested + gainedRestedXP end
+	if gainedRestedXP > 0 and RemainingXPCSC.xp.accumulatedRested ~= nil and IsResting() then RemainingXPCSC.xp.accumulatedRested = RemainingXPCSC.xp.accumulatedRested + gainedRestedXP end
 	return gainedXP, gainedRestedXP, oldXP, oldRestedXP, oldNeededXP
 end
 
 --Assemble the text containing the Banked XP details
 local function GetBankedText()
-	return (GameLimitedMode_IsActive() and csc.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
-		"#VALUE", wt.FormatThousands(csc.xp.banked)
+	return (GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
+		"#VALUE", wt.FormatThousands(RemainingXPCSC.xp.banked)
 	):gsub(
-		"#LEVELS", csc.xp.bankedLevels
+		"#LEVELS", RemainingXPCSC.xp.bankedLevels
 	) or ""
 end
 
 --Update the position, width and visibility of the main XP display bar segments with the current XP values
 local function UpdateXPDisplaySegments()
 	--Current XP segment
-	frames.display.xp:SetWidth(csc.xp.current / csc.xp.needed * frames.display.bg:GetWidth())
+	frames.display.xp:SetWidth(RemainingXPCSC.xp.current / RemainingXPCSC.xp.needed * frames.display.bg:GetWidth())
 
 	--Rested XP segment
-	if csc.xp.rested == 0 then frames.display.rested:Hide() else
+	if RemainingXPCSC.xp.rested == 0 then frames.display.rested:Hide() else
 		frames.display.rested:Show()
 		if frames.display.xp:GetWidth() == 0 then frames.display.rested:SetPoint("LEFT") else frames.display.rested:SetPoint("LEFT", frames.display.xp, "RIGHT") end
-		frames.display.rested:SetWidth((csc.xp.current + csc.xp.rested > csc.xp.needed and csc.xp.needed - csc.xp.current or csc.xp.rested) / csc.xp.needed * frames.display.bg:GetWidth())
+		frames.display.rested:SetWidth((RemainingXPCSC.xp.current + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.needed and RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.needed * frames.display.bg:GetWidth())
 	end
 end
 
@@ -471,12 +388,12 @@ end
 local function UpdateXPDisplayText()
 	local text = ""
 
-	if db.display.text.details then
-		text = wt.FormatThousands(csc.xp.current) .. " / " .. wt.FormatThousands(csc.xp.needed) .. " (" .. wt.FormatThousands(csc.xp.remaining) .. ")"
-		text = text .. (csc.xp.rested > 0 and " + " .. wt.FormatThousands(csc.xp.rested) .. " (" .. wt.FormatThousands(
-			math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100
+	if RemainingXPDB.display.text.details then
+		text = wt.FormatThousands(RemainingXPCSC.xp.current) .. " / " .. wt.FormatThousands(RemainingXPCSC.xp.needed) .. " (" .. wt.FormatThousands(RemainingXPCSC.xp.remaining) .. ")"
+		text = text .. (RemainingXPCSC.xp.rested > 0 and " + " .. wt.FormatThousands(RemainingXPCSC.xp.rested) .. " (" .. wt.FormatThousands(
+			math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current) * 10000) / 100
 		) .. "%)" or "") .. GetBankedText()
-	else text = wt.FormatThousands(csc.xp.remaining) end
+	else text = wt.FormatThousands(RemainingXPCSC.xp.remaining) end
 
 	frames.display.text:SetText(text)
 end
@@ -490,19 +407,19 @@ local function UpdateIntegrationText(keep, remaining)
 	wt.SetVisibility(frames.integration.text, keep)
 
 	--Text content
-	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(wt.FormatThousands(csc.xp.remaining))
+	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(wt.FormatThousands(RemainingXPCSC.xp.remaining))
 	else frames.integration.text:SetText(
 		ns.strings.xpBar.text:gsub(
-			"#CURRENT", wt.FormatThousands(csc.xp.current)
+			"#CURRENT", wt.FormatThousands(RemainingXPCSC.xp.current)
 		):gsub(
-			"#NEEDED", wt.FormatThousands(csc.xp.needed)
+			"#NEEDED", wt.FormatThousands(RemainingXPCSC.xp.needed)
 		):gsub(
-			"#REMAINING", wt.FormatThousands(csc.xp.remaining)
+			"#REMAINING", wt.FormatThousands(RemainingXPCSC.xp.remaining)
 		) .. (
-			csc.xp.rested > 0 and " + " .. ns.strings.xpBar.rested:gsub(
-				"#RESTED", wt.FormatThousands(csc.xp.rested)
+			RemainingXPCSC.xp.rested > 0 and " + " .. ns.strings.xpBar.rested:gsub(
+				"#RESTED", wt.FormatThousands(RemainingXPCSC.xp.rested)
 			):gsub(
-				"#PERCENT", wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100) .. "%%"
+				"#PERCENT", wt.FormatThousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current) * 10000) / 100) .. "%%"
 			) or ""
 		) .. GetBankedText()
 	) end
@@ -525,14 +442,14 @@ local function GetXPTooltipTextlines()
 		--Current XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.current:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.current), ns.colors.purple[2])
+				"#VALUE", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.current), ns.colors.purple[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.purple[1],
 		},
 		{
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.current / csc.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(RemainingXPCSC.xp.current / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
 			),
 			color = ns.colors.purple[3],
 		},
@@ -540,14 +457,14 @@ local function GetXPTooltipTextlines()
 		--Remaining XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.remaining:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.remaining), ns.colors.rose[2])
+				"#VALUE", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.remaining), ns.colors.rose[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.rose[1],
 		},
 		{
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor((csc.xp.remaining / csc.xp.needed) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor((RemainingXPCSC.xp.remaining / RemainingXPCSC.xp.needed) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
 			),
 			color = ns.colors.rose[3],
 		},
@@ -555,7 +472,7 @@ local function GetXPTooltipTextlines()
 		--Required XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.required:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.needed), ns.colors.peach[2])
+				"#VALUE", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.needed), ns.colors.peach[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.peach[1],
@@ -574,23 +491,23 @@ local function GetXPTooltipTextlines()
 	}
 
 	--Current Rested XP
-	if csc.xp.rested > 0 then
+	if RemainingXPCSC.xp.rested > 0 then
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.rested:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.blue[2])
+				"#VALUE", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.rested), ns.colors.blue[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.blue[1],
 		})
 		table.insert(textLines, {
 			text = ns.strings.xpTooltip.percentRemaining:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
 		table.insert(textLines, {
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / csc.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
+				"#PERCENT", wt.Color(wt.FormatThousands(math.floor(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
@@ -621,8 +538,8 @@ local function GetXPTooltipTextlines()
 			font = GameTooltipText,
 			color = ns.colors.blue[1],
 		})
-		local atMax = wt.Round(csc.xp.rested / csc.xp.needed, 3) >= 1.5
-		local atMaxLast = UnitLevel("player") == maxLevel - 1 and wt.Round(csc.xp.rested / csc.xp.remaining, 3) >= 1
+		local atMax = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+		local atMaxLast = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
 		table.insert(textLines, {
 			text = (atMax or atMaxLast) and (ns.strings.xpTooltip.restedAtMax) or ns.strings.chat.restedStatus.accumulating,
 			color = ns.colors.blue[2],
@@ -630,23 +547,23 @@ local function GetXPTooltipTextlines()
 	end
 
 	--Accumulated Rested XP
-	if (csc.xp.accumulatedRested or 0) > 0 then
+	if (RemainingXPCSC.xp.accumulatedRested or 0) > 0 then
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.accumulated:gsub(
-				"#VALUE", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested or 0), ns.colors.blue[2])
+				"#VALUE", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.accumulatedRested or 0), ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
 	end
 
 	--Banked XP & levels
-	if GameLimitedMode_IsActive() and csc.xp.banked > 0 then
+	if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.banked:gsub(
 				"#VALUE", wt.Color(ns.strings.xpTooltip.bankedValue:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(csc.xp.banked), ns.colors.grey[2])
+					"#VALUE", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.banked), ns.colors.grey[2])
 				):gsub(
-					"#LEVELS", wt.Color(csc.xp.bankedLevels, ns.colors.grey[2])
+					"#LEVELS", wt.Color(RemainingXPCSC.xp.bankedLevels, ns.colors.grey[2])
 				), ns.colors.grey[3])
 			),
 			font = GameTooltipText,
@@ -712,30 +629,30 @@ end
 ---@param textIntensity? number Value determining how much to fade out the text ***Range:*** (0, 1) | ***Default:*** db.display.fade.text
 ---@param backdropIntensity? number Value determining how much to fade out the backdrop elements ***Range:*** (0, 1) | ***Default:*** db.display.fade.background
 local function Fade(state, textColor, bgColor, borderColor, xpColor, restedColor, textIntensity, backdropIntensity)
-	if state == nil then state = db.display.fade.enabled end
+	if state == nil then state = RemainingXPDB.display.fade.enabled end
 
 	--Text
-	local r, g, b, a = wt.UnpackColor(textColor or db.display.text.font.color)
-	frames.display.text:SetTextColor(r, g, b, (a or 1) * (state and 1 - (textIntensity or db.display.fade.text) or 1))
+	local r, g, b, a = wt.UnpackColor(textColor or RemainingXPDB.display.text.font.color)
+	frames.display.text:SetTextColor(r, g, b, (a or 1) * (state and 1 - (textIntensity or RemainingXPDB.display.fade.text) or 1))
 
 	--Background
-	if db.display.background.visible then
-		backdropIntensity = backdropIntensity or db.display.fade.background
+	if RemainingXPDB.display.background.visible then
+		backdropIntensity = backdropIntensity or RemainingXPDB.display.fade.background
 
 		--Backdrop
-		r, g, b, a = wt.UnpackColor(bgColor or db.display.background.colors.bg)
+		r, g, b, a = wt.UnpackColor(bgColor or RemainingXPDB.display.background.colors.bg)
 		frames.display.bg:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
 
 		--Current XP segment
-		r, g, b, a = wt.UnpackColor(xpColor or db.display.background.colors.xp)
+		r, g, b, a = wt.UnpackColor(xpColor or RemainingXPDB.display.background.colors.xp)
 		frames.display.xp:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
 
 		--Rested XP segment
-		r, g, b, a = wt.UnpackColor(restedColor or db.display.background.colors.rested)
+		r, g, b, a = wt.UnpackColor(restedColor or RemainingXPDB.display.background.colors.rested)
 		frames.display.rested:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
 
 		--Border & Text holder
-		r, g, b, a = wt.UnpackColor(borderColor or db.display.background.colors.border)
+		r, g, b, a = wt.UnpackColor(borderColor or RemainingXPDB.display.background.colors.border)
 		frames.display.overlay:SetBackdropBorderColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
 	end
 end
@@ -847,42 +764,42 @@ local function ApplyPreset(i)
 	frames.main:SetFrameStrata(presets[i].data.layer.strata)
 	ResizeDisplay(presets[i].data.background.size.width, presets[i].data.background.size.height)
 	if not presets[i].data.background.visible then wt.SetVisibility(frames.display.text, true) end
-	SetDisplayBackdrop(presets[i].data.background.visible, db.display.background.colors)
-	Fade(db.display.fade.enable)
+	SetDisplayBackdrop(presets[i].data.background.visible, RemainingXPDB.display.background.colors)
+	Fade(RemainingXPDB.display.fade.enable)
 
 	--Convert to absolute position
 	wt.ConvertToAbsolutePosition(frames.main)
 
 	--Update the DBs
-	dbc.hidden = false
-	wt.CopyValues(wt.PackPosition(frames.main:GetPoint()), db.display.position)
-	db.display.layer.strata = presets[i].data.layer.strata
-	if not presets[i].data.background.visible then db.display.text.visible = true end
-	db.display.background.visible = presets[i].data.background.visible
-	wt.CopyValues(presets[i].data.background.size, db.display.background.size)
+	RemainingXPDB.display.hidden = false
+	wt.CopyValues(wt.PackPosition(frames.main:GetPoint()), RemainingXPDB.display.position)
+	RemainingXPDB.display.layer.strata = presets[i].data.layer.strata
+	if not presets[i].data.background.visible then RemainingXPDB.display.text.visible = true end
+	RemainingXPDB.display.background.visible = presets[i].data.background.visible
+	wt.CopyValues(presets[i].data.background.size, RemainingXPDB.display.background.size)
 
 	--Update the options widgets
-	frames.options.display.visibility.hidden.setState(false)
-	frames.options.display.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
-	frames.options.display.position.anchor.setSelected(db.display.position.anchor)
-	frames.options.display.position.xOffset.setValue(db.display.position.offset.x)
-	frames.options.display.position.yOffset.setValue(db.display.position.offset.y)
-	frames.options.display.position.frameStrata.setSelected(db.display.layer.strata)
-	frames.options.display.text.visible.setState(true)
-	frames.options.display.text.visible:SetAttribute("loaded", true) --Update dependent widgets
-	frames.options.display.background.visible.setState(db.display.background.visible)
-	frames.options.display.background.visible:SetAttribute("loaded", true) --Update dependent widgets
-	frames.options.display.background.size.width.setValue(db.display.background.size.width)
-	frames.options.display.background.size.height.setValue(db.display.background.size.height)
+	options.display.visibility.hidden.setState(false)
+	options.display.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
+	options.display.position.anchor.setSelected(RemainingXPDB.display.position.anchor)
+	options.display.position.xOffset.setValue(RemainingXPDB.display.position.offset.x)
+	options.display.position.yOffset.setValue(RemainingXPDB.display.position.offset.y)
+	options.display.position.frameStrata.setSelected(RemainingXPDB.display.layer.strata)
+	options.display.text.visible.setState(true)
+	options.display.text.visible:SetAttribute("loaded", true) --Update dependent widgets
+	options.display.background.visible.setState(RemainingXPDB.display.background.visible)
+	options.display.background.visible:SetAttribute("loaded", true) --Update dependent widgets
+	options.display.background.size.width.setValue(RemainingXPDB.display.background.size.width)
+	options.display.background.size.height.setValue(RemainingXPDB.display.background.size.height)
 
 	--Check the visibility options widgets
-	if not db.display.background.visible then
-		frames.options.display.text.visible.checkbox:SetButtonState("DISABLED")
-		frames.options.display.text.visible.checkbox:UnlockHighlight()
-		frames.options.display.text.visible:SetAlpha(0.4)
+	if not RemainingXPDB.display.background.visible then
+		options.display.text.visible.checkbox:SetButtonState("DISABLED")
+		options.display.text.visible.checkbox:UnlockHighlight()
+		options.display.text.visible:SetAlpha(0.4)
 	else
-		frames.options.display.text.visible.checkbox:SetButtonState("NORMAL")
-		frames.options.display.text.visible:SetAlpha(1)
+		options.display.text.visible.checkbox:SetButtonState("NORMAL")
+		options.display.text.visible:SetAlpha(1)
 	end
 end
 
@@ -891,25 +808,25 @@ local function UpdateCustomPreset()
 	--Update the Custom preset
 	presets[1].data.position = wt.PackPosition(frames.main:GetPoint())
 	presets[1].data.layer.strata = frames.main:GetFrameStrata()
-	presets[1].data.background.visible = frames.options.display.background.visible.getState()
-	presets[1].data.background.size = { width = frames.options.display.background.size.width.getValue(), height = frames.options.display.background.size.height.getValue() }
-	wt.CopyValues(presets[1].data, db.customPreset) --Update the DB
-	RemainingXPDB.customPreset = wt.Clone(db.customPreset) --Commit to the SavedVariables DB
+	presets[1].data.background.visible = options.display.background.visible.getState()
+	presets[1].data.background.size = { width = options.display.background.size.width.getValue(), height = options.display.background.size.height.getValue() }
+	wt.CopyValues(presets[1].data, RemainingXPDB.customPreset) --Update the DB
+	RemainingXPDB.customPreset = wt.Clone(RemainingXPDB.customPreset) --Commit to the SavedVariables DB
 
 	--Update the presets widget
-	frames.options.display.position.presets.setSelected(1)
+	options.display.position.presets.setSelected(1)
 end
 
 --Reset the custom preset to its default state
 local function ResetCustomPreset()
 	--Reset the Custom preset
-	presets[1].data = wt.Clone(dbDefault.customPreset)
-	wt.CopyValues(presets[1].data, db.customPreset) --Update the DB
-	RemainingXPDB.customPreset = wt.Clone(db.customPreset) --Commit to the SavedVariables DB
+	presets[1].data = wt.Clone(ns.profileDefault.customPreset)
+	wt.CopyValues(presets[1].data, RemainingXPDB.customPreset) --Update the DB
+	RemainingXPDB.customPreset = wt.Clone(RemainingXPDB.customPreset) --Commit to the SavedVariables DB
 
 	--Apply the Custom preset
 	ApplyPreset(1)
-	frames.options.display.position.presets.setSelected(1) --Update the presets widget
+	options.display.position.presets.setSelected(1) --Update the presets widget
 end
 
 
@@ -933,410 +850,6 @@ end
 
 --[[ INTERFACE OPTIONS ]]
 
---[ Main ]
-
---Create the widgets
-local function CreateOptionsShortcuts(panel)
-	--Button: Display page
-	wt.CreateButton({
-		parent = panel,
-		name = "DisplayPage",
-		title = ns.strings.options.display.title,
-		tooltip = { lines = { { text = ns.strings.options.display.description:gsub("#ADDON", addonTitle), }, } },
-		arrange = {},
-		size = { width = 120, },
-		events = { OnClick = function() frames.options.display.page.open() end, },
-	})
-
-	--Button: Integration page
-	wt.CreateButton({
-		parent = panel,
-		name = "IntegrationPage",
-		title = ns.strings.options.integration.title,
-		tooltip = { lines = { { text = ns.strings.options.integration.description:gsub("#ADDON", addonTitle), }, } },
-		position = { offset = { x = 140, y = -30 } },
-		size = { width = 120, },
-		events = { OnClick = function() frames.options.integration.page.open() end, },
-	})
-
-	--Button: Notifications page
-	wt.CreateButton({
-		parent = panel,
-		name = "NotificationsPage",
-		title = ns.strings.options.events.title,
-		tooltip = { lines = { { text = ns.strings.options.events.description:gsub("#ADDON", addonTitle), }, } },
-		position = { offset = { x = 270, y = -30 } },
-		size = { width = 120, },
-		events = { OnClick = function() frames.options.events.page.open() end, },
-	})
-
-	--Button: Advanced page
-	wt.CreateButton({
-		parent = panel,
-		name = "AdvancedPage",
-		title = ns.strings.options.advanced.title,
-		tooltip = { lines = { { text = ns.strings.options.advanced.description:gsub("#ADDON", addonTitle), }, } },
-		position = {
-			anchor = "TOPRIGHT",
-			offset = { x = -12, y = -30 }
-		},
-		size = { width = 120, },
-		events = { OnClick = function() frames.options.advanced.page.open() end, },
-	})
-end
-local function CreateAboutInfo(panel)
-	--Text: Version
-	local version = wt.CreateText({
-		parent = panel,
-		name = "VersionTitle",
-		position = { offset = { x = 16, y = -32 } },
-		width = 45,
-		text = ns.strings.options.main.about.version .. ":",
-		font = "GameFontNormalSmall",
-		justify = { h = "RIGHT", },
-	})
-	wt.CreateText({
-		parent = panel,
-		name = "Version",
-		position = {
-			relativeTo = version,
-			relativePoint = "TOPRIGHT",
-			offset = { x = 5 }
-		},
-		width = 140,
-		text = GetAddOnMetadata(addonNameSpace, "Version"),
-		font = "GameFontHighlightSmall",
-		justify = { h = "LEFT", },
-	})
-
-	--Text: Date
-	local date = wt.CreateText({
-		parent = panel,
-		name = "DateTitle",
-		position = {
-			relativeTo = version,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -8 }
-		},
-		width = 45,
-		text = ns.strings.options.main.about.date .. ":",
-		font = "GameFontNormalSmall",
-		justify = { h = "RIGHT", },
-	})
-	wt.CreateText({
-		parent = panel,
-		name = "Date",
-		position = {
-			relativeTo = date,
-			relativePoint = "TOPRIGHT",
-			offset = { x = 5 }
-		},
-		width = 140,
-		text = ns.strings.misc.date:gsub(
-			"#DAY", GetAddOnMetadata(addonNameSpace, "X-Day")
-		):gsub(
-			"#MONTH", GetAddOnMetadata(addonNameSpace, "X-Month")
-		):gsub(
-			"#YEAR", GetAddOnMetadata(addonNameSpace, "X-Year")
-		),
-		font = "GameFontHighlightSmall",
-		justify = { h = "LEFT", },
-	})
-
-	--Text: Author
-	local author = wt.CreateText({
-		parent = panel,
-		name = "AuthorTitle",
-		position = {
-			relativeTo = date,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -8 }
-		},
-		width = 45,
-		text = ns.strings.options.main.about.author .. ":",
-		font = "GameFontNormalSmall",
-		justify = { h = "RIGHT", },
-	})
-	wt.CreateText({
-		parent = panel,
-		name = "Author",
-		position = {
-			relativeTo = author,
-			relativePoint = "TOPRIGHT",
-			offset = { x = 5 }
-		},
-		width = 140,
-		text = GetAddOnMetadata(addonNameSpace, "Author"),
-		font = "GameFontHighlightSmall",
-		justify = { h = "LEFT", },
-	})
-
-	--Text: License
-	local license = wt.CreateText({
-		parent = panel,
-		name = "LicenseTitle",
-		position = {
-			relativeTo = author,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -8 }
-		},
-		width = 45,
-		text = ns.strings.options.main.about.license .. ":",
-		font = "GameFontNormalSmall",
-		justify = { h = "RIGHT", },
-	})
-	wt.CreateText({
-		parent = panel,
-		name = "License",
-		position = {
-			relativeTo = license,
-			relativePoint = "TOPRIGHT",
-			offset = { x = 5 }
-		},
-		width = 140,
-		text = GetAddOnMetadata(addonNameSpace, "X-License"),
-		font = "GameFontHighlightSmall",
-		justify = { h = "LEFT", },
-	})
-
-	--Copybox: CurseForge
-	local curse = wt.CreateCopyBox({
-		parent = panel,
-		name = "CurseForge",
-		title = ns.strings.options.main.about.curseForge .. ":",
-		position = {
-			relativeTo = license,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -11 }
-		},
-		size = { width = 190, },
-		text = "curseforge.com/wow/addons/remaining-xp",
-		font = "GameFontNormalSmall",
-		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-		colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-	})
-
-	--Copybox: Wago
-	local wago = wt.CreateCopyBox({
-		parent = panel,
-		name = "Wago",
-		title = ns.strings.options.main.about.wago .. ":",
-		position = {
-			relativeTo = curse,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -8 }
-		},
-		size = { width = 190, },
-		text = "addons.wago.io/addons/remaining-xp",
-		font = "GameFontNormalSmall",
-		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-		colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-	})
-
-	--Copybox: Repository
-	local repo = wt.CreateCopyBox({
-		parent = panel,
-		name = "Repository",
-		title = ns.strings.options.main.about.repository .. ":",
-		position = {
-			relativeTo = wago,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -8 }
-		},
-		size = { width = 190, },
-		text = "github.com/Arxareon/RemainingXP",
-		font = "GameFontNormalSmall",
-		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-		colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-	})
-
-	--Copybox: Issues
-	wt.CreateCopyBox({
-		parent = panel,
-		name = "Issues",
-		title = ns.strings.options.main.about.issues .. ":",
-		position = {
-			relativeTo = repo,
-			relativePoint = "BOTTOMLEFT",
-			offset = { y = -8 }
-		},
-		size = { width = 190, },
-		text = "github.com/Arxareon/RemainingXP/issues",
-		font = "GameFontNormalSmall",
-		color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-		colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-	})
-
-	--EditScrollBox: Changelog
-	local changelog = wt.CreateEditScrollBox({
-		parent = panel,
-		name = "Changelog",
-		title = ns.strings.options.main.about.changelog.label,
-		tooltip = { lines = { { text = ns.strings.options.main.about.changelog.tooltip, }, } },
-		arrange = {},
-		size = { width = panel:GetWidth() - 225, height = panel:GetHeight() - 42 },
-		text = ns.GetChangelog(true),
-		font = { normal = "GameFontDisableSmall", },
-		color = ns.colors.grey[2],
-		readOnly = true,
-		scrollSpeed = 0.2,
-	})
-
-	--Button: Full changelog
-	local changelogFrame
-	wt.CreateButton({
-		parent = panel,
-		name = "OpenFullChangelog",
-		title = ns.strings.options.main.about.openFullChangelog.label,
-		tooltip = { lines = { { text = ns.strings.options.main.about.openFullChangelog.tooltip, }, } },
-		position = {
-			anchor = "TOPRIGHT",
-			relativeTo = changelog,
-			relativePoint = "TOPRIGHT",
-			offset = { x = -3, y = 2 }
-		},
-		size = { width = 176, height = 14 },
-		font = {
-			normal = "GameFontNormalSmall",
-			highlight = "GameFontHighlightSmall",
-		},
-		events = { OnClick = function()
-			if changelogFrame then changelogFrame:Show()
-			else
-				--Panel: Changelog frame
-				changelogFrame = wt.CreatePanel({
-					parent = UIParent,
-					name = addonNameSpace .. "Changelog",
-					append = false,
-					title = ns.strings.options.main.about.fullChangelog.label:gsub("#ADDON", addonTitle),
-					position = { anchor = "CENTER", },
-					keepInBounds = true,
-					size = { width = 740, height = 560 },
-					background = { color = { a = 0.9 }, },
-					initialize = function(windowPanel)
-						--EditScrollBox: Full changelog
-						wt.CreateEditScrollBox({
-							parent = windowPanel,
-							name = "FullChangelog",
-							title = ns.strings.options.main.about.fullChangelog.label:gsub("#ADDON", addonTitle),
-							label = false,
-							tooltip = { lines = { { text = ns.strings.options.main.about.fullChangelog.tooltip, }, } },
-							arrange = {},
-							size = { width = windowPanel:GetWidth() - 32, height = windowPanel:GetHeight() - 88 },
-							text = ns.GetChangelog(),
-							font = { normal = "GameFontDisable", },
-							color = ns.colors.grey[2],
-							readOnly = true,
-						})
-
-						--Button: Close
-						wt.CreateButton({
-							parent = windowPanel,
-							name = "CancelButton",
-							title = wt.GetStrings("close"),
-							arrange = {},
-							events = { OnClick = function() windowPanel:Hide() end },
-						})
-					end,
-					arrangement = {
-						margins = { l = 16, r = 16, t = 42, b = 16 },
-						flip = true,
-					}
-				})
-				_G[changelogFrame:GetName() .. "Title"]:SetPoint("TOPLEFT", 18, -18)
-				wt.SetMovability(changelogFrame, true)
-				changelogFrame:SetFrameStrata("DIALOG")
-				changelogFrame:IsToplevel(true)
-			end
-		end, },
-	}):SetFrameLevel(changelog:GetFrameLevel() + 1) --Make sure it's on top to be clickable
-end
-
---Create the category page
-local function CreateMainOptions()
-	---@type optionsPage
-	frames.options.main.page = wt.CreateOptionsCategory({
-		addon = addonNameSpace,
-		name = "Main",
-		description = ns.strings.options.main.description:gsub("#ADDON", addonTitle),
-		logo = ns.textures.logo,
-		titleLogo = true,
-		initialize = function(canvas)
-			--Panel: Shortcuts
-			-- wt.CreatePanel({ --FIXME: Reinstate once opening settings subcategories programmatically is once again supported in Dragonflight
-			-- 	parent = canvas,
-			-- 	name = "Shortcuts",
-			-- 	title = ns.strings.options.main.shortcuts.title,
-			-- 	description = ns.strings.options.main.shortcuts.description:gsub("#ADDON", addonTitle),
-			-- 	arrange = {},
-			-- 	initialize = CreateOptionsShortcuts,
-			-- 	arrangement = {}
-			-- })
-
-			--Panel: About
-			wt.CreatePanel({
-				parent = canvas,
-				name = "About",
-				title = ns.strings.options.main.about.title,
-				description = ns.strings.options.main.about.description:gsub("#ADDON", addonTitle),
-				arrange = {},
-				size = { height = 258 },
-				initialize = CreateAboutInfo,
-				arrangement = {
-					flip = true,
-					resize = false
-				}
-			})
-
-			--Panel: Sponsors
-			local top = GetAddOnMetadata(addonNameSpace, "X-TopSponsors")
-			local normal = GetAddOnMetadata(addonNameSpace, "X-Sponsors")
-			if top or normal then
-				local sponsorsPanel = wt.CreatePanel({
-					parent = canvas,
-					name = "Sponsors",
-					title = ns.strings.options.main.sponsors.title,
-					description = ns.strings.options.main.sponsors.description,
-					arrange = {},
-					size = { height = 64 + (top and normal and 24 or 0) },
-					initialize = function(panel)
-						if top then
-							wt.CreateText({
-								parent = panel,
-								name = "Top",
-								position = { offset = { x = 16, y = -33 } },
-								width = panel:GetWidth() - 32,
-								text = top:gsub("|", " • "),
-								font = "GameFontNormalLarge",
-								justify = { h = "LEFT", },
-							})
-						end
-						if normal then
-							wt.CreateText({
-								parent = panel,
-								name = "Normal",
-								position = { offset = { x = 16, y = -33 -(top and 24 or 0) } },
-								width = panel:GetWidth() - 32,
-								text = normal:gsub("|", " • "),
-								font = "GameFontHighlightMedium",
-								justify = { h = "LEFT", },
-							})
-						end
-					end,
-				})
-				wt.CreateText({
-					parent = sponsorsPanel,
-					name = "DescriptionHeart",
-					position = { offset = { x = _G[sponsorsPanel:GetName() .. "Description"]:GetStringWidth() + 16, y = -10 } },
-					text = "♥",
-					font = "ChatFontSmall",
-					justify = { h = "LEFT", },
-				})
-			end
-		end,
-		arrangement = {}
-	})
-end
 
 --[ Display ]
 
@@ -1344,34 +857,34 @@ end
 local function CreateVisibilityOptions(panel)
 	--Checkbox: Hidden
 	---@type checkbox
-	frames.options.display.visibility.hidden = wt.CreateCheckbox({
+	options.display.visibility.hidden = wt.CreateCheckbox({
 		parent = panel,
 		name = "Hidden",
 		title = ns.strings.options.display.visibility.hidden.label,
-		tooltip = { lines = { { text = ns.strings.options.display.visibility.hidden.tooltip:gsub("#ADDON", addonTitle), }, } },
+		tooltip = { lines = { { text = ns.strings.options.display.visibility.hidden.tooltip:gsub("#ADDON", ns.title), }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = dbc,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display,
 			storageKey = "hidden",
 			onChange = {
-				DisplayToggle = function() wt.SetVisibility(frames.main, not (dbc.hidden or max)) end,
+				DisplayToggle = function() wt.SetVisibility(frames.main, not (RemainingXPDB.display.hidden or max)) end,
 				EnsureVisibility = function()
-					if not db.display.background.visible then
-						frames.options.display.text.visible.checkbox:SetButtonState("DISABLED")
-						frames.options.display.text.visible.checkbox:UnlockHighlight()
-						frames.options.display.text.visible:SetAlpha(0.4)
+					if not RemainingXPDB.display.background.visible then
+						options.display.text.visible.checkbox:SetButtonState("DISABLED")
+						options.display.text.visible.checkbox:UnlockHighlight()
+						options.display.text.visible:SetAlpha(0.4)
 					else
-						if not dbc.hidden then frames.options.display.text.visible.checkbox:SetButtonState("NORMAL") end
-						frames.options.display.text.visible:SetAlpha(1)
+						if not RemainingXPDB.display.hidden then options.display.text.visible.checkbox:SetButtonState("NORMAL") end
+						options.display.text.visible:SetAlpha(1)
 					end
-					if not db.display.text.visible then
-						frames.options.display.background.visible.checkbox:SetButtonState("DISABLED")
-						frames.options.display.background.visible.checkbox:UnlockHighlight()
-						frames.options.display.background.visible:SetAlpha(0.4)
+					if not RemainingXPDB.display.text.visible then
+						options.display.background.visible.checkbox:SetButtonState("DISABLED")
+						options.display.background.visible.checkbox:UnlockHighlight()
+						options.display.background.visible:SetAlpha(0.4)
 					else
-						if not dbc.hidden then frames.options.display.background.visible.checkbox:SetButtonState("NORMAL") end
-						frames.options.display.background.visible:SetAlpha(1)
+						if not RemainingXPDB.display.hidden then options.display.background.visible.checkbox:SetButtonState("NORMAL") end
+						options.display.background.visible:SetAlpha(1)
 					end
 				end,
 			}
@@ -1380,31 +893,31 @@ local function CreateVisibilityOptions(panel)
 
 	--Checkbox: Status notice
 	---@type checkbox
-	frames.options.display.visibility.status = wt.CreateCheckbox({
+	options.display.visibility.status = wt.CreateCheckbox({
 		parent = panel,
 		name = " StatusNotice",
 		title = ns.strings.options.display.visibility.statusNotice.label,
-		tooltip = { lines = { { text = ns.strings.options.display.visibility.statusNotice.tooltip:gsub("#ADDON", addonTitle), }, } },
+		tooltip = { lines = { { text = ns.strings.options.display.visibility.statusNotice.tooltip:gsub("#ADDON", ns.title), }, } },
 		arrange = { newRow = false, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.notifications.statusNotice,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.notifications.statusNotice,
 			storageKey = "enabled",
 		}
 	})
 
 	--Checkbox: Max reminder
 	---@type checkbox
-	frames.options.display.visibility.maxReminder = wt.CreateCheckbox({
+	options.display.visibility.maxReminder = wt.CreateCheckbox({
 		parent = panel,
 		name = "MaxReminder",
 		title = ns.strings.options.display.visibility.maxReminder.label,
-		tooltip = { lines = { { text = ns.strings.options.display.visibility.maxReminder.tooltip:gsub("#ADDON", addonTitle), }, } },
+		tooltip = { lines = { { text = ns.strings.options.display.visibility.maxReminder.tooltip:gsub("#ADDON", ns.title), }, } },
 		arrange = { newRow = false, },
-		dependencies = { { frame = frames.options.display.visibility.status, }, },
+		dependencies = { { frame = options.display.visibility.status, }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.notifications.statusNotice,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.notifications.statusNotice,
 			storageKey = "maxReminder",
 		}
 	})
@@ -1418,7 +931,7 @@ local function CreatePositionOptions(panel)
 		presetItems[i].onSelect = function() ApplyPreset(i) end
 	end
 	---@type dropdown
-	frames.options.display.position.presets = wt.CreateDropdown({
+	options.display.position.presets = wt.CreateDropdown({
 		parent = panel,
 		name = "ApplyPreset",
 		title = ns.strings.options.display.position.presets.label,
@@ -1427,14 +940,14 @@ local function CreatePositionOptions(panel)
 		width = 180,
 		items = presetItems,
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
+			optionsKey = ns.name .. "Display",
 			onLoad = function(self) self.setSelected(nil, ns.strings.options.display.position.presets.select) end,
 		}
 	})
 
 	--Button & Popup: Save Custom preset
 	local savePopup = wt.CreatePopup({
-		addon = addonNameSpace,
+		addon = ns.name,
 		name = "SAVEPRESET",
 		text = ns.strings.options.display.position.savePreset.warning:gsub("#CUSTOM", presets[1].name),
 		accept = ns.strings.misc.override,
@@ -1442,7 +955,7 @@ local function CreatePositionOptions(panel)
 			UpdateCustomPreset()
 
 			--Notification
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.save.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.save.response:gsub(
 				"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3])
 			), ns.colors.blue[3]))
 		end,
@@ -1455,12 +968,12 @@ local function CreatePositionOptions(panel)
 		arrange = { newRow = false, },
 		size = { width = 170, height = 26 },
 		events = { OnClick = function() StaticPopup_Show(savePopup) end, },
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 	})
 
 	--Button & Popup: Reset Custom preset
 	local resetPopup = wt.CreatePopup({
-		addon = addonNameSpace,
+		addon = ns.name,
 		name = "RESETPRESET",
 		text = ns.strings.options.display.position.resetPreset.warning:gsub("#CUSTOM", presets[1].name),
 		accept = ns.strings.misc.override,
@@ -1468,7 +981,7 @@ local function CreatePositionOptions(panel)
 			ResetCustomPreset()
 
 			--Notification
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
 				"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3])
 			), ns.colors.blue[3]))
 		end,
@@ -1485,7 +998,7 @@ local function CreatePositionOptions(panel)
 
 	--Selector: Anchor point
 	---@type specialSelector
-	frames.options.display.position.anchor = wt.CreateSpecialSelector({
+	options.display.position.anchor = wt.CreateSpecialSelector({
 		parent = panel,
 		name = "AnchorPoint",
 		title = ns.strings.options.display.position.anchor.label,
@@ -1493,19 +1006,19 @@ local function CreatePositionOptions(panel)
 		arrange = {},
 		width = 140,
 		itemset = "anchor",
-		onSelection = function(point) frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end,
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		onSelection = function(point) options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end,
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.position,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.position,
 			storageKey = "anchor",
-			onChange = { UpdateDisplayPosition = function() wt.SetPosition(frames.main, db.display.position) end, }
+			onChange = { UpdateDisplayPosition = function() wt.SetPosition(frames.main, RemainingXPDB.display.position) end, }
 		}
 	})
 
 	--Slider: X offset
 	---@type slider
-	frames.options.display.position.xOffset = wt.CreateSlider({
+	options.display.position.xOffset = wt.CreateSlider({
 		parent = panel,
 		name = "OffsetX",
 		title = ns.strings.options.display.position.xOffset.label,
@@ -1515,12 +1028,12 @@ local function CreatePositionOptions(panel)
 		step = 1,
 		altStep = 25,
 		events = { OnValueChanged = function(_, _, user) if user then
-			frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
+			options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
 		end end, },
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.position.offset,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.position.offset,
 			storageKey = "x",
 			onChange = { "UpdateDisplayPosition", }
 		}
@@ -1528,7 +1041,7 @@ local function CreatePositionOptions(panel)
 
 	--Slider: Y offset
 	---@type slider
-	frames.options.display.position.yOffset = wt.CreateSlider({
+	options.display.position.yOffset = wt.CreateSlider({
 		parent = panel,
 		name = "OffsetY",
 		title = ns.strings.options.display.position.yOffset.label,
@@ -1538,12 +1051,12 @@ local function CreatePositionOptions(panel)
 		step = 1,
 		altStep = 25,
 		events = { OnValueChanged = function(_, _, user) if user then
-			frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
+			options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
 		end end, },
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.position.offset,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.position.offset,
 			storageKey = "y",
 			onChange = { "UpdateDisplayPosition", }
 		},
@@ -1551,7 +1064,7 @@ local function CreatePositionOptions(panel)
 
 	--Checkbox: Frame Strata
 	---@type specialSelector
-	frames.options.display.position.frameStrata = wt.CreateSpecialSelector({
+	options.display.position.frameStrata = wt.CreateSpecialSelector({
 		parent = panel,
 		name = "FrameStrata",
 		title = ns.strings.options.display.position.strata.label,
@@ -1559,33 +1072,33 @@ local function CreatePositionOptions(panel)
 		arrange = {},
 		width = 140,
 		itemset = "frameStrata",
-		onSelection = function() frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end,
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		onSelection = function() options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end,
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.layer,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.layer,
 			storageKey = "strata",
-			onChange = { UpdateDisplayFrameStrata = function() frames.main:SetFrameStrata(db.display.layer.strata) end, }
+			onChange = { UpdateDisplayFrameStrata = function() frames.main:SetFrameStrata(RemainingXPDB.display.layer.strata) end, }
 		}
 	})
 end
 local function CreateTextOptions(panel)
 	--Checkbox: Visible
 	---@type checkbox
-	frames.options.display.text.visible = wt.CreateCheckbox({
+	options.display.text.visible = wt.CreateCheckbox({
 		parent = panel,
 		name = "Visible",
 		title = ns.strings.options.display.text.visible.label,
 		tooltip = { lines = { { text = ns.strings.options.display.text.visible.tooltip, }, } },
 		arrange = {},
-		events = { OnClick = function(_, state) frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		events = { OnClick = function(_, state) options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.text,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.text,
 			storageKey = "visible",
 			onChange = {
-				ToggleDisplayText = function() wt.SetVisibility(frames.display.text, db.display.text.visible) end,
+				ToggleDisplayText = function() wt.SetVisibility(frames.display.text, RemainingXPDB.display.text.visible) end,
 				"EnsureVisibility",
 			}
 		}
@@ -1593,19 +1106,19 @@ local function CreateTextOptions(panel)
 
 	--Checkbox: Details
 	---@type checkbox
-	frames.options.display.text.details = wt.CreateCheckbox({
+	options.display.text.details = wt.CreateCheckbox({
 		parent = panel,
 		name = "Details",
 		title = ns.strings.options.display.text.details.label,
 		tooltip = { lines = { { text = ns.strings.options.display.text.details.tooltip, }, } },
 		arrange = { newRow = false, },
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.text.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.text.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.text,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.text,
 			storageKey = "details",
 			onChange = { UpdateDisplayText = function() UpdateXPDisplayText() end, }
 		}
@@ -1620,14 +1133,14 @@ local function CreateTextOptions(panel)
 			title = ns.fonts[i].name,
 			lines = i == 1 and { { text = ns.strings.options.display.text.font.family.default, }, } or (i == #ns.fonts and {
 				{ text = ns.strings.options.display.text.font.family.custom[1]:gsub("#OPTION_CUSTOM", ns.strings.misc.custom):gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
-				{ text = "[WoW]\\Interface\\AddOns\\" .. addonNameSpace .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
+				{ text = "[WoW]\\Interface\\AddOns\\" .. ns.name .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
 				{ text = ns.strings.options.display.text.font.family.custom[2]:gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
 				{ text = "\n" .. ns.strings.options.display.text.font.family.custom[3], color = { r = 0.89, g = 0.65, b = 0.40 }, },
 			} or nil),
 		}
 	end
 	---@type dropdown
-	frames.options.display.text.font.family = wt.CreateDropdown({
+	options.display.text.font.family = wt.CreateDropdown({
 		parent = panel,
 		name = "FontFamily",
 		title = ns.strings.options.display.text.font.family.label,
@@ -1635,17 +1148,17 @@ local function CreateTextOptions(panel)
 		arrange = {},
 		items = fontItems,
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.text.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.text.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.text.font,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.text.font,
 			storageKey = "family",
 			convertSave = function(value) return ns.fonts[value].path end,
 			convertLoad = function(font) return GetFontID(font) end,
 			onChange = {
-				UpdateDisplayFont = function() frames.display.text:SetFont(db.display.text.font.family, db.display.text.font.size, "THINOUTLINE") end,
+				UpdateDisplayFont = function() frames.display.text:SetFont(RemainingXPDB.display.text.font.family, RemainingXPDB.display.text.font.size, "THINOUTLINE") end,
 				RefreshDisplayText = function() --Refresh the text so the font will be applied even the first time as well not just subsequent times
 					local text = frames.display.text:GetText()
 					frames.display.text:SetText("")
@@ -1653,9 +1166,9 @@ local function CreateTextOptions(panel)
 				end,
 				UpdateFontFamilyDropdownText = function()
 					--Update the font of the dropdown toggle button label
-					local label = _G[frames.options.display.text.font.family.toggle:GetName() .. "Text"]
+					local label = _G[options.display.text.font.family.toggle:GetName() .. "Text"]
 					local _, size, flags = label:GetFont()
-					label:SetFont(ns.fonts[frames.options.display.text.font.family.getSelected()].path, size, flags)
+					label:SetFont(ns.fonts[options.display.text.font.family.getSelected()].path, size, flags)
 
 					--Refresh the text so the font will be applied right away (if the font is loaded)
 					local text = label:GetText()
@@ -1665,30 +1178,30 @@ local function CreateTextOptions(panel)
 			}
 		}
 	})
-	for i = 1, #frames.options.display.text.font.family.selector.items do
+	for i = 1, #options.display.text.font.family.selector.items do
 		--Update fonts of the dropdown options
-		local label = _G[frames.options.display.text.font.family.selector.items[i]:GetName() .. "RadioButtonText"]
+		local label = _G[options.display.text.font.family.selector.items[i]:GetName() .. "RadioButtonText"]
 		local _, size, flags = label:GetFont()
 		label:SetFont(ns.fonts[i].path, size, flags)
 	end
 
 	--Slider: Font size
 	---@type slider
-	frames.options.display.text.font.size = wt.CreateSlider({
+	options.display.text.font.size = wt.CreateSlider({
 		parent = panel,
 		name = "FontSize",
 		title = ns.strings.options.display.text.font.size.label,
-		tooltip = { lines = { { text = ns.strings.options.display.text.font.size.tooltip .. "\n\n" .. ns.strings.misc.default .. ": " .. dbDefault.display.text.font.size, }, } },
+		tooltip = { lines = { { text = ns.strings.options.display.text.font.size.tooltip .. "\n\n" .. ns.strings.misc.default .. ": " .. ns.profileDefault.display.text.font.size, }, } },
 		arrange = { newRow = false, },
 		value = { min = 8, max = 64, increment = 1 },
 		altStep = 3,
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.text.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.text.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.text.font,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.text.font,
 			storageKey = "size",
 			onChange = { "UpdateDisplayFont", }
 		}
@@ -1696,7 +1209,7 @@ local function CreateTextOptions(panel)
 
 	--Selector: Text alignment
 	---@type specialSelector
-	frames.options.display.text.alignment = wt.CreateSpecialSelector({
+	options.display.text.alignment = wt.CreateSpecialSelector({
 		parent = panel,
 		name = "Alignment",
 		title = ns.strings.options.display.text.alignment.label,
@@ -1705,37 +1218,37 @@ local function CreateTextOptions(panel)
 		width = 140,
 		itemset = "justifyH",
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.text.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.text.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.text,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.text,
 			storageKey = "alignment",
 			onChange = { UpdateDisplayTextAlignment = function()
-				frames.display.text:SetJustifyH(db.display.text.alignment)
-				wt.SetPosition(frames.display.text, { anchor = db.display.text.alignment, })
+				frames.display.text:SetJustifyH(RemainingXPDB.display.text.alignment)
+				wt.SetPosition(frames.display.text, { anchor = RemainingXPDB.display.text.alignment, })
 			end, }
 		}
 	})
 
 	--Color Picker: Font color
 	---@type colorPicker
-	frames.options.display.text.font.color = wt.CreateColorPicker({
+	options.display.text.font.color = wt.CreateColorPicker({
 		parent = panel,
 		name = "FontColor",
 		title = ns.strings.options.display.text.font.color.label,
 		arrange = {},
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.text.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.text.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.text.font,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.text.font,
 			storageKey = "color",
 			onChange = {
-				UpdateDisplayFontColor = function() frames.display.text:SetTextColor(wt.UnpackColor(db.display.text.font.color)) end,
+				UpdateDisplayFontColor = function() frames.display.text:SetTextColor(wt.UnpackColor(RemainingXPDB.display.text.font.color)) end,
 				UpdateFade = Fade,
 			}
 		}
@@ -1744,20 +1257,20 @@ end
 local  function CreateBackgroundOptions(panel)
 	--Checkbox: Visible
 	---@type checkbox
-	frames.options.display.background.visible = wt.CreateCheckbox({
+	options.display.background.visible = wt.CreateCheckbox({
 		parent = panel,
 		name = "Visible",
 		title = ns.strings.options.display.background.visible.label,
 		tooltip = { lines = { { text = ns.strings.options.display.background.visible.tooltip, }, } },
 		arrange = {},
-		events = { OnClick = function(_, state) frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		events = { OnClick = function(_, state) options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background,
 			storageKey = "visible",
 			onChange = {
-				ToggleDisplayBackdrop = function() SetDisplayBackdrop(db.display.background.visible, db.display.background.colors) end,
+				ToggleDisplayBackdrop = function() SetDisplayBackdrop(RemainingXPDB.display.background.visible, RemainingXPDB.display.background.colors) end,
 				"EnsureVisibility",
 				"UpdateFade",
 			}
@@ -1766,7 +1279,7 @@ local  function CreateBackgroundOptions(panel)
 
 	--Slider: Background width
 	---@type slider
-	frames.options.display.background.size.width = wt.CreateSlider({
+	options.display.background.size.width = wt.CreateSlider({
 		parent = panel,
 		name = "Width",
 		title = ns.strings.options.display.background.size.width.label,
@@ -1774,22 +1287,22 @@ local  function CreateBackgroundOptions(panel)
 		arrange = { newRow = false, },
 		value = { min = 64, max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1) , increment = 2 },
 		altStep = 8,
-		events = { OnValueChanged = function() frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
+		events = { OnValueChanged = function() options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background.size,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background.size,
 			storageKey = "width",
-			onChange = { UpdateDisplaySize = function() ResizeDisplay(db.display.background.size.width, db.display.background.size.height) end, }
+			onChange = { UpdateDisplaySize = function() ResizeDisplay(RemainingXPDB.display.background.size.width, RemainingXPDB.display.background.size.height) end, }
 		}
 	})
 
 	--Slider: Background height
 	---@type slider
-	frames.options.display.background.size.height = wt.CreateSlider({
+	options.display.background.size.height = wt.CreateSlider({
 		parent = panel,
 		name = "Height",
 		title = ns.strings.options.display.background.size.height.label,
@@ -1797,14 +1310,14 @@ local  function CreateBackgroundOptions(panel)
 		arrange = { newRow = false, },
 		value = { min = 2, max = 80, increment = 2 },
 		altStep = 8,
-		events = { OnValueChanged = function() frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
+		events = { OnValueChanged = function() options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select) end, },
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background.size,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background.size,
 			storageKey = "height",
 			onChange = { "UpdateDisplaySize", }
 		}
@@ -1812,22 +1325,22 @@ local  function CreateBackgroundOptions(panel)
 
 	--Color Picker: Background color
 	---@type colorPicker
-	frames.options.display.background.colors.bg = wt.CreateColorPicker({
+	options.display.background.colors.bg = wt.CreateColorPicker({
 		parent = panel,
 		name = "Color",
 		title = ns.strings.options.display.background.colors.bg.label,
 		arrange = {},
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background.colors,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background.colors,
 			storageKey = "bg",
 			onChange = {
 				UpdateDisplayBackgroundColor = function()
-					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(db.display.background.colors.bg)) end
+					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(RemainingXPDB.display.background.colors.bg)) end
 				end,
 				"UpdateFade",
 			}
@@ -1835,22 +1348,22 @@ local  function CreateBackgroundOptions(panel)
 	})
 	--Color Picker: Border color
 	---@type colorPicker
-	frames.options.display.background.colors.border = wt.CreateColorPicker({
+	options.display.background.colors.border = wt.CreateColorPicker({
 		parent = panel,
 		name = "BorderColor",
 		title = ns.strings.options.display.background.colors.border.label,
 		arrange = { newRow = false, },
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background.colors,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background.colors,
 			storageKey = "border",
 			onChange = {
 				UpdateDisplayBorderColor = function()
-					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(db.display.background.colors.border)) end
+					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(RemainingXPDB.display.background.colors.border)) end
 				end,
 				"UpdateFade",
 			}
@@ -1859,22 +1372,22 @@ local  function CreateBackgroundOptions(panel)
 
 	--Color Picker: XP color
 	---@type colorPicker
-	frames.options.display.background.colors.xp = wt.CreateColorPicker({
+	options.display.background.colors.xp = wt.CreateColorPicker({
 		parent = panel,
 		name = "XPColor",
 		title = ns.strings.options.display.background.colors.xp.label,
 		arrange = { newRow = false, },
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background.colors,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background.colors,
 			storageKey = "xp",
 			onChange = {
 				UpdateDisplayXPColor = function()
-					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(db.display.background.colors.xp)) end 
+					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(RemainingXPDB.display.background.colors.xp)) end 
 				end,
 				"UpdateFade",
 			}
@@ -1883,22 +1396,22 @@ local  function CreateBackgroundOptions(panel)
 
 	--Color Picker: Rested color
 	---@type colorPicker
-	frames.options.display.background.colors.rested = wt.CreateColorPicker({
+	options.display.background.colors.rested = wt.CreateColorPicker({
 		parent = panel,
 		name = "RestedColor",
 		title = ns.strings.options.display.background.colors.rested.label,
 		arrange = { newRow = false, },
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.background.colors,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.background.colors,
 			storageKey = "rested",
 			onChange = {
 				UpdateDisplayBorderColor = function()
-					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(db.display.background.colors.rested)) end
+					if frames.display.bg:GetBackdrop() ~= nil then frames.display.bg:SetBackdropColor(wt.UnpackColor(RemainingXPDB.display.background.colors.rested)) end
 				end,
 				"UpdateFade",
 			}
@@ -1908,16 +1421,16 @@ end
 local function CreateFadeOptions(panel)
 	--Checkbox: Fade toggle
 	---@type checkbox
-	frames.options.display.fade.toggle = wt.CreateCheckbox({
+	options.display.fade.toggle = wt.CreateCheckbox({
 		parent = panel,
 		name = "FadeToggle",
 		title = ns.strings.options.display.fade.toggle.label,
 		tooltip = { lines = { { text = ns.strings.options.display.fade.toggle.tooltip, }, } },
 		arrange = { newRow = false, },
-		dependencies = { { frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+		dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.fade,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.fade,
 			storageKey = "enabled",
 			onChange = { "UpdateFade", }
 		}
@@ -1925,7 +1438,7 @@ local function CreateFadeOptions(panel)
 
 	--Slider: Text fade intensity
 	---@type slider
-	frames.options.display.fade.text = wt.CreateSlider({
+	options.display.fade.text = wt.CreateSlider({
 		parent = panel,
 		name = " TextFade",
 		title = ns.strings.options.display.fade.text.label,
@@ -1934,13 +1447,13 @@ local function CreateFadeOptions(panel)
 		value = { min = 0, max = 1, increment = 0.05 },
 		altStep = 0.2,
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.fade.toggle, },
-			{ frame = frames.options.display.text.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.fade.toggle, },
+			{ frame = options.display.text.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.fade,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.fade,
 			storageKey = "text",
 			onChange = { "UpdateFade", }
 		}
@@ -1948,7 +1461,7 @@ local function CreateFadeOptions(panel)
 
 	--Slider: Background fade intensity
 	---@type slider
-	frames.options.display.fade.background = wt.CreateSlider({
+	options.display.fade.background = wt.CreateSlider({
 		parent = panel,
 		name = "BackgroundFade",
 		title = ns.strings.options.display.fade.background.label,
@@ -1957,13 +1470,13 @@ local function CreateFadeOptions(panel)
 		value = { min = 0, max = 1, increment = 0.05 },
 		altStep = 0.2,
 		dependencies = {
-			{ frame = frames.options.display.visibility.hidden, evaluate = function(state) return not state end },
-			{ frame = frames.options.display.fade.toggle, },
-			{ frame = frames.options.display.background.visible, },
+			{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+			{ frame = options.display.fade.toggle, },
+			{ frame = options.display.background.visible, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Display",
-			workingTable = db.display.fade,
+			optionsKey = ns.name .. "Display",
+			workingTable = RemainingXPDB.display.fade,
 			storageKey = "background",
 			onChange = { "UpdateFade", }
 		}
@@ -1973,38 +1486,31 @@ end
 --Create the category page
 local function CreateDisplayOptions()
 	---@type optionsPage
-	frames.options.display.page = wt.CreateOptionsCategory({
-		parent = frames.options.main.page.category,
-		addon = addonNameSpace,
+	options.display.page = wt.CreateOptionsCategory({
+		parent = options.main.page.category,
+		addon = ns.name,
 		name = "Display",
 		title = ns.strings.options.display.title,
-		description = ns.strings.options.display.description:gsub("#ADDON", addonTitle),
+		description = ns.strings.options.display.description:gsub("#ADDON", ns.title),
 		logo = ns.textures.logo,
 		scroll = {},
-		optionsKeys = { addonNameSpace .. "Display" },
-		storage = {
-			{
-				workingTable =  dbc,
-				storageTable = RemainingXPDBC,
-				defaultsTable = dbcDefault,
-			},
-			{
-				workingTable =  db.display,
-				storageTable = RemainingXPDB.display,
-				defaultsTable = dbDefault.display,
-			},
-		},
-		onSave = function() RemainingXPDB = wt.Clone(db) end,
+		optionsKeys = { ns.name .. "Display" },
+		storage = { {
+			workingTable =  RemainingXPDB.display,
+			storageTable = RemainingXPDB.display,
+			defaultsTable = ns.profileDefault.display,
+		}, },
+		onSave = function() RemainingXPDB = wt.Clone(RemainingXPDB) end,
 		onDefault = function(user)
 			ResetCustomPreset()
 
 			if not user then return end
 
 			--Notification
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
 				"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3])
 			), ns.colors.blue[3]))
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
 				"#CATEGORY", wt.Color(ns.strings.options.display.title, ns.colors.purple[3])
 			), ns.colors.blue[3]))
 		end,
@@ -2014,7 +1520,7 @@ local function CreateDisplayOptions()
 				parent = canvas,
 				name = "Visibility",
 				title = ns.strings.options.display.title,
-				description = ns.strings.options.display.description:gsub("#ADDON", addonTitle),
+				description = ns.strings.options.display.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				initialize = CreateVisibilityOptions,
 				arrangement = {}
@@ -2047,7 +1553,7 @@ local function CreateDisplayOptions()
 				parent = canvas,
 				name = "Background",
 				title = ns.strings.options.display.background.title,
-				description = ns.strings.options.display.background.description:gsub("#ADDON", addonTitle),
+				description = ns.strings.options.display.background.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				initialize = CreateBackgroundOptions,
 				arrangement = {}
@@ -2058,7 +1564,7 @@ local function CreateDisplayOptions()
 				parent = canvas,
 				name = "Fade",
 				title = ns.strings.options.display.fade.title,
-				description = ns.strings.options.display.fade.description:gsub("#ADDON", addonTitle),
+				description = ns.strings.options.display.fade.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				initialize = CreateFadeOptions,
 				arrangement = {}
@@ -2074,55 +1580,55 @@ end
 local function CreateEnhancementOptions(panel)
 	--Checkbox: Enable integration
 	---@type checkbox
-	frames.options.integration.enhancement.toggle = wt.CreateCheckbox({
+	options.integration.enhancement.toggle = wt.CreateCheckbox({
 		parent = panel,
 		name = "EnableIntegration",
 		title = ns.strings.options.integration.enhancement.toggle.label,
 		tooltip = { lines = { { text = ns.strings.options.integration.enhancement.toggle.tooltip, }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Integration",
-			workingTable = db.enhancement,
+			optionsKey = ns.name .. "Integration",
+			workingTable = RemainingXPDB.enhancement,
 			storageKey = "enabled",
 			onChange = { ToggleIntegration = function()
-				SetIntegrationVisibility(db.enhancement.enabled)
-				UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
+				SetIntegrationVisibility(RemainingXPDB.enhancement.enabled)
+				UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining)
 			end, }
 		}
 	})
 
 	--Checkbox: Keep text
 	---@type checkbox
-	frames.options.integration.enhancement.keep = wt.CreateCheckbox({
+	options.integration.enhancement.keep = wt.CreateCheckbox({
 		parent = panel,
 		name = "KeepText",
 		title = ns.strings.options.integration.enhancement.keep.label,
 		tooltip = { lines = { { text = ns.strings.options.integration.enhancement.keep.tooltip, }, } },
 		arrange = { newRow = false, },
-		dependencies = { { frame = frames.options.integration.enhancement.toggle, }, },
+		dependencies = { { frame = options.integration.enhancement.toggle, }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Integration",
-			workingTable = db.enhancement,
+			optionsKey = ns.name .. "Integration",
+			workingTable = RemainingXPDB.enhancement,
 			storageKey = "keep",
-			onChange = { UpdateIntegrationText = function() UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining) end, }
+			onChange = { UpdateIntegrationText = function() UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining) end, }
 		}
 	})
 
 	--Checkbox: Keep only remaining XP text
 	---@type checkbox
-	frames.options.integration.enhancement.remaining = wt.CreateCheckbox({
+	options.integration.enhancement.remaining = wt.CreateCheckbox({
 		parent = panel,
 		name = "RemainingOnly",
 		title = ns.strings.options.integration.enhancement.remaining.label,
 		tooltip = { lines = { { text = ns.strings.options.integration.enhancement.remaining.tooltip, }, } },
 		arrange = { newRow = false, },
 		dependencies = {
-			{ frame = frames.options.integration.enhancement.toggle, },
-			{ frame = frames.options.integration.enhancement.keep, },
+			{ frame = options.integration.enhancement.toggle, },
+			{ frame = options.integration.enhancement.keep, },
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Integration",
-			workingTable = db.enhancement,
+			optionsKey = ns.name .. "Integration",
+			workingTable = RemainingXPDB.enhancement,
 			storageKey = "remaining",
 			onChange = { "UpdateIntegrationText", }
 		}
@@ -2131,17 +1637,17 @@ end
 local function CreateRemovalsOptions(panel)
 	--Checkbox: Hide the status bars
 	---@type checkbox
-	frames.options.integration.removals.xpBar = wt.CreateCheckbox({
+	options.integration.removals.xpBar = wt.CreateCheckbox({
 		parent = panel,
 		name = "HideXPBar",
 		title = ns.strings.options.integration.removals.xpBar.label,
-		tooltip = { lines = { { text = ns.strings.options.integration.removals.xpBar.tooltip:gsub("#ADDON", addonTitle), }, } },
+		tooltip = { lines = { { text = ns.strings.options.integration.removals.xpBar.tooltip:gsub("#ADDON", ns.title), }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Integration",
-			workingTable = db.removals,
+			optionsKey = ns.name .. "Integration",
+			workingTable = RemainingXPDB.removals,
 			storageKey = "xpBar",
-			onChange = { ToggleXPBar = function() wt.SetVisibility(MainStatusTrackingBarContainer, not db.removals.xpBar) end, }
+			onChange = { ToggleXPBar = function() wt.SetVisibility(MainStatusTrackingBarContainer, not RemainingXPDB.removals.xpBar) end, }
 		}
 	})
 end
@@ -2149,31 +1655,31 @@ end
 --Create the category page
 local function CreateIntegrationOptions()
 	---@type optionsPage
-	frames.options.integration.page = wt.CreateOptionsCategory({
-		parent = frames.options.main.page.category,
-		addon = addonNameSpace,
+	options.integration.page = wt.CreateOptionsCategory({
+		parent = options.main.page.category,
+		addon = ns.name,
 		name = "Integration",
 		title = ns.strings.options.integration.title,
-		description = ns.strings.options.integration.description:gsub("#ADDON", addonTitle),
+		description = ns.strings.options.integration.description:gsub("#ADDON", ns.title),
 		logo = ns.textures.logo,
-		optionsKeys = { addonNameSpace .. "Integration" },
+		optionsKeys = { ns.name .. "Integration" },
 		storage = {
 			{
-				workingTable =  db.enhancement,
+				workingTable =  RemainingXPDB.enhancement,
 				storageTable = RemainingXPDB.enhancement,
-				defaultsTable = dbDefault.enhancement,
+				defaultsTable = ns.profileDefault.enhancement,
 			},
 			{
-				workingTable =  db.removals,
+				workingTable =  RemainingXPDB.removals,
 				storageTable = RemainingXPDB.removals,
-				defaultsTable = dbDefault.removals,
+				defaultsTable = ns.profileDefault.removals,
 			},
 		},
 		onDefault = function(user)
 			if not user then return end
 
 			--Notification
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
 				"#CATEGORY", wt.Color(ns.strings.options.integration.title, ns.colors.purple[3])
 			), ns.colors.blue[3]))
 		end,
@@ -2183,7 +1689,7 @@ local function CreateIntegrationOptions()
 				parent = canvas,
 				name = "Enhancement",
 				title = ns.strings.options.integration.enhancement.title,
-				description = ns.strings.options.integration.enhancement.description:gsub("#ADDON", addonTitle),
+				description = ns.strings.options.integration.enhancement.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				initialize = CreateEnhancementOptions,
 				arrangement = {}
@@ -2194,7 +1700,7 @@ local function CreateIntegrationOptions()
 				parent = canvas,
 				name = "Removals",
 				title = ns.strings.options.integration.removals.title,
-				description = ns.strings.options.integration.removals.description:gsub("#ADDON", addonTitle),
+				description = ns.strings.options.integration.removals.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				initialize = CreateRemovalsOptions,
 				arrangement = {}
@@ -2211,122 +1717,122 @@ end
 local function CreateNotificationsOptions(panel)
 	--Checkbox: XP gained
 	---@type checkbox
-	frames.options.events.xpGained = wt.CreateCheckbox({
+	options.events.xpGained = wt.CreateCheckbox({
 		parent = panel,
 		name = "XPGained",
 		title = ns.strings.options.events.notifications.xpGained.label,
 		tooltip = { lines = { { text = ns.strings.options.events.notifications.xpGained.tooltip, }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications,
 			storageKey = "xpGained",
 		}
 	})
 
 	--Checkbox: Rested XP gained
 	---@type checkbox
-	frames.options.events.restedXPGained = wt.CreateCheckbox({
+	options.events.restedXPGained = wt.CreateCheckbox({
 		parent = panel,
 		name = "RestedXPGained",
 		title = ns.strings.options.events.notifications.restedXP.gained.label,
 		tooltip = { lines = { { text = ns.strings.options.events.notifications.restedXP.gained.tooltip, }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications.restedXP,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications.restedXP,
 			storageKey = "gained",
 		}
 	})
 
 	--Checkbox: Significant Rested XP updates only
 	---@type checkbox
-	frames.options.events.significantRestedOnly = wt.CreateCheckbox({
+	options.events.significantRestedOnly = wt.CreateCheckbox({
 		parent = panel,
 		name = "SignificantRestedOnly",
 		title = ns.strings.options.events.notifications.restedXP.significantOnly.label,
 		tooltip = { lines = { { text = ns.strings.options.events.notifications.restedXP.significantOnly.tooltip, }, } },
 		arrange = { newRow = false, },
-		dependencies = { { frame = frames.options.events.restedXPGained, }, },
+		dependencies = { { frame = options.events.restedXPGained, }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications.restedXP,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications.restedXP,
 			storageKey = "significantOnly",
 		}
 	})
 
 	--Checkbox: Accumulated Rested XP
 	---@type checkbox
-	frames.options.events.restedXPAccumulated = wt.CreateCheckbox({
+	options.events.restedXPAccumulated = wt.CreateCheckbox({
 		parent = panel,
 		name = "AccumulatedRestedXP",
 		title = ns.strings.options.events.notifications.restedXP.accumulated.label,
 		tooltip = { lines = {
 			{ text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[1], },
 			{
-				text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[2]:gsub("#ADDON", addonTitle),
+				text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[2]:gsub("#ADDON", ns.title),
 				color = { r = 0.89, g = 0.65, b = 0.40 },
 			},
 		} },
 		arrange = { newRow = false, },
-		dependencies = { { frame = frames.options.events.restedXPGained, }, },
+		dependencies = { { frame = options.events.restedXPGained, }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications.restedXP,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications.restedXP,
 			storageKey = "accumulated",
-			onChange = { UpdateRestedAccumulation = function() SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and max) end, }
+			onChange = { UpdateRestedAccumulation = function() SetRestedAccumulation(RemainingXPDB.notifications.restedXP.gained and RemainingXPDB.notifications.restedXP.accumulated and max) end, }
 		}
 	})
 
 	--Checkbox: Rested status update
 	---@type checkbox
-	frames.options.events.restedStatusUpdate = wt.CreateCheckbox({
+	options.events.restedStatusUpdate = wt.CreateCheckbox({
 		parent = panel,
 		name = "RestedStatusUpdate",
 		title = ns.strings.options.events.notifications.restedStatus.update.label,
 		tooltip = { lines = { { text = ns.strings.options.events.notifications.restedStatus.update.tooltip, }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications.restedStatus,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications.restedStatus,
 			storageKey = "update",
 		}
 	})
 
 	--Checkbox: Max Rested XP reminder
 	---@type checkbox
-	frames.options.events.maxRestedXPReminder = wt.CreateCheckbox({
+	options.events.maxRestedXPReminder = wt.CreateCheckbox({
 		parent = panel,
 		name = "MaxRestedXPReminder",
 		title = ns.strings.options.events.notifications.restedStatus.maxReminder.label,
 		tooltip = { lines = { { text = ns.strings.options.events.notifications.restedStatus.maxReminder.tooltip, }, } },
 		arrange = { newRow = false, },
-		dependencies = { { frame = frames.options.events.restedStatusUpdate, }, },
+		dependencies = { { frame = options.events.restedStatusUpdate, }, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications.restedStatus,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications.restedStatus,
 			storageKey = "maxReminder",
 		}
 	})
 
 	--Checkbox: Level up
 	---@type checkbox
-	frames.options.events.lvlUp = wt.CreateCheckbox({
+	options.events.lvlUp = wt.CreateCheckbox({
 		parent = panel,
 		name = "LevelUp",
 		title = ns.strings.options.events.notifications.lvlUp.congrats.label,
 		tooltip = { lines = { { text = ns.strings.options.events.notifications.lvlUp.congrats.tooltip, }, } },
 		arrange = {},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Events",
-			workingTable = db.notifications.lvlUp,
+			optionsKey = ns.name .. "Events",
+			workingTable = RemainingXPDB.notifications.lvlUp,
 			storageKey = "congrats",
 		}
 	})
 
 	--Checkbox: Time played
 	---@type checkbox
-	frames.options.events.timePlayed = wt.CreateCheckbox({
+	options.events.timePlayed = wt.CreateCheckbox({
 		parent = panel,
 		name = "TimePlayed",
 		title = ns.strings.options.events.notifications.lvlUp.timePlayed.label .. " (Soon™)",
@@ -2348,24 +1854,24 @@ end
 --Create the category page
 local function CreateEventsOptions()
 	---@type optionsPage
-	frames.options.events.page = wt.CreateOptionsCategory({
-		parent = frames.options.main.page.category,
-		addon = addonNameSpace,
+	options.events.page = wt.CreateOptionsCategory({
+		parent = options.main.page.category,
+		addon = ns.name,
 		name = "Events",
 		title = ns.strings.options.events.title,
-		description = ns.strings.options.events.description:gsub("#ADDON", addonTitle),
+		description = ns.strings.options.events.description:gsub("#ADDON", ns.title),
 		logo = ns.textures.logo,
-		optionsKeys = { addonNameSpace .. "Events" },
+		optionsKeys = { ns.name .. "Events" },
 		storage = { {
-			workingTable =  db.notifications,
+			workingTable =  RemainingXPDB.notifications,
 			storageTable = RemainingXPDB.notifications,
-			defaultsTable = dbDefault.notifications,
+			defaultsTable = ns.profileDefault.notifications,
 		}, },
 		onDefault = function(user)
 			if not user then return end
 
 			--Notification
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
 				"#CATEGORY", wt.Color(ns.strings.options.events.title, ns.colors.purple[3])
 			), ns.colors.blue[3]))
 		end,
@@ -2405,42 +1911,42 @@ end
 local function CreateBackupOptions(panel)
 	--EditScrollBox & Popup: Import & Export
 	local importPopup = wt.CreatePopup({
-		addon = addonNameSpace,
+		addon = ns.name,
 		name = "IMPORT",
-		text = ns.strings.options.advanced.backup.warning,
-		accept = ns.strings.options.advanced.backup.import,
+		text = ns.strings.options.dataManagement.backup.warning,
+		accept = ns.strings.options.dataManagement.backup.import,
 		onAccept = function()
 			--Load from string to a temporary table
-			local success, t = pcall(loadstring("return " .. wt.Clear(frames.options.advanced.backup.string.getText())))
+			local success, t = pcall(loadstring("return " .. wt.Clear(options.dataManagement.backup.string.getText())))
 			if success and type(t) == "table" then
 				--Run DB checkup on the loaded table
-				CheckDBs(t.account, db, t.character, dbc)
+				CheckDBs(t.account, RemainingXPDB, t.character, RemainingXPDBC)
 
 				--Copy values from the loaded DBs to the addon DBs
-				wt.CopyValues(t.account, db)
-				wt.CopyValues(t.character, dbc)
+				wt.CopyValues(t.account, RemainingXPDB)
+				wt.CopyValues(t.character, RemainingXPDBC)
 
 				--Load the Custom preset
-				presets[1].data = wt.Clone(db.customPreset)
+				presets[1].data = wt.Clone(RemainingXPDB.customPreset)
 
 				--Load the options data & update the interface options
-				frames.options.display.page.load(true)
-				frames.options.integration.page.load(true)
-				frames.options.events.page.load(true)
-				frames.options.advanced.page.load(true)
-			else print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.options.advanced.backup.error, ns.colors.blue[1])) end
+				options.display.page.load(true)
+				options.integration.page.load(true)
+				options.events.page.load(true)
+				options.dataManagement.page.load(true)
+			else print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.options.dataManagement.backup.error, ns.colors.blue[1])) end
 		end
 	})
-	frames.options.advanced.backup.string = wt.CreateEditScrollBox({
+	options.dataManagement.backup.string = wt.CreateEditScrollBox({
 		parent = panel,
 		name = "ImportExport",
-		title = ns.strings.options.advanced.backup.backupBox.label,
+		title = ns.strings.options.dataManagement.backup.backupBox.label,
 		tooltip = { lines = {
-			{ text = ns.strings.options.advanced.backup.backupBox.tooltip[1], },
-			{ text = "\n" .. ns.strings.options.advanced.backup.backupBox.tooltip[2], },
-			{ text = "\n" .. ns.strings.options.advanced.backup.backupBox.tooltip[3], },
-			{ text = ns.strings.options.advanced.backup.backupBox.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-			{ text = "\n" .. ns.strings.options.advanced.backup.backupBox.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+			{ text = ns.strings.options.dataManagement.backup.backupBox.tooltip[1], },
+			{ text = "\n" .. ns.strings.options.dataManagement.backup.backupBox.tooltip[2], },
+			{ text = "\n" .. ns.strings.options.dataManagement.backup.backupBox.tooltip[3], },
+			{ text = ns.strings.options.dataManagement.backup.backupBox.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+			{ text = "\n" .. ns.strings.options.dataManagement.backup.backupBox.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
 		} },
 		arrange = {},
 		size = { width = panel:GetWidth() - 24, height = panel:GetHeight() - 76 },
@@ -2448,35 +1954,35 @@ local function CreateBackupOptions(panel)
 		maxLetters = 5500,
 		events = {
 			OnEnterPressed = function() StaticPopup_Show(importPopup) end,
-			OnEscapePressed = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, frames.options.advanced.backup.compact.getState(), true)) end,
+			OnEscapePressed = function(self) self:SetText(wt.TableToString({ account = RemainingXPDB, character = RemainingXPDBC }, options.dataManagement.backup.compact.getState(), true)) end,
 		},
 		optionsData = {
-			optionsKey = addonNameSpace .. "Advanced",
-			onLoad = function(self) self:SetText(wt.TableToString({ account = db, character = dbc }, frames.options.advanced.backup.compact.getState(), true)) end,
+			optionsKey = ns.name .. "Advanced",
+			onLoad = function(self) self:SetText(wt.TableToString({ account = RemainingXPDB, character = RemainingXPDBC }, options.dataManagement.backup.compact.getState(), true)) end,
 		}
 	})
 
 	--Checkbox: Compact
 	---@type checkbox
-	frames.options.advanced.backup.compact = wt.CreateCheckbox({
+	options.dataManagement.backup.compact = wt.CreateCheckbox({
 		parent = panel,
 		name = "Compact",
-		title = ns.strings.options.advanced.backup.compact.label,
-		tooltip = { lines = { { text = ns.strings.options.advanced.backup.compact.tooltip, }, } },
+		title = ns.strings.options.dataManagement.backup.compact.label,
+		tooltip = { lines = { { text = ns.strings.options.dataManagement.backup.compact.tooltip, }, } },
 		position = {
 			anchor = "BOTTOMLEFT",
 			offset = { x = 12, y = 12 }
 		},
 		events = { OnClick = function(_, state)
-			frames.options.advanced.backup.string.setText(wt.TableToString({ account = db, character = dbc }, state, true))
+			options.dataManagement.backup.string.setText(wt.TableToString({ account = RemainingXPDB, character = RemainingXPDBC }, state, true))
 
 			--Set focus after text change to set the scroll to the top and refresh the position character counter
-			frames.options.advanced.backup.string.scrollFrame.EditBox:SetFocus()
-			frames.options.advanced.backup.string.scrollFrame.EditBox:ClearFocus()
+			options.dataManagement.backup.string.scrollFrame.EditBox:SetFocus()
+			options.dataManagement.backup.string.scrollFrame.EditBox:ClearFocus()
 		end, },
 		optionsData = {
-			optionsKey = addonNameSpace .. "Advanced",
-			storageTable = cs,
+			optionsKey = ns.name .. "Advanced",
+			storageTable = RemainingXPCS,
 			storageKey = "compactBackup",
 		}
 	})
@@ -2485,8 +1991,8 @@ local function CreateBackupOptions(panel)
 	wt.CreateButton({
 		parent = panel,
 		name = "Load",
-		title = ns.strings.options.advanced.backup.load.label,
-		tooltip = { lines = { { text = ns.strings.options.advanced.backup.load.tooltip, }, } },
+		title = ns.strings.options.dataManagement.backup.load.label,
+		tooltip = { lines = { { text = ns.strings.options.dataManagement.backup.load.tooltip, }, } },
 		arrange = {},
 		size = { height = 26 },
 		events = { OnClick = function() StaticPopup_Show(importPopup) end, },
@@ -2496,19 +2002,19 @@ local function CreateBackupOptions(panel)
 	wt.CreateButton({
 		parent = panel,
 		name = "Reset",
-		title = ns.strings.options.advanced.backup.reset.label,
-		tooltip = { lines = { { text = ns.strings.options.advanced.backup.reset.tooltip, }, } },
+		title = ns.strings.options.dataManagement.backup.reset.label,
+		tooltip = { lines = { { text = ns.strings.options.dataManagement.backup.reset.tooltip, }, } },
 		position = {
 			anchor = "BOTTOMRIGHT",
 			offset = { x = -100, y = 12 }
 		},
 		size = { height = 26 },
 		events = { OnClick = function()
-			frames.options.advanced.backup.string.setText(wt.TableToString({ account = db, character = dbc }, frames.options.advanced.backup.compact.getState(), true))
+			options.dataManagement.backup.string.setText(wt.TableToString({ account = RemainingXPDB, character = RemainingXPDBC }, options.dataManagement.backup.compact.getState(), true))
 
 			--Set focus after text change to set the scroll to the top and refresh the position character counter
-			frames.options.advanced.backup.string.scrollFrame.EditBox:SetFocus()
-			frames.options.advanced.backup.string.scrollFrame.EditBox:ClearFocus()
+			options.dataManagement.backup.string.scrollFrame.EditBox:SetFocus()
+			options.dataManagement.backup.string.scrollFrame.EditBox:ClearFocus()
 		end, },
 	})
 end
@@ -2516,23 +2022,23 @@ end
 --Create the category page
 local function CreateAdvancedOptions()
 	---@type optionsPage
-	frames.options.advanced.page = wt.CreateOptionsCategory({
-		parent = frames.options.main.page.category,
-		addon = addonNameSpace,
+	options.dataManagement.page = wt.CreateOptionsCategory({
+		parent = options.main.page.category,
+		addon = ns.name,
 		name = "Advanced",
-		title = ns.strings.options.advanced.title,
-		description = ns.strings.options.advanced.description:gsub("#ADDON", addonTitle),
+		title = ns.strings.options.dataManagement.title,
+		description = ns.strings.options.dataManagement.description:gsub("#ADDON", ns.title),
 		logo = ns.textures.logo,
-		optionsKeys = { addonNameSpace .. "Advanced" },
+		optionsKeys = { ns.name .. "Advanced" },
 		onDefault = function()
 			ResetCustomPreset()
 
 			--Notification
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
 				"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3])
 			), ns.colors.blue[3]))
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
-				"#CATEGORY", wt.Color(ns.strings.options.advanced.title, ns.colors.purple[3])
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.defaults.response:gsub(
+				"#CATEGORY", wt.Color(ns.strings.options.dataManagement.title, ns.colors.purple[3])
 			), ns.colors.blue[3]))
 		end,
 		initialize = function(canvas)
@@ -2540,8 +2046,8 @@ local function CreateAdvancedOptions()
 			wt.CreatePanel({
 				parent = canvas,
 				name = "Profiles",
-				title = ns.strings.options.advanced.profiles.title,
-				description = ns.strings.options.advanced.profiles.description:gsub("#ADDON", addonTitle),
+				title = ns.strings.options.dataManagement.profiles.title,
+				description = ns.strings.options.dataManagement.profiles.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				size = { height = 64 },
 				initialize = CreateOptionsProfiles,
@@ -2551,8 +2057,8 @@ local function CreateAdvancedOptions()
 			wt.CreatePanel({
 				parent = canvas,
 				name = "Backup",
-				title = ns.strings.options.advanced.backup.title,
-				description = ns.strings.options.advanced.backup.description:gsub("#ADDON", addonTitle),
+				title = ns.strings.options.dataManagement.backup.title,
+				description = ns.strings.options.dataManagement.backup.description:gsub("#ADDON", ns.title),
 				arrange = {},
 				size = { height = canvas:GetHeight() - 200 },
 				initialize = CreateBackupOptions,
@@ -2574,19 +2080,19 @@ end
 ---Print visibility info
 ---@param load boolean ***Default:*** false
 local function PrintStatus(load)
-	if load == true and not db.notifications.statusNotice.enabled then return end
+	if load == true and not RemainingXPDB.notifications.statusNotice.enabled then return end
 
-	local status = wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
+	local status = wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
 		frames.main:IsVisible() and ns.strings.chat.status.visible or ns.strings.chat.status.hidden, ns.colors.blue[1]
 	):gsub(
 		"#FADE", wt.Color(ns.strings.chat.status.fade:gsub(
-			"#STATE", wt.Color(db.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+			"#STATE", wt.Color(RemainingXPDB.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 		), ns.colors.blue[2])
 	)
 
-	if max then if db.notifications.statusNotice.maxReminder then
+	if max then if RemainingXPDB.notifications.statusNotice.maxReminder then
 		status = wt.Color(ns.strings.chat.status.disabled:gsub(
-			"#ADDON", wt.Color(addonTitle, ns.colors.purple[1])
+			"#ADDON", wt.Color(ns.title, ns.colors.purple[1])
 		) .." " ..  wt.Color(ns.strings.chat.status.max:gsub(
 			"#MAX", wt.Color(maxLevel, ns.colors.purple[2])
 		), ns.colors.blue[2]), ns.colors.blue[1])
@@ -2597,10 +2103,10 @@ end
 
 --Print help info
 local function PrintInfo()
-	print(wt.Color(ns.strings.chat.help.thanks:gsub("#ADDON", wt.Color(addonTitle, ns.colors.purple[1])), ns.colors.blue[1]))
+	print(wt.Color(ns.strings.chat.help.thanks:gsub("#ADDON", wt.Color(ns.title, ns.colors.purple[1])), ns.colors.blue[1]))
 	PrintStatus()
 	print(wt.Color(ns.strings.chat.help.hint:gsub("#HELP_COMMAND", wt.Color("/" .. ns.chat.keyword .. " " .. ns.chat.commands.help, ns.colors.purple[3])), ns.colors.blue[3]))
-	print(wt.Color(ns.strings.chat.help.move:gsub("#ADDON", addonTitle), ns.colors.blue[3]))
+	print(wt.Color(ns.strings.chat.help.move:gsub("#ADDON", ns.title), ns.colors.blue[3]))
 end
 
 ---Format and print a command description
@@ -2612,31 +2118,31 @@ end
 
 --Reset to defaults confirmation
 local resetDefaultsPopup = wt.CreatePopup({
-	addon = addonNameSpace,
+	addon = ns.name,
 	name = "DefaultOptions",
-	text = (wt.GetStrings("warning") or ""):gsub("#TITLE", wt.Clear(addonTitle)),
+	text = (wt.GetStrings("warning") or ""):gsub("#TITLE", wt.Clear(ns.title)),
 	onAccept = function()
 		--Reset the options data & update the interface options
-		frames.options.display.page.default()
-		frames.options.integration.page.default()
-		frames.options.events.page.default()
-		frames.options.advanced.page.default(true)
+		options.display.page.default()
+		options.integration.page.default()
+		options.events.page.default()
+		options.dataManagement.page.default(true)
 	end,
 })
 
 --[ Commands ]
 
 --Register handlers
-local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword }, {
+local commandManager = wt.RegisterChatCommands(ns.name, { ns.chat.keyword }, {
 	{
 		command = ns.chat.commands.help,
-		handler = function() print(wt.Color(addonTitle .. " ", ns.colors.purple[1]) .. wt.Color(ns.strings.chat.help.list .. ":", ns.colors.blue[1])) end,
+		handler = function() print(wt.Color(ns.title .. " ", ns.colors.purple[1]) .. wt.Color(ns.strings.chat.help.list .. ":", ns.colors.blue[1])) end,
 		help = true,
 	},
 	{
 		command = ns.chat.commands.options,
-		handler = function() frames.options.main.page.open() end,
-		onHelp = function() PrintCommand(ns.chat.commands.options, ns.strings.chat.options.description:gsub("#ADDON", addonTitle)) end
+		handler = function() options.main.page.open() end,
+		onHelp = function() PrintCommand(ns.chat.commands.options, ns.strings.chat.options.description:gsub("#ADDON", ns.title)) end
 	},
 	{
 		command = ns.chat.commands.preset,
@@ -2653,26 +2159,26 @@ local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword
 			ApplyPreset(i)
 
 			--Update in the SavedVariables DB
-			RemainingXPDBC.hidden = false
-			RemainingXPDB.display.position = wt.Clone(db.display.position)
-			RemainingXPDB.display.layer.strate = db.display.layer.strata
+			RemainingXPDB.display.hidden = false
+			RemainingXPDB.display.position = wt.Clone(RemainingXPDB.display.position)
+			RemainingXPDB.display.layer.strate = RemainingXPDB.display.layer.strata
 			if not presets[i].data.background.visible then RemainingXPDB.display.text.visible = true end
-			RemainingXPDB.display.background.visible = db.display.background.visible
-			RemainingXPDB.display.background.size = wt.Clone(db.display.background.size)
+			RemainingXPDB.display.background.visible = RemainingXPDB.display.background.visible
+			RemainingXPDB.display.background.size = wt.Clone(RemainingXPDB.display.background.size)
 
 			--Update the options widget
-			frames.options.display.position.presets.setSelected(i)
+			options.display.position.presets.setSelected(i)
 
 			return true, i
 		end,
 		onSuccess = function(i)
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.preset.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.preset.response:gsub(
 				"#PRESET", wt.Color(presets[i].name, ns.colors.purple[2])
 			), ns.colors.blue[2]))
 		end,
 		onError = function()
 			--Error
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.preset.unchanged, ns.colors.blue[1]))
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.preset.unchanged, ns.colors.blue[1]))
 			print(wt.Color(ns.strings.chat.preset.error:gsub("#INDEX", wt.Color(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[2])), ns.colors.blue[2]))
 			print(wt.Color(ns.strings.chat.preset.list, ns.colors.purple[2]))
 			for j = 1, #presets, 2 do
@@ -2692,7 +2198,7 @@ local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword
 
 			return true
 		end,
-		onSuccess = function() print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.save.response:gsub(
+		onSuccess = function() print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.save.response:gsub(
 			"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[2])
 		), ns.colors.blue[2])) end,
 		onHelp = function() PrintCommand(ns.chat.commands.save, ns.strings.chat.save.description:gsub("#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3]))) end
@@ -2704,7 +2210,7 @@ local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword
 
 			return true
 		end,
-		onSuccess = function() print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
+		onSuccess = function() print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
 			"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[2])
 		), ns.colors.blue[2])) end,
 		onHelp = function() PrintCommand(ns.chat.commands.reset, ns.strings.chat.reset.description:gsub("#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3]))) end
@@ -2713,52 +2219,52 @@ local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword
 		command = ns.chat.commands.toggle,
 		handler = function()
 			--Update the DBs
-			dbc.hidden = not dbc.hidden
-			RemainingXPDBC.hidden = dbc.hidden
+			RemainingXPDB.display.hidden = not RemainingXPDB.display.hidden
+			RemainingXPDB.display.hidden = RemainingXPDB.display.hidden
 
 			--Update the GUI option in case it was open
-			frames.options.display.visibility.hidden.setState(dbc.hidden)
-			frames.options.display.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
+			options.display.visibility.hidden.setState(RemainingXPDB.display.hidden)
+			options.display.visibility.hidden:SetAttribute("loaded", true) --Update dependent widgets
 
 			--Update the visibility
-			wt.SetVisibility(frames.main, not (dbc.hidden or max))
+			wt.SetVisibility(frames.main, not (RemainingXPDB.display.hidden or max))
 
 			return true
 		end,
 		onSuccess = function()
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
-				dbc.hidden and ns.strings.chat.toggle.hiding or ns.strings.chat.toggle.unhiding, ns.colors.blue[2])
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
+				RemainingXPDB.display.hidden and ns.strings.chat.toggle.hiding or ns.strings.chat.toggle.unhiding, ns.colors.blue[2])
 			)
 			if max then PrintStatus() end
 		end,
 		onHelp = function() PrintCommand(ns.chat.commands.toggle, ns.strings.chat.toggle.description:gsub(
-			"#HIDDEN", wt.Color(dbc.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.notHidden, ns.colors.purple[3])
+			"#HIDDEN", wt.Color(RemainingXPDB.display.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.notHidden, ns.colors.purple[3])
 		)) end
 	},
 	{
 		command = ns.chat.commands.fade,
 		handler = function()
 			--Update the DBs
-			db.display.fade.enabled = not db.display.fade.enabled
-			RemainingXPDB.display.fade.enabled = db.display.fade.enabled
+			RemainingXPDB.display.fade.enabled = not RemainingXPDB.display.fade.enabled
+			RemainingXPDB.display.fade.enabled = RemainingXPDB.display.fade.enabled
 
 			--Update the GUI option in case it was open
-			frames.options.display.fade.toggle.setState(db.display.fade.enabled)
-			frames.options.display.fade.toggle:SetAttribute("loaded", true) --Update dependent widgets
+			options.display.fade.toggle.setState(RemainingXPDB.display.fade.enabled)
+			options.display.fade.toggle:SetAttribute("loaded", true) --Update dependent widgets
 
 			--Update the main display fade
-			Fade(db.display.fade.enabled)
+			Fade(RemainingXPDB.display.fade.enabled)
 
 			return true
 		end,
 		onSuccess = function()
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.fade.response:gsub(
-				"#STATE", wt.Color(db.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.fade.response:gsub(
+				"#STATE", wt.Color(RemainingXPDB.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 			), ns.colors.blue[2]))
 			if max then PrintStatus() end
 		end,
 		onHelp = function() PrintCommand(ns.chat.commands.fade, ns.strings.chat.fade.description:gsub(
-			"#STATE", wt.Color(db.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[3])
+			"#STATE", wt.Color(RemainingXPDB.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[3])
 		)) end
 	},
 	{
@@ -2768,53 +2274,53 @@ local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword
 			if not size then return false end
 
 			--Update the DBs
-			db.display.text.font.size = size
-			RemainingXPDB.display.text.font.size = db.display.text.font.size
+			RemainingXPDB.display.text.font.size = size
+			RemainingXPDB.display.text.font.size = RemainingXPDB.display.text.font.size
 
 			--Update the GUI option in case it was open
-			frames.options.display.text.font.size.setValue(size)
+			options.display.text.font.size.setValue(size)
 
 			--Update the font
-			frames.display.text:SetFont(db.display.text.font.family, db.display.text.font.size, "THINOUTLINE")
+			frames.display.text:SetFont(RemainingXPDB.display.text.font.family, RemainingXPDB.display.text.font.size, "THINOUTLINE")
 
 			return true, size
 		end,
 		onSuccess = function(size)
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.response:gsub(
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.response:gsub(
 				"#VALUE", wt.Color(size, ns.colors.purple[2])
 			), ns.colors.blue[2]))
 			if max then PrintStatus() end
 		end,
 		onError = function()
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.unchanged, ns.colors.blue[1]))
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.unchanged, ns.colors.blue[1]))
 			print(wt.Color(ns.strings.chat.size.error:gsub(
-				"#SIZE", wt.Color(ns.chat.commands.size .. " " .. dbDefault.display.text.font.size, ns.colors.purple[2])
+				"#SIZE", wt.Color(ns.chat.commands.size .. " " .. ns.profileDefault.display.text.font.size, ns.colors.purple[2])
 			), ns.colors.blue[2]))
 		end,
 		onHelp = function() PrintCommand(ns.chat.commands.size, ns.strings.chat.size.description:gsub(
-			"#SIZE", wt.Color(ns.chat.commands.size .. " " .. dbDefault.display.text.font.size, ns.colors.purple[3])
+			"#SIZE", wt.Color(ns.chat.commands.size .. " " .. ns.profileDefault.display.text.font.size, ns.colors.purple[3])
 		)) end
 	},
 	{
 		command = ns.chat.commands.integration,
 		handler = function()
 			--Update the DBs
-			db.enhancement.enabled = not db.enhancement.enabled
-			RemainingXPDB.enhancement.enabled = db.enhancement.enabled
+			RemainingXPDB.enhancement.enabled = not RemainingXPDB.enhancement.enabled
+			RemainingXPDB.enhancement.enabled = RemainingXPDB.enhancement.enabled
 
 			--Update the GUI option in case it was open
-			frames.options.integration.enhancement.toggle.setState(db.enhancement.enabled)
-			frames.options.integration.enhancement.toggle:SetAttribute("loaded", true) --Update dependent widgets
+			options.integration.enhancement.toggle.setState(RemainingXPDB.enhancement.enabled)
+			options.integration.enhancement.toggle:SetAttribute("loaded", true) --Update dependent widgets
 
 			--Update the integration
-			SetIntegrationVisibility(db.enhancement.enabled)
-			UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
+			SetIntegrationVisibility(RemainingXPDB.enhancement.enabled)
+			UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining)
 
 			return true
 		end,
 		onSuccess = function()
-			print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.integration.response:gsub(
-				"#STATE", wt.Color(db.enhancement.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+			print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.integration.response:gsub(
+				"#STATE", wt.Color(RemainingXPDB.enhancement.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 			), ns.colors.blue[2]))
 			if max then PrintStatus() end
 		end,
@@ -2830,373 +2336,344 @@ local commandManager = wt.RegisterChatCommands(addonNameSpace, { ns.chat.keyword
 
 --[[ INITIALIZATION ]]
 
---[ Event Handlers ]
-
---Main frame
-local AddonLoaded = function(self, addon)
-	if addon ~= addonNameSpace then return end
-
-	self:UnregisterEvent("ADDON_LOADED")
-
-	--[ DBs ]
-
-	local firstLoad = not RemainingXPDB
-
-	--Load storage DBs
-	RemainingXPDB = RemainingXPDB or wt.Clone(dbDefault)
-	RemainingXPDBC = RemainingXPDBC or wt.Clone(dbcDefault)
-
-	--DB checkup & fix
-	CheckDBs(RemainingXPDB, dbDefault, RemainingXPDBC, dbcDefault)
-
-	--Load working DBs
-	db = wt.Clone(RemainingXPDB)
-	dbc = wt.Clone(RemainingXPDBC)
-
-	--Load cross-session DBs
-	RemainingXPCS = RemainingXPCS or {}
-	RemainingXPCSC = RemainingXPCSC or {}
-	cs = RemainingXPCSC
-	csc = RemainingXPCSC
-
-	--Load the custom preset
-	presets[1].data = wt.Clone(db.customPreset)
-
-	--Welcome message
-	if firstLoad then PrintInfo() end
-
-	--[ Settings Setup ]
-
-	--Load cross-session data
-	if cs.compactBackup == nil then cs.compactBackup = true end
-
-	--Set up the interface options
-	CreateMainOptions()
-	CreateDisplayOptions()
-	CreateIntegrationOptions()
-	CreateEventsOptions()
-	CreateAdvancedOptions()
-
-	--[ Frame & Display Setup ]
-
-	if max then
-		--Hide displays
-		self:Hide()
-		TurnOffIntegration()
-
-		--Disable events
-		self:UnregisterAllEvents()
-	else
-		--Load cross-session character data
-		csc.xp = csc.xp or {}
-
-		--Position
-		wt.SetPosition(self, db.display.position)
-
-		--Make movable
-		wt.SetMovability(self, true, "SHIFT", { frames.display.overlay, }, {
-			onStop = function()
-				--Save the position (for account-wide use)
-				wt.CopyValues(wt.PackPosition(self:GetPoint()), db.display.position)
-
-				--Update in the SavedVariables DB
-				RemainingXPDB.display.position = wt.Clone(db.display.position)
-
-				--Update the GUI options in case the window was open
-				frames.options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
-				frames.options.display.position.anchor.setSelected(db.display.position.anchor)
-				frames.options.display.position.xOffset.setValue(db.display.position.offset.x)
-				frames.options.display.position.yOffset.setValue(db.display.position.offset.y)
-
-				--Chat response
-				print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.position.save, ns.colors.blue[1]))
-			end,
-			onCancel = function()
-				--Reset the position
-				wt.SetPosition(self, db.display.position)
-
-				--Chat response
-				print(wt.Color(addonTitle .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.position.cancel, ns.colors.blue[1]))
-				print(wt.Color(ns.strings.chat.position.error, ns.colors.blue[2]))
-			end
-		})
-
-		--Main display
-		SetDisplayValues(db, dbc)
-
-		--Integrated display
-		SetIntegrationVisibility(db.enhancement.enabled)
-	end
-
-	--Visibility notice
-	if not self:IsVisible() then PrintStatus(true) end
-end
-local PlayerEnteringWorld = function(self)
-	self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-
-	--XP update
-	UpdateXPValues()
-
-	--Set up displays
-	ResizeDisplay(db.display.background.size.width, db.display.background.size.height)
-	UpdateXPDisplayText()
-	UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
-
-	--Initialize display tooltips
-	wt.AddTooltip(frames.display.overlay, {
-		tooltip = ns.tooltip,
-		title = ns.strings.xpTooltip.title,
-		anchor = "ANCHOR_BOTTOMRIGHT",
-		offset = { y = frames.display.overlay:GetHeight() },
-		flipColors = true,
-	})
-	frames.display.overlay:HookScript("OnEnter", UpdateXPTooltip)
-	wt.AddTooltip(frames.integration.frame, {
-		tooltip = ns.tooltip,
-		title = ns.strings.xpTooltip.title,
-		anchor = "ANCHOR_NONE",
-		offset = { x = -11, y = 115 },
-		position = { anchor = "BOTTOMRIGHT" },
-		flipColors = true,
-	})
-	frames.integration.frame:HookScript("OnEnter", UpdateXPTooltip)
-
-	--Removals
-	if db.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
-
-	--Set up Edit Mode exit updates
-	EditModeManagerFrame:HookScript("OnHide", function()
-		--Removals
-		if db.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
-	end)
-end
-local PlayerXPUpdate = function(_, unit)
-	if unit ~= "player" then return end
-
-	--XP update
-	local gainedXP, _, oldXP = UpdateXPValues()
-	if oldXP == csc.xp.current then return end --The event fired without actual XP gain
-
-	--Update UI elements
-	UpdateXPDisplayText()
-	UpdateXPDisplaySegments()
-	UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
-
-	--Notification
-	if db.notifications.xpGained then
-		print(wt.Color(ns.strings.chat.xpGained.text:gsub(
-			"#AMOUNT", wt.Color(wt.FormatThousands(gainedXP), ns.colors.purple[1])
-		):gsub(
-			"#REMAINING", wt.Color(max and ns.strings.chat.lvlUp.disabled.reason:gsub(
-				"#MAX", maxLevel
-			) or ns.strings.chat.xpGained.remaining:gsub(
-				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.remaining), ns.colors.purple[3])
-			):gsub(
-				"#NEXT", UnitLevel("player") + 1
-			), ns.colors.blue[3])
-		), ns.colors.blue[1]))
-	end
-
-	--Tooltip update
-	UpdateXPTooltip()
-end
-local PlayerLevelUp = function(self, newLevel)
-	max = newLevel >= maxLevel
-
-	if max then
-		self:Hide()
-		TurnOffIntegration()
-
-		--Notification
-		print(wt.Color(ns.strings.chat.lvlUp.disabled.text:gsub(
-			"#ADDON", wt.Color(addonTitle, ns.colors.purple[1])
-		):gsub(
-			"#REASON", wt.Color(ns.strings.chat.lvlUp.disabled.reason:gsub(
-				"#MAX", maxLevel
-			), ns.colors.blue[3])
-		) .. " " .. ns.strings.chat.lvlUp.congrats, ns.colors.blue[1]))
-	else
-		--Notification
-		if db.notifications.lvlUp.congrats then
-			print(wt.Color(ns.strings.chat.lvlUp.text:gsub(
-				"#LEVEL", wt.Color(newLevel, ns.colors.purple[1])
-			) .. " " .. wt.Color(ns.strings.chat.lvlUp.congrats, ns.colors.purple[3]), ns.colors.blue[1]))
-			if db.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
-		end
-
-		--Tooltip update
-		UpdateXPTooltip()
-	end
-end
-local UpdateExhaustion = function()
-	--Update Rested XP
-	local _, gainedRestedXP = UpdateXPValues()
-	if gainedRestedXP <= 0 then return end
-
-	--Update UI elements
-	UpdateXPDisplayText()
-	UpdateXPDisplaySegments()
-	UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
-
-	--Notification
-	if db.notifications.restedXP.gained and not (db.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(csc.xp.needed / 1000)) then
-		print(wt.Color(ns.strings.chat.restedXPGained.text:gsub(
-				"#AMOUNT", wt.Color(gainedRestedXP, ns.colors.purple[1])
-			):gsub(
-				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.purple[1])
-			):gsub(
-				"#PERCENT", wt.Color(ns.strings.chat.restedXPGained.percent:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[3])
-				), ns.colors.blue[3])
-			), ns.colors.blue[1])
-		)
-	end
-
-	--Tooltip update
-	UpdateXPTooltip()
-end
-local PlayerUpdateResting = function()
-	--Notification
-	if db.notifications.restedXP.gained and db.notifications.restedXP.accumulated and not IsResting() then
-		print((db.notifications.restedStatus.update and (wt.Color(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
-			(csc.xp.accumulatedRested or 0) > 0 and wt.Color(ns.strings.chat.restedXPAccumulated.text:gsub(
-				"#AMOUNT", wt.Color(wt.FormatThousands(csc.xp.accumulatedRested), ns.colors.purple[1])
-			):gsub(
-				"#TOTAL", wt.Color(wt.FormatThousands(csc.xp.rested), ns.colors.purple[1])
-			):gsub(
-				"#PERCENT", wt.Color(ns.strings.chat.restedXPAccumulated.percent:gsub(
-					"#VALUE", wt.Color(wt.FormatThousands(math.floor(csc.xp.rested / (csc.xp.needed - csc.xp.current) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
-				):gsub(
-					"#NEXT", wt.Color(UnitLevel("player") + 1, ns.colors.purple[3])
-				), ns.colors.blue[3])
-			), ns.colors.blue[1]) or wt.Color(ns.strings.chat.restedXPAccumulated.zero, ns.colors.blue[1])
-		))
-	end
-
-	--Initiate or remove the cross-session Rested XP accumulation tracking variable
-	SetRestedAccumulation(db.notifications.restedXP.gained and db.notifications.restedXP.accumulated)
-
-	--Tooltip update
-	UpdateXPTooltip()
-end
-
---[ Frames ]
+local firstLoad, newCharacter
 
 --Set up a display context menu
-local function _CreateContextMenu(parent)
-	---@type contextMenu
-	local contextMenu = wt.CreateContextMenu({ parent = parent, })
-
-	--[ Items ]
-
-	wt.AddContextLabel(contextMenu, { text = addonTitle, })
-
-	--Options submenu
-	-- local optionsMenu = wt.AddContextSubmenu(contextMenu, { --FIXME: Restore the submenu and the buttons once opening settings subcategories programmatically is once again supported in Dragonflight
-	-- 	title = ns.strings.misc.options,
-	-- })
-
-	-- wt.AddContextButton(optionsMenu, contextMenu, {
-	wt.AddContextButton(contextMenu, nil, {
-		-- title = ns.strings.options.main.name,
-		title = ns.strings.misc.options,
-		tooltip = { lines = { { text = ns.strings.options.main.description:gsub("#ADDON", addonTitle), }, } },
-		events = { OnClick = function() frames.options.main.page.open() end, },
-	})
-	-- wt.AddContextButton(optionsMenu, contextMenu, {
-	-- 	title = ns.strings.options.display.title,
-	-- 	tooltip = { lines = { { text = ns.strings.options.display.description:gsub("#ADDON", addonTitle), }, } },
-	-- 	events = { OnClick = function() frames.options.display.page.open() end, },
-	-- })
-	-- wt.AddContextButton(optionsMenu, contextMenu, {
-	-- 	title = ns.strings.options.integration.title,
-	-- 	tooltip = { lines = { { text = ns.strings.options.integration.description:gsub("#ADDON", addonTitle), }, } },
-	-- 	events = { OnClick = function() frames.options.integration.page.open() end, },
-	-- })
-	-- wt.AddContextButton(optionsMenu, contextMenu, {
-	-- 	title = ns.strings.options.events.title,
-	-- 	tooltip = { lines = { { text = ns.strings.options.events.description:gsub("#ADDON", addonTitle), }, } },
-	-- 	events = { OnClick = function() frames.options.events.page.open() end, },
-	-- })
-	-- wt.AddContextButton(optionsMenu, contextMenu, {
-	-- 	title = ns.strings.options.advanced.title,
-	-- 	tooltip = { lines = { { text = ns.strings.options.advanced.description:gsub("#ADDON", addonTitle), }, } },
-	-- 	events = { OnClick = function() frames.options.advanced.page.open() end, },
-	-- })
-
-	--Presets submenu
-	local presetsMenu = wt.AddContextSubmenu(contextMenu, {
-		title = ns.strings.options.display.position.presets.label,
-		tooltip = { lines = { { text = ns.strings.options.display.position.presets.tooltip, }, } },
-		width = 160,
-	})
-	for i = 1, #presets do wt.AddContextButton(presetsMenu, contextMenu, {
-		title = presets[i].name,
-		events = { OnClick = function() commandManager.handleCommand(ns.chat.commands.preset, i) end, },
-	}) end
-end --TODO: Reinstate after fix or delete
 local function CreateContextMenu(parent)
-	local menu = {
-		{
-			text = addonTitle,
-			isTitle = true,
-			notCheckable = true,
-		},
-		{
-			text = ns.strings.misc.options,
-			func = function() frames.options.main.page.open() end,
-			notCheckable = true,
-		},
-		{
-			text = ns.strings.options.display.position.presets.label,
-			hasArrow = true,
-			menuList = {},
-			notCheckable = true,
-		},
-	}
-
-	--Insert presets
-	for i = 1, #presets do table.insert(menu[3].menuList, {
-		text = presets[i].name,
-		func = function() commandManager.handleCommand(ns.chat.commands.preset, i) end,
-		notCheckable = true,
-	}) end
-
-	wt.CreateClassicContextMenu({
-		parent = parent,
-		menu = menu
-	})
+	wt.CreateContextMenu({ parent = parent, initialize = function(menu)
+		wt.CreateMenuTextline(menu, { text = ns.title, })
+		wt.CreateSubmenu(menu, { title = ns.strings.misc.options, initialize = function(optionsMenu)
+			wt.CreateMenuButton(optionsMenu, {
+				title = wt.GetStrings("about").title,
+				tooltip = { lines = { { text = ns.strings.options.main.description:gsub("#ADDON", ns.title), }, } },
+				action = options.main.page.open,
+			})
+			wt.CreateMenuButton(optionsMenu, {
+				title = ns.strings.options.display.title:gsub("#TYPE", ns.strings.options.display.title),
+				tooltip = { lines = { { text = ns.strings.options.display.description, }, } },
+				action = options.display.page.open,
+			})
+			wt.CreateMenuButton(optionsMenu, {
+				title = ns.strings.options.integration.title:gsub("#TYPE", ns.strings.options.integration.title),
+				tooltip = { lines = { { text = ns.strings.options.integration.description, }, } },
+				action = options.integration.page.open,
+			})
+			wt.CreateMenuButton(optionsMenu, {
+				title = ns.strings.options.events.title:gsub("#TYPE", ns.strings.options.events.title),
+				tooltip = { lines = { { text = ns.strings.options.events.description, }, } },
+				action = options.events.page.open,
+			})
+			wt.CreateMenuButton(optionsMenu, {
+				title = wt.GetStrings("dataManagement").title,
+				tooltip = { lines = { { text = wt.GetStrings("dataManagement").description:gsub("#ADDON", ns.title), }, } },
+				action = options.dataManagement.page.open,
+			})
+		end })
+		wt.CreateSubmenu(menu, { title = wt.GetStrings("apply").label, initialize = function(presetsMenu)
+			for i = 1, #options.display.position.presetList do wt.CreateMenuButton(presetsMenu, {
+				title = options.display.position.presetList[i].title,
+				action = function() options.display.position.applyPreset(i) end,
+			}) end
+		end })
+	end, })
 end
 
 --Create main addon frame & display frames
 frames.main = wt.CreateFrame({
 	parent = UIParent,
-	name = addonNameSpace,
+	name = ns.name,
 	keepInBounds = true,
 	size = { width = 114, height = 14 },
 	keepOnTop = true,
 	onEvent = {
-		ADDON_LOADED = AddonLoaded,
-		PLAYER_ENTERING_WORLD = PlayerEnteringWorld,
-		PLAYER_XP_UPDATE = PlayerXPUpdate,
-		PLAYER_LEVEL_UP = PlayerLevelUp,
-		UPDATE_EXHAUSTION = UpdateExhaustion,
-		PLAYER_UPDATE_RESTING = PlayerUpdateResting,
+		ADDON_LOADED = function(self, addon)
+			if addon ~= ns.name then return end
+
+			self:UnregisterEvent("ADDON_LOADED")
+
+			--[ DBs ]
+
+			RemainingXPDB = RemainingXPDB or {}
+			RemainingXPDBC = RemainingXPDBC or {}
+			RemainingXPCS = wt.AddMissing(RemainingXPCS, {
+				compactBackup = true,
+				keepInPlace = true,
+			})
+			RemainingXPCSC = RemainingXPCSC or {}
+
+			--| Initialize data management
+
+			options.dataManagement, firstLoad, newCharacter = wt.CreateDataManagementPage(ns.name, {
+				onDefault = function(_, category) if not category then options.dataManagement.resetProfile() end end,
+				accountData = RemainingXPDB,
+				characterData = RemainingXPDBC,
+				settingsData = RemainingXPCS,
+				defaultsTable = ns.profileDefault,
+				onProfileActivated = function(title)
+					options.display.page.load(true)
+					options.integration.page.load(true)
+					options.events.page.load(true)
+					options.dataManagement.page.load(true)
+
+					chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", wt.Color(title, ns.colors.yellow[2])))
+				end,
+				onProfileDeleted = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", wt.Color(title, ns.colors.yellow[2]))) end,
+				onProfileReset = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", wt.Color(title, ns.colors.yellow[2]))) end,
+				onImport = function(success) if success then
+					options.display.page.load(true)
+					options.integration.page.load(true)
+					options.events.page.load(true)
+					options.dataManagement.page.load(true)
+				else chatCommands.print(wt.GetStrings("backup").error) end end,
+				onImportAllProfiles = function(success) if not success then chatCommands.print(wt.GetStrings("backup").error) end end,
+				valueChecker = CheckValidity,
+				onRecovery = GetRecoveryMap,
+			})
+
+			--[ Settings Setup ]
+
+			options.main.page = wt.CreateAboutPage(ns.name, {
+				name = "Main",
+				description = ns.strings.options.main.description:gsub("#ADDON", ns.title),
+				changelog = ns.changelog
+			})
+
+			options.pageManager = wt.CreateSettingsCategory(ns.name, options.main.page, {
+				CreateSpeedDisplayOptionsPage("playerSpeed"),
+				CreateSpeedDisplayOptionsPage("travelSpeed"),
+				CreateTargetSpeedOptionsPage(),
+				options.dataManagement.page
+			})
+
+			--Set up the interface options
+			CreateMainOptions()
+			CreateDisplayOptions()
+			CreateIntegrationOptions()
+			CreateEventsOptions()
+			CreateAdvancedOptions()
+
+			--[ Chat Control Setup ]
+
+			--Welcome message
+			if firstLoad then PrintInfo() end
+
+			--[ Frame & Display Setup ]
+
+			if max then
+				--Hide displays
+				self:Hide()
+				TurnOffIntegration()
+
+				--Disable events
+				self:UnregisterAllEvents()
+			else
+				--Load cross-session character data
+				RemainingXPCSC.xp = RemainingXPCSC.xp or {}
+
+				--Position
+				wt.SetPosition(self, RemainingXPDB.display.position)
+
+				--Make movable
+				wt.SetMovability(self, true, "SHIFT", { frames.display.overlay, }, {
+					onStop = function()
+						--Save the position (for account-wide use)
+						wt.CopyValues(wt.PackPosition(self:GetPoint()), RemainingXPDB.display.position)
+
+						--Update in the SavedVariables DB
+						RemainingXPDB.display.position = wt.Clone(RemainingXPDB.display.position)
+
+						--Update the GUI options in case the window was open
+						options.display.position.presets.setSelected(nil, ns.strings.options.display.position.presets.select)
+						options.display.position.anchor.setSelected(RemainingXPDB.display.position.anchor)
+						options.display.position.xOffset.setValue(RemainingXPDB.display.position.offset.x)
+						options.display.position.yOffset.setValue(RemainingXPDB.display.position.offset.y)
+
+						--Chat response
+						print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.position.save, ns.colors.blue[1]))
+					end,
+					onCancel = function()
+						--Reset the position
+						wt.SetPosition(self, RemainingXPDB.display.position)
+
+						--Chat response
+						print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.position.cancel, ns.colors.blue[1]))
+						print(wt.Color(ns.strings.chat.position.error, ns.colors.blue[2]))
+					end
+				})
+
+				--Main display
+				SetDisplayValues(RemainingXPDB, RemainingXPDBC)
+
+				--Integrated display
+				SetIntegrationVisibility(RemainingXPDB.enhancement.enabled)
+			end
+
+			--Visibility notice
+			if not self:IsVisible() then PrintStatus(true) end
+		end,
+		PLAYER_ENTERING_WORLD = function(self)
+			self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+
+			--XP update
+			UpdateXPValues()
+
+			--Set up displays
+			ResizeDisplay(RemainingXPDB.display.background.size.width, RemainingXPDB.display.background.size.height)
+			UpdateXPDisplayText()
+			UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining)
+
+			--Initialize display tooltips
+			wt.AddTooltip(frames.display.overlay, {
+				tooltip = ns.tooltip,
+				title = ns.strings.xpTooltip.title,
+				anchor = "ANCHOR_BOTTOMRIGHT",
+				offset = { y = frames.display.overlay:GetHeight() },
+				flipColors = true,
+			})
+			frames.display.overlay:HookScript("OnEnter", UpdateXPTooltip)
+			wt.AddTooltip(frames.integration.frame, {
+				tooltip = ns.tooltip,
+				title = ns.strings.xpTooltip.title,
+				anchor = "ANCHOR_NONE",
+				offset = { x = -11, y = 115 },
+				position = { anchor = "BOTTOMRIGHT" },
+				flipColors = true,
+			})
+			frames.integration.frame:HookScript("OnEnter", UpdateXPTooltip)
+
+			--Removals
+			if RemainingXPDB.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
+
+			--Set up Edit Mode exit updates
+			EditModeManagerFrame:HookScript("OnHide", function()
+				--Removals
+				if RemainingXPDB.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
+			end)
+		end,
+		PLAYER_XP_UPDATE = function(_, unit)
+			if unit ~= "player" then return end
+
+			--XP update
+			local gainedXP, _, oldXP = UpdateXPValues()
+			if oldXP == RemainingXPCSC.xp.current then return end --The event fired without actual XP gain
+
+			--Update UI elements
+			UpdateXPDisplayText()
+			UpdateXPDisplaySegments()
+			UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining)
+
+			--Notification
+			if RemainingXPDB.notifications.xpGained then
+				print(wt.Color(ns.strings.chat.xpGained.text:gsub(
+					"#AMOUNT", wt.Color(wt.FormatThousands(gainedXP), ns.colors.purple[1])
+				):gsub(
+					"#REMAINING", wt.Color(max and ns.strings.chat.lvlUp.disabled.reason:gsub(
+						"#MAX", maxLevel
+					) or ns.strings.chat.xpGained.remaining:gsub(
+						"#AMOUNT", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.remaining), ns.colors.purple[3])
+					):gsub(
+						"#NEXT", UnitLevel("player") + 1
+					), ns.colors.blue[3])
+				), ns.colors.blue[1]))
+			end
+
+			--Tooltip update
+			UpdateXPTooltip()
+		end,
+		PLAYER_LEVEL_UP = function(self, newLevel)
+			max = newLevel >= maxLevel
+
+			if max then
+				self:Hide()
+				TurnOffIntegration()
+
+				--Notification
+				print(wt.Color(ns.strings.chat.lvlUp.disabled.text:gsub(
+					"#ADDON", wt.Color(ns.title, ns.colors.purple[1])
+				):gsub(
+					"#REASON", wt.Color(ns.strings.chat.lvlUp.disabled.reason:gsub(
+						"#MAX", maxLevel
+					), ns.colors.blue[3])
+				) .. " " .. ns.strings.chat.lvlUp.congrats, ns.colors.blue[1]))
+			else
+				--Notification
+				if RemainingXPDB.notifications.lvlUp.congrats then
+					print(wt.Color(ns.strings.chat.lvlUp.text:gsub(
+						"#LEVEL", wt.Color(newLevel, ns.colors.purple[1])
+					) .. " " .. wt.Color(ns.strings.chat.lvlUp.congrats, ns.colors.purple[3]), ns.colors.blue[1]))
+					if RemainingXPDB.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
+				end
+
+				--Tooltip update
+				UpdateXPTooltip()
+			end
+		end,
+		UPDATE_EXHAUSTION = function()
+			--Update Rested XP
+			local _, gainedRestedXP = UpdateXPValues()
+			if gainedRestedXP <= 0 then return end
+
+			--Update UI elements
+			UpdateXPDisplayText()
+			UpdateXPDisplaySegments()
+			UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining)
+
+			--Notification
+			if RemainingXPDB.notifications.restedXP.gained and not (RemainingXPDB.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
+				print(wt.Color(ns.strings.chat.restedXPGained.text:gsub(
+						"#AMOUNT", wt.Color(gainedRestedXP, ns.colors.purple[1])
+					):gsub(
+						"#TOTAL", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
+					):gsub(
+						"#PERCENT", wt.Color(ns.strings.chat.restedXPGained.percent:gsub(
+							"#VALUE", wt.Color(wt.FormatThousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[3])
+						), ns.colors.blue[3])
+					), ns.colors.blue[1])
+				)
+			end
+
+			--Tooltip update
+			UpdateXPTooltip()
+		end,
+		PLAYER_UPDATE_RESTING = function()
+			--Notification
+			if RemainingXPDB.notifications.restedXP.gained and RemainingXPDB.notifications.restedXP.accumulated and not IsResting() then
+				print((RemainingXPDB.notifications.restedStatus.update and (wt.Color(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
+					(RemainingXPCSC.xp.accumulatedRested or 0) > 0 and wt.Color(ns.strings.chat.restedXPAccumulated.text:gsub(
+						"#AMOUNT", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.accumulatedRested), ns.colors.purple[1])
+					):gsub(
+						"#TOTAL", wt.Color(wt.FormatThousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
+					):gsub(
+						"#PERCENT", wt.Color(ns.strings.chat.restedXPAccumulated.percent:gsub(
+							"#VALUE", wt.Color(wt.FormatThousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.current) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
+						):gsub(
+							"#NEXT", wt.Color(UnitLevel("player") + 1, ns.colors.purple[3])
+						), ns.colors.blue[3])
+					), ns.colors.blue[1]) or wt.Color(ns.strings.chat.restedXPAccumulated.zero, ns.colors.blue[1])
+				))
+			end
+
+			--Initiate or remove the cross-session Rested XP accumulation tracking variable
+			SetRestedAccumulation(RemainingXPDB.notifications.restedXP.gained and RemainingXPDB.notifications.restedXP.accumulated)
+
+			--Tooltip update
+			UpdateXPTooltip()
+		end,
 		UNIT_ENTERING_VEHICLE = function(self, unit, swapUI) if unit == "player" and swapUI then
 			frames.integration.frame:Hide()
 			self:Hide()
 		end end,
 		UNIT_EXITING_VEHICLE = function(self, unit) if unit == "player" then
-			if db.enhancement.enabled then frames.integration.frame:Show() end
-			if not dbc.hidden then self:Show() end
+			if RemainingXPDB.enhancement.enabled then frames.integration.frame:Show() end
+			if not RemainingXPDB.display.hidden then self:Show() end
 		end end,
 		PET_BATTLE_OPENING_START = function(self)
 			frames.integration.frame:Hide()
 			self:Hide()
 		end,
 		PET_BATTLE_CLOSE = function(self)
-			if db.enhancement.enabled then frames.integration.frame:Show() end
-			if not dbc.hidden then self:Show() end
+			if RemainingXPDB.enhancement.enabled then frames.integration.frame:Show() end
+			if not RemainingXPDB.display.hidden then self:Show() end
 		end,
 	},
 	initialize = function(frame)
@@ -3235,8 +2712,8 @@ frames.main = wt.CreateFrame({
 					customizable = true,
 					position = { anchor = "CENTER", },
 					events = {
-						OnEnter = function() if db.display.fade.enabled then Fade(false) end end,
-						onLeave = function() if db.display.fade.enabled then Fade(true) end end,
+						OnEnter = function() if RemainingXPDB.display.fade.enabled then Fade(false) end end,
+						onLeave = function() if RemainingXPDB.display.fade.enabled then Fade(true) end end,
 					},
 				})
 
@@ -3278,10 +2755,10 @@ frames.main = wt.CreateFrame({
 					if GameLimitedMode_IsActive() then
 						local rLevel = GetRestrictedAccountData()
 						if UnitLevel("player") >= rLevel then
-							if csc.xp.banked > 0 then
+							if RemainingXPCSC.xp.banked > 0 then
 								GameTooltip:SetOwner(MainStatusTrackingBarContainer, "ANCHOR_RIGHT", 0, -14)
 								local text = TRIAL_CAP_BANKED_XP_TOOLTIP
-								if csc.xp.bankedLevels > 0 then text = TRIAL_CAP_BANKED_LEVELS_TOOLTIP:format(csc.xp.bankedLevels) end
+								if RemainingXPCSC.xp.bankedLevels > 0 then text = TRIAL_CAP_BANKED_LEVELS_TOOLTIP:format(RemainingXPCSC.xp.bankedLevels) end
 								GameTooltip:SetText(text, nil, nil, nil, nil, true)
 								GameTooltip:Show()
 
@@ -3295,7 +2772,7 @@ frames.main = wt.CreateFrame({
 				end,
 				onLeave = function()
 					--Hide the enhanced XP text on the default XP bar
-					UpdateIntegrationText(db.enhancement.keep, db.enhancement.remaining)
+					UpdateIntegrationText(RemainingXPDB.enhancement.keep, RemainingXPDB.enhancement.remaining)
 
 					--Default trial tooltip
 					if GameLimitedMode_IsActive() and IsTrialAccount() then

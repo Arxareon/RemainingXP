@@ -1,18 +1,28 @@
-## Interface: 100105 #Fallback to the Mainline version
+## Interface: 110200, 50500, 11507
 ## Title: Remaining XP
-## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
-## Version: 2.3.1
-## X-Day: 24
-## X-Month: 7
-## X-Year: 2023
+## Version: 3.0
+## X-Day: 8
+## X-Month: 8
+## X-Year: 2025
+## Category: Quests & Leveling
+## Notes: Shows the amount of XP needed to reach the next level & much more.
 ## Author: Barnabas Nagy (Arxareon)
 ## X-Sponsors: Celierra
 ## X-License: All Rights Reserved
-## Notes: Shows the amount of XP needed to reach the next level & much more.
+## X-CurseForge: curseforge.com/wow/addons/remaining-xp
+## X-Wago: addons.wago.io/addons/remaining-xp
+## X-Repository: github.com/Arxareon/RemainingXP
+## X-Issues: github.com/Arxareon/RemainingXP/issues
+## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
 ## SavedVariables: RemainingXPDB, RemainingXPCS
 ## SavedVariablesPerCharacter: RemainingXPDBC, RemainingXPCSC
 ## Dependencies: WidgetTools
 
+Localizations.lua
 Resources.lua
-WidgetToolbox.lua
-Main.lua
+Toolbox\Load.lua
+Toolbox\Resources.lua
+Toolbox\Utilities.lua
+Toolbox\Constructors.lua
+Main.lua [AllowLoadGameType mainline]
+Main_Classic.lua [AllowLoadGameType classic]

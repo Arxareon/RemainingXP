@@ -1,615 +1,636 @@
---[[ WIDGET TOOLS DATA ]]
+--[[ NAMESPACE ]]
 
---Local toolbox registry
+---@class WidgetToolsNamespace
+local ns = select(2, ...)
+
+
+--[[ TOOLBOX MANAGEMENT ]]
+
 local registry = { toolbox = {}, addons = {} }
 
 --Global WidgetTools table
 WidgetTools = {}
 
 ---Register or get a read-only reference of a WidgetTools toolbox under the specified version key
+---***
 ---@param addon string Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
 ---@param version string Version key the **toolbox** should be registered under
 ---@param toolbox? table Reference to the table to register as a WidgetTools toolbox
+---***
 ---@return table|nil? toolbox Reference to the toolbox table registered under the **version** key
-WidgetTools.RegisterToolbox = function(addon, version, toolbox)
+function WidgetTools.RegisterToolbox(addon, version, toolbox)
 	if not addon or not version or (not registry.toolbox[version] and not toolbox) then return nil end
 
 	--Register the addon
-	if IsAddOnLoaded(addon) then
+	if C_AddOns.IsAddOnLoaded(addon) then
 		registry.addons[version] = registry.addons[version] or {}
 		table.insert(registry.addons[version], addon)
-	end
+	else return nil end
 
 	--Register the toolbox
 	registry.toolbox[version] = registry.toolbox[version] or toolbox
+
 	return registry.toolbox[version]
 end
 
 
 --[[ INITIALIZATION ]]
 
----Addon namespace
----@class ns
-local addonNameSpace, ns = ...
-
---Frame
-local frame = CreateFrame("Frame", addonNameSpace .. "Frame")
+--Initialization frame
+WidgetTools.frame = CreateFrame("Frame", ns.name .. "InitializationFrame")
 
 --Event handler
-frame:SetScript("OnEvent", function(self, event, ...)
-	return self[event] and self[event](self, ...)
-end)
+WidgetTools.frame:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
 
---Add the WidgetTools about info to the Settings
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-function frame:PLAYER_ENTERING_WORLD()
-	frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
+WidgetTools.frame:RegisterEvent("PLAYER_LOGIN")
 
-	--[ Resources ]
+function WidgetTools.frame:PLAYER_LOGIN()
+	WidgetTools.frame:UnregisterEvent("PLAYER_LOGIN")
 
-	---WidgetTools toolbox
+
+	--[[ RESOURCES ]]
+
 	---@class wt
 	local wt = ns.WidgetToolbox
 
-	--Addon display name
-	local addonTitle = wt.Clear(select(2, GetAddOnInfo(addonNameSpace))):gsub("^%s*(.-)%s*$", "%1")
+	---@type chatCommandManager
+	local chatCommands
 
-	--Local frame references
-	local frames = {}
+	--[ Data ]
+
+	--Loaded DB snapshot
+	local loaded = wt.Clone(WidgetToolsDB)
 
 
-	--[ Settings Category Pages ]
+	--[[ DEV TOOLS ]]
 
-	--Main page
-	local mainPage = wt.CreateOptionsCategory({
-		addon = addonNameSpace,
+	if WidgetToolsDB.frameAttributes.enabled then WidgetTools.frame:RegisterEvent("FRAMESTACK_VISIBILITY_UPDATED") end
+
+
+	--[[ SETTINGS ]]
+
+	--| Main Page
+
+	local mainPage = wt.CreateAboutPage(ns.name, {
+		register = true,
 		name = "About",
-		appendOptions = false,
-		description = GetAddOnMetadata(addonNameSpace, "Notes"),
-		logo = ns.textures.logo,
-		titleLogo = true,
-		initialize = function(canvas)
-			--Panel: Shortcuts
-			if wt.classic then wt.CreatePanel({ --FIXME: Reinstate once opening settings subcategories programmatically is once again supported in Dragonflight
-				parent = canvas,
-				name = "Shortcuts",
-				title = ns.strings.shortcuts.title,
-				description = ns.strings.shortcuts.description:gsub("#ADDON", addonTitle),
-				arrange = {},
-				size = { height = 64 },
-				initialize = function(panel)
-					--Button: Addon List page
-					wt.CreateButton({
-						parent = panel,
-						name = "AddonsPage",
-						title = ns.strings.addons.title,
-						tooltip = { lines = { { text =  ns.strings.addons.description:gsub("#ADDON", addonTitle), }, } },
-						arrange = {},
-						size = { width = 160, },
-						events = { OnClick = function() frames.addonsPage.open() end, },
-					})
-				end,
-				arrangement = {}
-			}) end
-
-			--Panel: About
-			wt.CreatePanel({
-				parent = canvas,
-				name = "About",
-				title = ns.strings.about.title,
-				description = ns.strings.about.description:gsub("#ADDON", addonTitle),
-				arrange = {},
-				size = { height = 258 },
-				initialize = function(panel)
-					--Text: Version
-					local version = wt.CreateText({
-						parent = panel,
-						name = "VersionTitle",
-						position = { offset = { x = 16, y = -32 } },
-						width = 45,
-						text = ns.strings.about.version .. ":",
-						font = "GameFontNormalSmall",
-						justify = { h = "RIGHT", },
-					})
-					wt.CreateText({
-						parent = panel,
-						name = "Version",
-						position = {
-							relativeTo = version,
-							relativePoint = "TOPRIGHT",
-							offset = { x = 5 }
-						},
-						width = 140,
-						text = GetAddOnMetadata(addonNameSpace, "Version"),
-						font = "GameFontHighlightSmall",
-						justify = { h = "LEFT", },
-					})
-
-					--Text: Date
-					local date = wt.CreateText({
-						parent = panel,
-						name = "DateTitle",
-						position = {
-							relativeTo = version,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -8 }
-						},
-						width = 45,
-						text = ns.strings.about.date .. ":",
-						font = "GameFontNormalSmall",
-						justify = { h = "RIGHT", },
-					})
-					wt.CreateText({
-						parent = panel,
-						name = "Date",
-						position = {
-							relativeTo = date,
-							relativePoint = "TOPRIGHT",
-							offset = { x = 5 }
-						},
-						width = 140,
-						text = ns.strings.about.dateFormat:gsub(
-							"#DAY", GetAddOnMetadata(addonNameSpace, "X-Day")
-						):gsub(
-							"#MONTH", GetAddOnMetadata(addonNameSpace, "X-Month")
-						):gsub(
-							"#YEAR", GetAddOnMetadata(addonNameSpace, "X-Year")
-						),
-						font = "GameFontHighlightSmall",
-						justify = { h = "LEFT", },
-					})
-
-					--Text: Author
-					local author = wt.CreateText({
-						parent = panel,
-						name = "AuthorTitle",
-						position = {
-							relativeTo = date,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -8 }
-						},
-						width = 45,
-						text = ns.strings.about.author .. ":",
-						font = "GameFontNormalSmall",
-						justify = { h = "RIGHT", },
-					})
-					wt.CreateText({
-						parent = panel,
-						name = "Author",
-						position = {
-							relativeTo = author,
-							relativePoint = "TOPRIGHT",
-							offset = { x = 5 }
-						},
-						width = 140,
-						text = GetAddOnMetadata(addonNameSpace, "Author"),
-						font = "GameFontHighlightSmall",
-						justify = { h = "LEFT", },
-					})
-
-					--Text: License
-					local license = wt.CreateText({
-						parent = panel,
-						name = "LicenseTitle",
-						position = {
-							relativeTo = author,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -8 }
-						},
-						width = 45,
-						text = ns.strings.about.license .. ":",
-						font = "GameFontNormalSmall",
-						justify = { h = "RIGHT", },
-					})
-					wt.CreateText({
-						parent = panel,
-						name = "License",
-						position = {
-							relativeTo = license,
-							relativePoint = "TOPRIGHT",
-							offset = { x = 5 }
-						},
-						width = 140,
-						text = GetAddOnMetadata(addonNameSpace, "X-License"),
-						font = "GameFontHighlightSmall",
-						justify = { h = "LEFT", },
-					})
-
-					--Copybox: CurseForge
-					local curse = wt.CreateCopyBox({
-						parent = panel,
-						name = "CurseForge",
-						title = ns.strings.about.curseForge .. ":",
-						position = {
-							relativeTo = license,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -11 }
-						},
-						size = { width = 190, },
-						text = "curseforge.com/wow/addons/widget-tools",
-						font = "GameFontNormalSmall",
-						color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-						colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-					})
-
-					--Copybox: Wago
-					local wago = wt.CreateCopyBox({
-						parent = panel,
-						name = "Wago",
-						title = ns.strings.about.wago .. ":",
-						position = {
-							relativeTo = curse,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -8 }
-						},
-						size = { width = 190, },
-						text = "addons.wago.io/addons/widget-tools",
-						font = "GameFontNormalSmall",
-						color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-						colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-					})
-
-					--Copybox: Repository
-					local repo = wt.CreateCopyBox({
-						parent = panel,
-						name = "Repository",
-						title = ns.strings.about.repository .. ":",
-						position = {
-							relativeTo = wago,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -8 }
-						},
-						size = { width = 190, },
-						text = "github.com/Arxareon/widgetTools",
-						font = "GameFontNormalSmall",
-						color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-						colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-					})
-
-					--Copybox: Issues
-					wt.CreateCopyBox({
-						parent = panel,
-						name = "Issues",
-						title = ns.strings.about.issues .. ":",
-						position = {
-							relativeTo = repo,
-							relativePoint = "BOTTOMLEFT",
-							offset = { y = -8 }
-						},
-						size = { width = 190, },
-						text = "github.com/Arxareon/WidgetTools/issues",
-						font = "GameFontNormalSmall",
-						color = { r = 0.6, g = 0.8, b = 1, a = 1 },
-						colorOnMouse = { r = 0.8, g = 0.95, b = 1, a = 1 },
-					})
-
-					--EditScrollBox: Changelog
-					local changelog = wt.CreateEditScrollBox({
-						parent = panel,
-						name = "Changelog",
-						title = ns.strings.about.changelog.label,
-						tooltip = { lines = { { text = ns.strings.about.changelog.tooltip, }, } },
-						arrange = {},
-						size = { width = panel:GetWidth() - 225, height = panel:GetHeight() - 42 },
-						text = ns.GetChangelog(true),
-						font = { normal = "GameFontDisableSmall", },
-						color = ns.colors.grey[1],
-						readOnly = true,
-					})
-
-					--Button: Full changelog
-					local changelogFrame
-					wt.CreateButton({
-						parent = panel,
-						name = "OpenFullChangelog",
-						title = ns.strings.about.openFullChangelog.label,
-						tooltip = { lines = { { text = ns.strings.about.openFullChangelog.tooltip, }, } },
-						position = {
-							anchor = "TOPRIGHT",
-							relativeTo = changelog,
-							relativePoint = "TOPRIGHT",
-							offset = { x = -3, y = 2 }
-						},
-						size = { width = 176, height = 14 },
-						font = {
-							normal = "GameFontNormalSmall",
-							highlight = "GameFontHighlightSmall",
-						},
-						events = { OnClick = function()
-							if changelogFrame then changelogFrame:Show()
-							else
-								--Panel: Changelog frame
-								changelogFrame = wt.CreatePanel({
-									parent = UIParent,
-									name = addonNameSpace .. "Changelog",
-									append = false,
-									title = ns.strings.about.fullChangelog.label:gsub("#ADDON", addonTitle),
-									position = { anchor = "CENTER", },
-									keepInBounds = true,
-									size = { width = 740, height = 560 },
-									background = { color = { a = 0.9 }, },
-									initialize = function(windowPanel)
-										--EditScrollBox: Full changelog
-										wt.CreateEditScrollBox({
-											parent = windowPanel,
-											name = "FullChangelog",
-											title = ns.strings.about.fullChangelog.label:gsub("#ADDON", addonTitle),
-											label = false,
-											tooltip = { lines = { { text = ns.strings.about.fullChangelog.tooltip, }, } },
-											arrange = {},
-											size = { width = windowPanel:GetWidth() - 32, height = windowPanel:GetHeight() - 88 },
-											text = ns.GetChangelog(),
-											font = { normal = "GameFontDisable", },
-											color = ns.colors.grey[1],
-											readOnly = true,
-										})
-
-										--Button: Close
-										wt.CreateButton({
-											parent = windowPanel,
-											name = "CancelButton",
-											title = wt.GetStrings("close"),
-											arrange = {},
-											events = { OnClick = function() windowPanel:Hide() end },
-										})
-									end,
-									arrangement = {
-										margins = { l = 16, r = 16, t = 42, b = 16 },
-										flip = true,
-									}
-								})
-								_G[changelogFrame:GetName() .. "Title"]:SetPoint("TOPLEFT", 18, -18)
-								wt.SetMovability(changelogFrame, true)
-								changelogFrame:SetFrameStrata("DIALOG")
-								changelogFrame:IsToplevel(true)
-							end
-						end, },
-					}):SetFrameLevel(changelog:GetFrameLevel() + 1) --Make sure it's on top to be clickable
-				end,
-				arrangement = {
-					flip = true,
-					resize = false
-				}
-			})
-
-			--Panel: Sponsors
-			local top = GetAddOnMetadata(addonNameSpace, "X-TopSponsors")
-			local normal = GetAddOnMetadata(addonNameSpace, "X-Sponsors")
-			if top or normal then
-				local sponsorsPanel = wt.CreatePanel({
-					parent = canvas,
-					name = "Sponsors",
-					title = ns.strings.sponsors.title,
-					description = ns.strings.sponsors.description,
-					arrange = {},
-					size = { height = 64 + (top and normal and 24 or 0) },
-					initialize = function(panel)
-						if top then
-							wt.CreateText({
-								parent = panel,
-								name = "Top",
-								position = { offset = { x = 16, y = -33 } },
-								width = panel:GetWidth() - 32,
-								text = top:gsub("|", " • "),
-								font = "GameFontNormalLarge",
-								justify = { h = "LEFT", },
-							})
-						end
-						if normal then
-							wt.CreateText({
-								parent = panel,
-								name = "Normal",
-								position = { offset = { x = 16, y = -33 -(top and 24 or 0) } },
-								width = panel:GetWidth() - 32,
-								text = normal:gsub("|", " • "),
-								font = "GameFontHighlightMedium",
-								justify = { h = "LEFT", },
-							})
-						end
-					end,
-				})
-				wt.CreateText({
-					parent = sponsorsPanel,
-					name = "DescriptionHeart",
-					position = { offset = { x = _G[sponsorsPanel:GetName() .. "Description"]:GetStringWidth() + 16, y = -10 } },
-					text = "♥",
-					font = "ChatFontSmall",
-					justify = { h = "LEFT", },
-				})
-			end
-		end,
-		arrangement = {}
+		changelog = ns.changelog
 	})
 
-	--Addons page
-	frames.addonsPage = wt.CreateOptionsCategory({
-		parent = mainPage.category,
-		addon = addonNameSpace,
+	--| Specifications Page
+
+	---@type checkbox
+	local liteToggle
+
+	local specificationsPage = wt.CreateSettingsPage(ns.name, {
+		register = mainPage,
+		name = "Specifications",
+		title = ns.strings.specifications.title,
+		description = ns.strings.specifications.description,
+		storage = { { storageTable = WidgetToolsDB, defaultsTable = ns.defaults, }, },
+		dataManagement = {},
+		arrangement = {},
+		initialize = function(canvas, _, _, category, keys)
+			wt.CreatePanel({
+				parent = canvas,
+				name = "General",
+				title = ns.strings.specifications.general.title,
+				description = ns.strings.specifications.general.description,
+				arrange = {},
+				arrangement = {},
+				initialize = function(panel)
+					local silentSave = false
+
+					local enableLitePopup = wt.RegisterPopupDialog(ns.name, "ENABLE_LITE_MODE", {
+						text = ns.strings.lite.enable.warning:gsub("#ADDON", ns.title),
+						accept = ns.strings.lite.enable.accept,
+						onAccept = function()
+							liteToggle.setState(true)
+							liteToggle.saveData(nil, silentSave)
+
+							chatCommands.print(ns.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
+						end,
+					})
+					local disableLitePopup = wt.RegisterPopupDialog(ns.name, "DISABLE_LITE_MODE", {
+						text = ns.strings.lite.disable.warning:gsub("#ADDON", ns.title),
+						accept = ns.strings.lite.disable.accept,
+						onAccept = function()
+							liteToggle.setState(false)
+							liteToggle.saveData(nil, silentSave)
+
+							chatCommands.print(ns.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
+						end,
+					})
+
+					liteToggle = wt.CreateCheckbox({
+						parent = panel,
+						name = "LiteMode",
+						title = ns.strings.specifications.general.lite.label,
+						tooltip = { lines = { { text = ns.strings.specifications.general.lite.tooltip:gsub("#COMMAND", WrapTextInColorCode("/wt lite", "FFFFFFFF")), }, } },
+						arrange = {},
+						getData = function() return WidgetToolsDB.lite end,
+						saveData = function(state) WidgetToolsDB.lite = state end,
+						default = false,
+						instantSave = false,
+						listeners = {
+							saved = { { handler = function()
+								silentSave = false
+
+								if loaded.lite ~= WidgetToolsDB.lite then wt.CreateReloadNotice() end end,
+							}, },
+							toggled = { { handler = function(_, state, user)
+								if not user then return end
+
+								if state then StaticPopup_Show(enableLitePopup) else StaticPopup_Show(disableLitePopup) end
+
+								liteToggle.setState(not state, false) --Wait for popup response
+							end }, },
+						},
+						events = { OnClick = function() silentSave = true end, },
+						dataManagement = {
+							category = category,
+							key = keys[1],
+						},
+					})
+
+					wt.CreateCheckbox({
+						parent = panel,
+						name = "PositioningAids",
+						title = ns.strings.specifications.general.positioningAids.label,
+						tooltip = { lines = { { text = ns.strings.specifications.general.positioningAids.tooltip, }, } },
+						arrange = {},
+						getData = function() return WidgetToolsDB.positioningAids end,
+						saveData = function(state) WidgetToolsDB.positioningAids = state end,
+						listeners = { saved = { { handler = function() if loaded.positioningAids ~= WidgetToolsDB.positioningAids then wt.CreateReloadNotice() end end, }, }, },
+						instantSave = false,
+						dataManagement = {
+							category = category,
+							key = keys[1],
+						},
+						default = true,
+					})
+				end,
+			})
+
+			wt.CreatePanel({
+				parent = canvas,
+				name = "DevTools",
+				title = ns.strings.specifications.dev.title,
+				description = ns.strings.specifications.dev.description,
+				arrange = {},
+				arrangement = {},
+				initialize = function(panel)
+					local toggle = wt.CreateCheckbox({
+						parent = panel,
+						name = "ToggleWideFrameAttributes",
+						title = ns.strings.specifications.dev.frameAttributes.enabled.label,
+						tooltip = { lines = { { text = ns.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
+						arrange = {},
+						getData = function() return WidgetToolsDB.frameAttributes.enabled end,
+						saveData = function(state) WidgetToolsDB.frameAttributes.enabled = state end,
+						default = false,
+						dataManagement = {
+							category = category,
+							key = keys[1],
+							onChange = { ToggleWideFrameAttributes = function()
+								if WidgetToolsDB.frameAttributes.enabled then
+									if _G["TableAttributeDisplay"] then
+										TableAttributeDisplay:SetWidth(WidgetToolsDB.frameAttributes.width + 70)
+										TableAttributeDisplay.LinesScrollFrame:SetWidth(WidgetToolsDB.frameAttributes.width)
+									end
+
+									WidgetTools.frame:RegisterEvent("FRAMESTACK_VISIBILITY_UPDATED")
+								else
+									if _G["TableAttributeDisplay"] then
+										TableAttributeDisplay:SetWidth(500)
+										TableAttributeDisplay.LinesScrollFrame:SetWidth(430)
+									end
+
+									WidgetTools.frame:UnregisterEvent("FRAMESTACK_VISIBILITY_UPDATED")
+								end
+							end, },
+						},
+					})
+
+					wt.CreateNumericSlider({
+						parent = panel,
+						name = "FrameAttributesWidth",
+						title = ns.strings.specifications.dev.frameAttributes.width.label,
+						tooltip = { lines = { { text = ns.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
+						arrange = { newRow = false, },
+						min = 200,
+						max = 1400,
+						step = 20,
+						altStep = 1,
+						dependencies = { { frame = toggle, } },
+						getData = function() return WidgetToolsDB.frameAttributes.width end,
+						saveData = function(value) WidgetToolsDB.frameAttributes.width = value end,
+						default = 620,
+						dataManagement = {
+							category = category,
+							key = keys[1],
+							onChange = { ResizeWideFrameAttributes = function() if _G["TableAttributeDisplay"] then
+								TableAttributeDisplay:SetWidth(WidgetToolsDB.frameAttributes.width + 70)
+								TableAttributeDisplay.LinesScrollFrame:SetWidth(WidgetToolsDB.frameAttributes.width)
+							end end, },
+						},
+					})
+				end,
+			})
+		end,
+	})
+
+	--| Addons Page
+
+	local addonsPage = wt.CreateSettingsPage(ns.name, {
+		register = mainPage,
 		name = "Addons",
-		appendOptions = false,
 		title = ns.strings.addons.title,
-		description = ns.strings.addons.description:gsub("#ADDON", addonTitle),
-		logo = ns.textures.logo,
+		description = ns.strings.addons.description:gsub("#ADDON", ns.title),
 		scroll = { speed = 0.2 },
-		optionsKeys = { addonNameSpace, },
-		initialize = function(canvas)
-			--List Toolbox versions in use
-			for k, v in wt.SortedPairs(registry.addons) do
-				--Panel: Toolbox
+		static = true,
+		dataManagement = {},
+		arrangement = {},
+		initialize = function(canvas, _, _, category, keys)
+
+			--[ List Toolbox Versions ]
+
+			for toolboxVersion, addons in wt.SortedPairs(registry.addons) do
 				wt.CreatePanel({
 					parent = canvas,
-					name = "Toolbox" .. k,
-					title = ns.strings.addons.toolbox:gsub("#VERSION", ns.strings.about.compactVersion:gsub("#VERSION", WrapTextInColorCode(k, "FFFFFFFF"))),
+					name = "Toolbox" .. toolboxVersion,
+					title = ns.strings.addons.toolbox:gsub("#VERSION", ns.strings.about.version:gsub("#VERSION", WrapTextInColorCode(toolboxVersion, "FFFFFFFF"))),
 					arrange = {},
-					size = { height = 32 },
-					initialize = function(toolboxPanel)
-						--List reliant addons
-						for i = 1, #v do
-							--Panel: Addon info
+					size = { h = 32 },
+					arrangement = {
+						margins = { l = 30, },
+						gaps = 10,
+					},
+					initialize = function(toolboxPanel, width)
+
+						--[ List Reliant Addons ]
+
+						for i = 1, #addons do if C_AddOns.IsAddOnLoaded(addons[i]) then
+							local data = {
+								title = C_AddOns.GetAddOnMetadata(addons[i], "Title"),
+								version = C_AddOns.GetAddOnMetadata(addons[i], "Version"),
+								day = C_AddOns.GetAddOnMetadata(addons[i], "X-Day"),
+								month = C_AddOns.GetAddOnMetadata(addons[i], "X-Month"),
+								year = C_AddOns.GetAddOnMetadata(addons[i], "X-Year"),
+								category = C_AddOns.GetAddOnMetadata(addons[i], "Category"),
+								notes = C_AddOns.GetAddOnMetadata(addons[i], "Notes"),
+								author = C_AddOns.GetAddOnMetadata(addons[i], "Author"),
+								license = C_AddOns.GetAddOnMetadata(addons[i], "X-License"),
+								curse = C_AddOns.GetAddOnMetadata(addons[i], "X-CurseForge"),
+								wago = C_AddOns.GetAddOnMetadata(addons[i], "X-Wago"),
+								repo = C_AddOns.GetAddOnMetadata(addons[i], "X-Repository"),
+								issues = C_AddOns.GetAddOnMetadata(addons[i], "X-Issues"),
+								sponsors = C_AddOns.GetAddOnMetadata(addons[i], "X-Sponsors"),
+								topSponsors = C_AddOns.GetAddOnMetadata(addons[i], "X-TopSponsors"),
+								logo = C_AddOns.GetAddOnMetadata(addons[i], "IconTexture"),
+							}
+
 							wt.CreatePanel({
 								parent = toolboxPanel,
-								name = v[i],
-								title = wt.Clear(GetAddOnMetadata(v[i], "Title")),
-								description = GetAddOnMetadata(v[i], "Notes") or "…",
+								name = addons[i],
+								label = false,
 								arrange = {},
-								size = { width = toolboxPanel:GetWidth() - 40, height = 48 },
+								size = { w = width - 42, h = 84 },
 								background = { color = { r = 0.1, g = 0.1, b = 0.1, a = 0.6 } },
+								arrangement = {
+									margins = { l = 34, },
+									resize = false,
+								},
 								initialize = function(addonPanel)
-									--Logo texture
-									local logo = wt.CreateTexture({
+									wt.CreateTexture({
 										parent = addonPanel,
 										name = "Logo",
 										position = {
-											anchor = "LEFT",
-											offset = { x = -16, }
+											anchor = "TOP",
+											relativeTo = addonPanel,
+											relativePoint = "TOPLEFT",
+											offset = { x = 3, y = -3 }
 										},
-										size = { width = 42, height = 42 },
-										path = GetAddOnMetadata(v[i], "IconTexture") or ns.textures.missing,
+										size = { w = 38, h = 38 },
+										path = data.logo or ns.textures.missing,
 									})
 
-									--Update the addon info panel title & description
-									_G[addonPanel:GetName() .. "Title"]:SetPoint("TOPLEFT", logo, "TOPLEFT", 8, 18)
-									_G[addonPanel:GetName() .. "Description"]:SetPoint("TOPLEFT", logo, "TOPRIGHT", 8, -9)
-									_G[addonPanel:GetName() .. "Title"]:SetWidth(_G[addonPanel:GetName() .. "Title"]:GetWidth() + 20)
-									_G[addonPanel:GetName() .. "Description"]:SetWidth(_G[addonPanel:GetName() .. "Description"]:GetWidth() - 30)
+									--| Toggle
 
-									--Checkbox: Toggle
 									local function toggleAddon(state)
 										if state then
-											EnableAddOn(v[i])
+											C_AddOns.EnableAddOn(addons[i])
 											addonPanel:SetAlpha(1)
 										else
-											DisableAddOn(v[i])
+											C_AddOns.DisableAddOn(addons[i])
 											addonPanel:SetAlpha(0.5)
 										end
 									end
-									wt.CreateCheckbox({
+
+									local toggle = wt.CreateCheckbox({
 										parent = addonPanel,
-										title = ns.strings.about.toggle.label,
-										tooltip = { lines = { { text = ns.strings.about.toggle.tooltip }, } },
-										position = {
-											anchor = "BOTTOMRIGHT",
-											relativeTo = addonPanel,
-											relativePoint = "TOPRIGHT",
-											offset = { x = -12, }
-										},
-										size = { width = 80, height = 20 },
+										name = "Toggle",
+										title = wt.Color(C_AddOns.GetAddOnMetadata(addons[i], "Title"), wt.colors.highlight) .. " (" .. ns.strings.about.toggle.label .. ")",
+										tooltip = { lines = { { text = ns.strings.about.toggle.tooltip, }, } },
+										arrange = {},
+										size = { w = 300, },
+										font = { normal = "GameFontNormalMed1", },
+										getData = function() return C_AddOns.GetAddOnEnableState(addons[i]) > 0 end,
+										saveData = function(state) toggleAddon(state) end,
+										instantSave = false,
+										listeners = { saved = { { handler = function(self) if not self.getState() then wt.CreateReloadNotice() end end, }, }, },
 										events = { OnClick = function(_, state) toggleAddon(state) end, },
-										optionsData = {
-											optionsKey = addonNameSpace,
-											convertLoad = function() return GetAddOnEnableState(nil, v[i]) > 0 end,
-											onSave = function(_, state) if not state then wt.CreateReloadNotice() end end,
-											onLoad = function(_, state) toggleAddon(state) end,
-										}
-									}):SetIgnoreParentAlpha(true)
-
-									--Text: Version
-									local addonVersion = wt.CreateText({
-										parent = addonPanel,
-										name = "Version",
-										position = {
-											anchor = "BOTTOMLEFT",
-											relativeTo = logo,
-											relativePoint = "BOTTOMRIGHT",
-											offset = { x = 8, y = 9 }
+										showDefault = false,
+										utilityMenu = false,
+										dataManagement = {
+											category = category,
+											key = keys[1],
 										},
-										text = ns.strings.about.compactVersion:gsub("#VERSION", WrapTextInColorCode(GetAddOnMetadata(v[i], "Version") or "?", "FFFFFFFF")),
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
 									})
 
-									--Text: Date
-									local addonDate = wt.CreateText({
+									if toggle.frame then toggle.frame:SetIgnoreParentAlpha(true) end
+
+									--| Description
+
+									if data.notes then wt.CreateText({
 										parent = addonPanel,
-										name = "Date",
-										position = {
-											relativeTo = addonVersion,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 10, }
-										},
-										text = ns.strings.about.compactDate:gsub(
-											"#DATE", WrapTextInColorCode(ns.strings.about.dateFormat:gsub(
-												"#DAY", GetAddOnMetadata(v[i], "X-Day") or "?"
+										name = "Notes",
+										position = { offset = { x = 16, y = -49 } },
+										width = 318,
+										height = 20,
+										text = data.notes,
+										font = "GameFontHighlightSmall",
+										justify = { h = "LEFT", v = "TOP" },
+									}) end
+
+									--| Information
+
+									local position = { offset = { x = 344, y = -13 } }
+
+									if data.version then
+										local version = wt.CreateText({
+											parent = addonPanel,
+											name = "VersionTitle",
+											position = position,
+											width = 48,
+											text = wt.strings.about.version,
+											font = "GameFontHighlightSmall",
+											justify = { h = "RIGHT", },
+										})
+
+										wt.CreateText({
+											parent = addonPanel,
+											name = "Version",
+											position = {
+												relativeTo = version,
+												relativePoint = "TOPRIGHT",
+												offset = { x = 5 }
+											},
+											width = 140,
+											text = data.version .. (data.day and data.month and data.year and WrapTextInColorCode(" ( " .. wt.strings.about.date .. ": " .. wt.Color(wt.strings.date:gsub(
+												"#DAY", data.day
 											):gsub(
-												"#MONTH", GetAddOnMetadata(v[i], "X-Month") or "?"
+												"#MONTH", data.month
 											):gsub(
-												"#YEAR", GetAddOnMetadata(v[i], "X-Year") or "?"
-											), "FFFFFFFF")
-										),
-										font = "GameFontNormalSmall",
-										justify = "LEFT",
-									})
+												"#YEAR", data.year
+											), wt.colors.normal) .. ")", "FFFFFFFF") or ""),
+											font = "GameFontNormalSmall",
+											justify = { h = "LEFT", },
+										})
 
-									--Text: Credits
-									local addonAuthor = wt.CreateText({
-										parent = addonPanel,
-										name = "Credits",
-										position = {
-											relativeTo = addonDate,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 10, }
-										},
-										text = ns.strings.about.compactAuthor:gsub("#AUTHOR", WrapTextInColorCode(GetAddOnMetadata(v[i], "Author") or "?", "FFFFFFFF")),
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
-									})
+										position.relativeTo = version
+										position.relativePoint = "BOTTOMLEFT"
+										position.offset.x = 0
+										position.offset.y = -6
+									end
 
-									--Text: License
-									wt.CreateText({
-										parent = addonPanel,
-										name = "License",
-										position = {
-											relativeTo = addonAuthor,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 10, }
-										},
-										text = ns.strings.about.compactLicense:gsub("#LICENSE", WrapTextInColorCode(GetAddOnMetadata(v[i], "X-License") or "?", "FFFFFFFF")),
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
-									})
+									if data.category then
+										local category = wt.CreateText({
+											parent = addonPanel,
+											name = "Category",
+											position = position,
+											width = 48,
+											text = CATEGORY,
+											font = "GameFontHighlightSmall",
+											justify = { h = "RIGHT", },
+											wrap = false,
+										})
+
+										wt.CreateText({
+											parent = addonPanel,
+											name = "Category",
+											position = {
+												relativeTo = category,
+												relativePoint = "TOPRIGHT",
+												offset = { x = 5 }
+											},
+											width = 140,
+											text = data.category,
+											font = "GameFontNormalSmall",
+											justify = { h = "LEFT", },
+										})
+
+										position.relativeTo = category
+										position.relativePoint = "BOTTOMLEFT"
+										position.offset.x = 0
+										position.offset.y = -6
+									end
+
+									if data.author then
+										local author = wt.CreateText({
+											parent = addonPanel,
+											name = "AuthorTitle",
+											position = position,
+											width = 48,
+											text = wt.strings.about.author,
+											font = "GameFontHighlightSmall",
+											justify = { h = "RIGHT", },
+										})
+
+										wt.CreateText({
+											parent = addonPanel,
+											name = "Author",
+											position = {
+												relativeTo = author,
+												relativePoint = "TOPRIGHT",
+												offset = { x = 5 }
+											},
+											width = 140,
+											text = data.author,
+											font = "GameFontNormalSmall",
+											justify = { h = "LEFT", },
+										})
+
+										position.relativeTo = author
+										position.relativePoint = "BOTTOMLEFT"
+										position.offset.x = 0
+										position.offset.y = -6
+									end
+
+									if data.license then
+										local license = wt.CreateText({
+											parent = addonPanel,
+											name = "LicenseTitle",
+											position = position,
+											width = 48,
+											text = wt.strings.about.license,
+											font = "GameFontHighlightSmall",
+											justify = { h = "RIGHT", },
+										})
+
+										wt.CreateText({
+											parent = addonPanel,
+											name = "License",
+											position = {
+												relativeTo = license,
+												relativePoint = "TOPRIGHT",
+												offset = { x = 5 }
+											},
+											width = 140,
+											text = data.license,
+											font = "GameFontNormalSmall",
+											justify = { h = "LEFT", },
+										})
+									end
 								end,
 							})
-						end
+						end end
 					end,
-					arrangement = {
-						margins = { t = 28, },
-						gaps = 24,
-						flip = true,
-					}
 				})
 			end
 
-			--Panel: Old toolboxes
 			wt.CreatePanel({
 				parent = canvas,
 				name = "OldList",
 				title = ns.strings.addons.old.title,
 				description = ns.strings.addons.old.description,
 				arrange = {},
-				size = { height = 60 },
-				initialize = function (panel)
-					--Find old toolboxes
-					local oldToolboxes = ns.strings.addons.old.none:gsub("#ADDON", addonTitle)
-					if WidgetToolbox then if next(WidgetToolbox) then
-						local toolboxes = ""
-						for k, _ in wt.SortedPairs(WidgetToolbox) do toolboxes = toolboxes .. " • " .. k end
-						oldToolboxes = WrapTextInColorCode(ns.strings.addons.old.inUse:gsub(
-							"#TOOLBOXES",  WrapTextInColorCode(toolboxes:sub(5),  "FFFFFFFF")
-						), wt.ColorToHex(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, true, false))
-					end end
+				size = { h = 42 },
+				initialize = function(panel)
+					local oldToolboxes = ns.strings.addons.old.none:gsub("#ADDON", ns.title)
 
-					--Text: Old toolboxes
+					if type(WidgetToolbox) == "table" and next(WidgetToolbox) then
+						local toolboxes = ""
+
+						--Find old toolboxes
+						for k, _ in wt.SortedPairs(WidgetToolbox) do toolboxes = toolboxes .. " • " .. k end
+
+						oldToolboxes = WrapTextInColorCode(ns.strings.addons.old.inUse:gsub(
+							"#TOOLBOXES",  WrapTextInColorCode(toolboxes:sub(5), "FFFFFFFF")
+						), wt.ColorToHex(NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1, true, false))
+					end
+
 					wt.CreateText({
 						parent = panel,
 						name = "OldToolboxes",
-						position = { offset = { x = 16, y = -33 } },
+						position = { offset = { x = 16, y = -16 } },
 						text = oldToolboxes,
-						font = "GameFontDisableSmall",
+						font = "GameFontDisable",
 						justify = { h = "LEFT", },
 					})
-				end
+				end,
 			})
 		end,
-		arrangement = {}
 	})
+
+
+	--[[ CHAT CONTROL ]]
+
+	chatCommands = wt.RegisterChatCommands(ns.name, { ns.chat.keyword }, {
+		commands = {
+			{
+				command = ns.chat.commands.about,
+				description = ns.strings.chat.about.description,
+				handler = mainPage.open,
+			},
+			{
+				command = ns.chat.commands.lite,
+				description = ns.strings.chat.lite.description,
+				handler = function() liteToggle.setState(not WidgetToolsDB.lite, true) end,
+			},
+			{
+				command = ns.chat.commands.dump,
+				description = ns.strings.chat.dump.description,
+				handler = function() wt.Dump(WidgetToolsDB, "WidgetToolsDB") end,
+			},
+			{
+				command = ns.chat.commands.run,
+				description = ns.strings.chat.run.description:gsub("#EXAMPLE", wt.Color("/wt run Dump { 1, \"a\", true, { print, UIParent, { 2 } } }; \"T\"; _; 2", ns.colors.grey[2])),
+				handler = function(_, f, ...) print(f, wt[f]) return type(wt[f]) == "function", f, ... end,
+				success = ns.strings.chat.run.success,
+				error = ns.strings.chat.run.error,
+				onSuccess = function(_, f, ...)
+					local p = strsplittable(";", table.concat({ ... }, " "), nil)
+
+					for i = 1, #p do _, p[i] = pcall(loadstring("return " .. p[i])) end
+
+					wt[f](unpack(p))
+				end,
+			},
+		},
+		colors = {
+			title = ns.colors.gold[1],
+			content = ns.colors.gold[2],
+			command = { r = 1, g = 1, b = 1, },
+			description = ns.colors.grey[1]
+		},
+	})
+
+
+	--[[ ADDON COMPARTMENT ]]
+
+	wt.SetUpAddonCompartment(ns.name, {
+		onClick = function()
+			if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
+				initialize = function(menu)
+					wt.CreateMenuTextline(menu, { text = ns.title, })
+					wt.CreateMenuButton(menu, {
+						title = wt.GetStrings("about").title,
+						action = mainPage.open
+					})
+					wt.CreateMenuButton(menu, {
+						title = ns.strings.specifications.title,
+						action = specificationsPage.open
+					})
+					wt.CreateMenuButton(menu, {
+						title = ns.strings.addons.title,
+						action = addonsPage.open
+					})
+				end,
+				rightClickMenu = false,
+			}).open() end
+		end,
+		onEnter = function(_, frame) frame.tooltipData.lines[5] = {
+			text = "\n" .. (WidgetToolsDB.lite and ns.strings.compartment.lite or ns.strings.compartment.open),
+			font = GameFontNormalTiny,
+			color = ns.colors.grey[1],
+		} end
+	}, { lines = {
+		{ text = ns.strings.about.version:gsub("#VERSION", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.name, "Version") or "?", "FFFFFFFF")), },
+		{ text = ns.strings.about.date:gsub(
+			"#DATE", WrapTextInColorCode(ns.strings.date:gsub(
+				"#DAY", C_AddOns.GetAddOnMetadata(ns.name, "X-Day") or "?"
+			):gsub(
+				"#MONTH", C_AddOns.GetAddOnMetadata(ns.name, "X-Month") or "?"
+			):gsub(
+				"#YEAR", C_AddOns.GetAddOnMetadata(ns.name, "X-Year") or "?"
+			), "FFFFFFFF")
+		), },
+		{ text = ns.strings.about.author:gsub("#AUTHOR", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.name, "Author") or "?", "FFFFFFFF")), },
+		{ text = ns.strings.about.license:gsub("#LICENSE", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.name, "X-License") or "?", "FFFFFFFF")), },
+		{
+			text = "\n" .. (WidgetToolsDB.lite and ns.strings.compartment.lite or ns.strings.compartment.open),
+			font = GameFontNormalTiny,
+			color = ns.colors.grey[1],
+		},
+	} })
+end
+
+function WidgetTools.frame:FRAMESTACK_VISIBILITY_UPDATED()
+	WidgetTools.frame:UnregisterEvent("FRAMESTACK_VISIBILITY_UPDATED")
+
+	if _G["TableAttributeDisplay"] then
+		TableAttributeDisplay:SetWidth(WidgetToolsDB.frameAttributes.width + 70)
+		TableAttributeDisplay.LinesScrollFrame:SetWidth(WidgetToolsDB.frameAttributes.width)
+	end
 end
