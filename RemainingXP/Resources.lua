@@ -266,6 +266,7 @@ ns.strings = ns.localizations[GetLocale()]
 --| Fill static & internal references
 
 ns.strings.options.main.description = ns.strings.options.main.description:gsub("#KEYWORD", "/" .. ns.chat.keyword)
+ns.strings.options.display.referenceName = ns.strings.options.display.referenceName:gsub("#ADDON", ns.name)
 ns.strings.options.display.font.color.tooltip = ns.strings.options.display.font.color.tooltip:gsub("#VALUE_COLORING", ns.strings.options.display.font.valueColoring.label)
 
 --| Cleanup
@@ -406,6 +407,178 @@ ns.profileDefault = {
 		statusNotice = {
 			enabled = true,
 			maxReminder = true,
+		},
+	},
+}
+
+--Presets
+ns.presets = {
+	{
+		title = ns.strings.options.display.position.presets.list[1], --XP Bar Replacement
+		data = {
+			position = {
+				anchor = "BOTTOM",
+				offset = { x = 0, y = 0 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "LOW",
+				keepOnTop = false,
+			},
+			background = {
+				visible = true,
+				size = { width = 562, height = 16 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[2], --XP Bar Left Text
+		data = {
+			position = {
+				anchor = "BOTTOM",
+				offset = { x = -256, y = 0 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "HIGH",
+				keepOnTop = false,
+			},
+			background = {
+				visible = false,
+				size = { width = 68, height = 16 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[3], --XP Bar Right Text
+		data = {
+			position = {
+				anchor = "BOTTOM",
+				offset = { x = 252, y = 0 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "HIGH",
+				keepOnTop = false,
+			},
+			background = {
+				visible = false,
+				size = { width = 68, height = 16 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[4], --Player Frame Bar Above
+		data = {
+			position = {
+				anchor = "TOPRIGHT",
+				relativeTo = PlayerFrame,
+				relativePoint = "TOPRIGHT",
+				offset = { x = -27, y = -11 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "MEDIUM",
+				keepOnTop = false,
+			},
+			background = {
+				visible = true,
+				size = { width = 126, height = 16 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[5], --Player Frame Text Under
+		data = {
+			position = {
+				anchor = "BOTTOMLEFT",
+				relativeTo = PlayerFrame,
+				relativePoint = "BOTTOMLEFT",
+				offset = { y = 2 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "MEDIUM",
+				keepOnTop = false,
+			},
+			background = {
+				visible = false,
+				size = { width = 104, height = 16 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[6], --Objective Tracker Bar
+		data = {
+			position = {
+				anchor = "TOPLEFT",
+				relativeTo = ObjectiveTrackerFrame,
+				relativePoint = "TOPLEFT",
+				offset = { x = 34, y = -5 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "MEDIUM",
+				keepOnTop = false,
+			},
+			background = {
+				visible = true,
+				size = { width = 232, height = 22 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[7], --Bottom-Left Chunky Bar
+		data = {
+			position = {
+				anchor = "BOTTOMLEFT",
+				offset = { x = 188, y = 12 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "MEDIUM",
+				keepOnTop = false,
+			},
+			background = {
+				visible = true,
+				size = { width = 490, height = 38 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[8], --Bottom-Right Chunky Bar
+		data = {
+			position = {
+				anchor = "BOTTOMRIGHT",
+				offset = { x = -188, y = 12 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "MEDIUM",
+				keepOnTop = false,
+			},
+			background = {
+				visible = true,
+				size = { width = 490, height = 38 },
+			},
+		},
+	},
+	{
+		title = ns.strings.options.display.position.presets.list[9], --Top-Center Long Bar
+		data = {
+			position = {
+				anchor = "TOP",
+				offset = { x = 0, y = 3 }
+			},
+			keepInBounds = true,
+			layer = {
+				strata = "MEDIUM",
+				keepOnTop = false,
+			},
+			background = {
+				visible = true,
+				size = { width = 1248, height = 8 },
+			},
 		},
 	},
 }

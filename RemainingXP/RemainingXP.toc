@@ -1,7 +1,7 @@
 ## Interface: 110200, 50500, 11507
 ## Title: Remaining XP
 ## Version: 3.0
-## X-Day: 8
+## X-Day: 12
 ## X-Month: 8
 ## X-Year: 2025
 ## Category: Quests & Leveling
