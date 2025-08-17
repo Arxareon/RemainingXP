@@ -18,11 +18,22 @@ ns.localizations = {}
 
 ---@class strings
 ns.localizations.enUS = {
+	presets = {
+		"XP Bar Replacement",
+		"XP Bar Text Left",
+		"XP Bar Text Right",
+		"Player Frame Bar Above",
+		"Player Frame Text Under",
+		"Objective Tracker Bar",
+		"Bottom-Left Chunky Bar",
+		"Bottom-Right Chunky Bar",
+		"Top-Center Long Bar",
+	},
 	options = {
 		name = "#ADDON options",
 		defaults = "The default options and the #CUSTOM preset have been reset.",
 		main = {
-			description = "Customize #ADDON to fit your needs. Type #KEYWORD for chat commands.",
+			description = "Customize #ADDON to fit your needs.\nType #KEYWORD for chat commands.",
 			shortcuts = {
 				title = "Shortcuts",
 				description = "Access customization options by expanding the #ADDON categories on the left or by clicking a button here.",
@@ -74,53 +85,6 @@ ns.localizations.enUS = {
 				maxReminder = {
 					label = "Max level reminder",
 					tooltip = "Also get a reminder if the functionality of #ADDON is disabled because your character is max level.",
-				},
-			},
-			position = {
-				title = "Position",
-				description = "Drag & drop the main display while holding SHIFT to position it anywhere on the screen, fine-tune it here.",
-				presets = {
-					label = "Apply a Preset",
-					tooltip = "Swiftly change the position, size and visibility of the display elements by choosing and applying one of these presets.",
-					list = {
-						"XP Bar Replacement",
-						"XP Bar Text Left",
-						"XP Bar Text Right",
-						"Player Frame Bar Above",
-						"Player Frame Text Under",
-						"Objective Tracker Bar",
-						"Bottom-Left Chunky Bar",
-						"Bottom-Right Chunky Bar",
-						"Top-Center Long Bar",
-					},
-					select = "Select a preset…",
-				},
-				savePreset = {
-					label = "Update #CUSTOM preset",
-					tooltip = "Save the current position, background size and visibility of the main display to the #CUSTOM preset.",
-					warning = "Are you sure you want to override the #CUSTOM preset with the current customizations?\n\nThe #CUSTOM preset is account-wide.",
-					response = "The current position, background size and visibility of the main display have been applied to the #CUSTOM preset and will be saved along with the other options.",
-				},
-				resetPreset = {
-					label = "Reset #CUSTOM Preset",
-					tooltip = "Override currently saved #CUSTOM preset data with the default values, then apply it.",
-					warning = "Are you sure you want to override the #CUSTOM Preset with the default values?\n\nThe #CUSTOM preset is account-wide.",
-				},
-				anchor = {
-					label = "Screen Anchor Point",
-					tooltip = "Select which point of the screen should the main display be anchored to.",
-				},
-				xOffset = {
-					label = "Horizontal Offset",
-					tooltip = "Set the amount of horizontal offset (X axis) of the main display from the selected anchor point.",
-				},
-				yOffset = {
-					label = "Vertical Offset",
-					tooltip = "Set the amount of vertical offset (Y axis) of the main display from the selected anchor point.",
-				},
-				strata = {
-					label = "Screen Layer",
-					tooltip = "Raise or lower the main display to be in front of or behind other UI elements.",
 				},
 			},
 			text = {
@@ -183,7 +147,7 @@ ns.localizations.enUS = {
 						label = "Border Color",
 					},
 					xp = {
-						label = "Current XP Color",
+						label = "Gathered XP Color",
 					},
 					rested = {
 						label = "Rested XP Color",
@@ -336,7 +300,7 @@ ns.localizations.enUS = {
 			percent = "(#VALUE of the remaining XP)",
 		},
 		restedXPAccumulated = {
-			text = "You accumulated #AMOUNT Rested XP. Total: #TOTAL #PERCENT.",
+			text = "You accumulated #AMOUNT Rested XP while resting.\nTotal: #TOTAL #PERCENT.",
 			percent = "(#VALUE of the XP remaining to reach level #NEXT)",
 			zero = "You accumulated no Rested XP.",
 		},
@@ -408,9 +372,17 @@ ns.localizations.enUS = {
 			response = "The XP bar enhancement integration set to #STATE.",
 			notice = "Please, reload the interface to apply pending changes to the XP bar enhancement integration.",
 		},
-		defaults = {
-			description = "restore everything to defaults",
-			response = "The #CATEGORY options have been reset to defaults.",
+		profile = {
+			description = "activate a settings profile (e.g. #INDEX)",
+			response = "The #PROFILE settings profile was activated.",
+			unchanged = "The specified profile could not be activated.",
+			error = "Please enter a valid profile name or index (e.g. #INDEX).",
+			list = "The following profiles are available:",
+		},
+		default = {
+			description = "reset the active #PROFILE settings profile to default",
+			response = "The active #PROFILE settings profile has been reset to default.",
+			responseCategory = "Settings of the #CATEGORY category in the active #PROFILE settings profile have been reset to default.",
 		},
 		position = {
 			save = "The XP display position was saved.",
@@ -420,26 +392,26 @@ ns.localizations.enUS = {
 	},
 	xpTooltip = {
 		title = "XP details:",
-		text = "An updating summery of your XP status.",
-		current = "Current XP: #VALUE",
+		text = "An updating XP status summary.",
+		gathered = "Gathered XP: #VALUE",
 		remaining = "Remaining XP: #VALUE",
 		required = "Required XP: #VALUE",
-		requiredLevelUp = "(The total amount needed for level #LEVEL.)",
-		timeSpent = "Spent #TIME of game time on this level so far since resting in this area.",
+		requiredLevelUp = "(Total XP needed for level #LEVEL.)",
+		timeSpent = "Spent #TIME of game time on this level since resting in this area.",
 		rested = "Rested XP: #VALUE",
-		restedMax = "The maximal Rested XP amount is #PERCENT_MAX of the Required XP amount (or #PERCENT_REMAINING of the Remaining XP amount at level #LEVEL).",
-		restedDescription = "Earn #PERCENT XP from killing monsters and gathering materials until the Rested XP amount is depleted.",
+		restedMax = "The maximal amount is #PERCENT_MAX of the Required XP amount (or #PERCENT_REMAINING of the Remaining XP amount at level #LEVEL).",
+		restedDescription = "You earn #PERCENT XP (and lose that much Rested XP) for killing monsters and gathering materials until the Rested XP amount is depleted.",
 		restedAtMax = "You are no longer accumulating Rested XP. The maximal amount has been reached.",
-		accumulated = "Accumulated #VALUE Rested XP so far while resting in this area.",
+		accumulated = "You have accumulated #VALUE Rested XP while resting in this area.",
 		banked = "Banked XP: #VALUE",
 		bankedValue = "#VALUE (#LEVELS banked levels).",
-		percentRemaining = "(#PERCENT of the Remaining XP amount.)",
-		percentRequired = "(#PERCENT of the Required XP amount.)",
+		percentRemaining = "(#PERCENT of Remaining XP.)",
+		percentRequired = "(#PERCENT of Required XP.)",
 		hintOptions = "Right-click to open specific options.",
 		hintMove = "Hold SHIFT & drag to reposition.",
 	},
 	xpBar = {
-		text = "XP: #CURRENT / #NEEDED (#REMAINING Remaining)",
+		text = "XP: #GATHERED / #NEEDED (#REMAINING Remaining)",
 		rested = "#RESTED Rested (#PERCENT)",
 		banked = "#VALUE Banked (#LEVELS levels)",
 	},

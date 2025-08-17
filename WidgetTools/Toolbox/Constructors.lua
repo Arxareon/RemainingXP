@@ -3723,6 +3723,8 @@ function wt.CreateRadioSelector(t, widget)
 
 	---@class radioSelector : selector
 	---@field toggles? selectorRadioButton[] The list of radio button widgets linked together in this selector
+	---@field frame Frame
+	---@field label FontString
 	local selector = widget and widget.isType and (widget.isType("Selector") or widget.isType("SpecialSelector")) and widget or wt.CreateSelector(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
@@ -3862,6 +3864,8 @@ function wt.CreateCheckboxSelector(t, widget)
 
 	---@class checkboxSelector : multiselector
 	---@field toggles? selectorCheckbox[] The list of checkbox widgets linked together in this selector
+	---@field frame Frame
+	---@field label FontString
 	local selector = widget and widget.isType and widget.isType("Multiselector") and widget or wt.CreateMultiselector(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
@@ -7583,7 +7587,6 @@ function wt. CreatePositionOptions(addon, t)
 						wt.SetPosition(t.frame, panel.presetList[i].data.position, true)
 
 						--Update the storage
-						-- wt.ConvertToAbsolutePosition(t.frame) --CHECK if needed
 						wt.CopyValues(t.getData().position, wt.PackPosition(t.frame:GetPoint()))
 
 						--Update the options widgets

@@ -29,7 +29,7 @@ ns.chat = {
 		size = "size",
 		integration = "integrate",
 		profile = "profile",
-		defaults = "defaults",
+		default = "default",
 	},
 }
 
@@ -267,7 +267,6 @@ ns.strings = ns.localizations[GetLocale()]
 
 ns.strings.options.main.description = ns.strings.options.main.description:gsub("#KEYWORD", "/" .. ns.chat.keyword)
 ns.strings.options.display.referenceName = ns.strings.options.display.referenceName:gsub("#ADDON", ns.name)
-ns.strings.options.display.font.color.tooltip = ns.strings.options.display.font.color.tooltip:gsub("#VALUE_COLORING", ns.strings.options.display.font.valueColoring.label)
 
 --| Cleanup
 
@@ -307,7 +306,7 @@ ns.colors = {
 
 --Fonts
 ns.fonts = {
-	{ name = ns.strings.misc.default, path = ns.strings.defaultFont },
+	{ name = ns.strings.misc.default, path = STANDARD_TEXT_FONT:gsub("\\", "/") },
 	{ name = "Arbutus Slab", path = ns.root .. "Fonts/ArbutusSlab.ttf" },
 	{ name = "Caesar Dressing", path = ns.root .. "Fonts/CaesarDressing.ttf" },
 	{ name = "Germania One", path = ns.root .. "Fonts/GermaniaOne.ttf" },
@@ -347,6 +346,7 @@ ns.profileDefault = {
 		},
 	},
 	display = {
+		hidden = false,
 		position = {
 			anchor = "TOP",
 			offset = { x = 0, y = -58 }
@@ -414,7 +414,7 @@ ns.profileDefault = {
 --Presets
 ns.presets = {
 	{
-		title = ns.strings.options.display.position.presets.list[1], --XP Bar Replacement
+		title = ns.strings.presets[1], --XP Bar Replacement
 		data = {
 			position = {
 				anchor = "BOTTOM",
@@ -432,7 +432,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[2], --XP Bar Left Text
+		title = ns.strings.presets[2], --XP Bar Left Text
 		data = {
 			position = {
 				anchor = "BOTTOM",
@@ -450,7 +450,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[3], --XP Bar Right Text
+		title = ns.strings.presets[3], --XP Bar Right Text
 		data = {
 			position = {
 				anchor = "BOTTOM",
@@ -468,7 +468,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[4], --Player Frame Bar Above
+		title = ns.strings.presets[4], --Player Frame Bar Above
 		data = {
 			position = {
 				anchor = "TOPRIGHT",
@@ -488,7 +488,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[5], --Player Frame Text Under
+		title = ns.strings.presets[5], --Player Frame Text Under
 		data = {
 			position = {
 				anchor = "BOTTOMLEFT",
@@ -508,7 +508,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[6], --Objective Tracker Bar
+		title = ns.strings.presets[6], --Objective Tracker Bar
 		data = {
 			position = {
 				anchor = "TOPLEFT",
@@ -528,7 +528,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[7], --Bottom-Left Chunky Bar
+		title = ns.strings.presets[7], --Bottom-Left Chunky Bar
 		data = {
 			position = {
 				anchor = "BOTTOMLEFT",
@@ -546,7 +546,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[8], --Bottom-Right Chunky Bar
+		title = ns.strings.presets[8], --Bottom-Right Chunky Bar
 		data = {
 			position = {
 				anchor = "BOTTOMRIGHT",
@@ -564,7 +564,7 @@ ns.presets = {
 		},
 	},
 	{
-		title = ns.strings.options.display.position.presets.list[9], --Top-Center Long Bar
+		title = ns.strings.presets[9], --Top-Center Long Bar
 		data = {
 			position = {
 				anchor = "TOP",
