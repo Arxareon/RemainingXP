@@ -1986,7 +1986,7 @@ frames.main = wt.CreateFrame({
 
 			if max then
 				--Hide displays
-				self:Hide()
+				frames.display.frame:Hide()
 				TurnOffIntegration()
 
 				--Disable events
@@ -1995,12 +1995,10 @@ frames.main = wt.CreateFrame({
 				--Load cross-session character data
 				RemainingXPCSC.xp = RemainingXPCSC.xp or {}
 
-				--Position
-				wt.SetPosition(self, wt.AddMissing({ relativePoint = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position.anchor, }, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position))
-				-- wt.SetPosition(self, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position)
-
 				--Main display
 				SetDisplayValues(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data, RemainingXPDBC)
+				wt.SetPosition(frames.display.frame, wt.AddMissing({ relativePoint = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position.anchor, }, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position))
+				-- wt.SetPosition(self, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position)
 
 				--Integrated display
 				SetIntegrationVisibility(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.enhancement.enabled)
@@ -2082,7 +2080,7 @@ frames.main = wt.CreateFrame({
 			max = newLevel >= maxLevel
 
 			if max then
-				self:Hide()
+				frames.display.frame:Hide()
 				TurnOffIntegration()
 
 				--Notification
@@ -2157,21 +2155,21 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		UNIT_ENTERING_VEHICLE = function(self, unit, swapUI) if unit == "player" and swapUI then
+		UNIT_ENTERING_VEHICLE = function(_, unit, swapUI) if unit == "player" and swapUI then
+			frames.display.frame:Hide()
 			frames.integration.frame:Hide()
-			self:Hide()
 		end end,
-		UNIT_EXITING_VEHICLE = function(self, unit) if unit == "player" then
+		UNIT_EXITING_VEHICLE = function(_, unit) if unit == "player" then
+			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.enhancement.enabled then frames.integration.frame:Show() end
-			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then self:Show() end
 		end end,
-		PET_BATTLE_OPENING_START = function(self)
+		PET_BATTLE_OPENING_START = function()
+			frames.display.frame:Hide()
 			frames.integration.frame:Hide()
-			self:Hide()
 		end,
-		PET_BATTLE_CLOSE = function(self)
+		PET_BATTLE_CLOSE = function()
+			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.enhancement.enabled then frames.integration.frame:Show() end
-			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then self:Show() end
 		end,
 	},
 	initialize = function(_, _, _, name)
