@@ -1,11 +1,11 @@
 ## Interface: 110200, 50500, 11507
 ## Title: Remaining XP
 ## Version: 3.0
-## X-Day: 18
+## X-Day: 26
 ## X-Month: 8
 ## X-Year: 2025
 ## Category: Quests & Leveling
-## Notes: Shows the amount of XP needed to reach the next level & much more.
+## Notes: Tracks your XP gain, and provides detailed XP information in customizable XP bar displays, tooltips & chat notifications.
 ## Author: Barnabas Nagy (Arxareon)
 ## X-Sponsors: Celierra
 ## X-License: All Rights Reserved

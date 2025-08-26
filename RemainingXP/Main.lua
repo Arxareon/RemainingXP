@@ -2007,7 +2007,7 @@ frames.main = wt.CreateFrame({
 			--Visibility notice
 			if not self:IsVisible() then PrintStatus(true) end
 		end,
-		PLAYER_ENTERING_WORLD = function(self)
+		PLAYER_ENTERING_WORLD = max and nil or function(self)
 			self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 
 			--XP update
@@ -2046,7 +2046,7 @@ frames.main = wt.CreateFrame({
 				if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.removals.xpBar then MainStatusTrackingBarContainer:Hide() end
 			end)
 		end,
-		PLAYER_XP_UPDATE = function(_, unit)
+		PLAYER_XP_UPDATE = max and nil or function(_, unit)
 			if unit ~= "player" then return end
 
 			--XP update
@@ -2076,7 +2076,7 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		PLAYER_LEVEL_UP = function(self, newLevel)
+		PLAYER_LEVEL_UP = max and nil or function(_, newLevel)
 			max = newLevel >= maxLevel
 
 			if max then
@@ -2104,7 +2104,7 @@ frames.main = wt.CreateFrame({
 				UpdateXPTooltip()
 			end
 		end,
-		UPDATE_EXHAUSTION = function()
+		UPDATE_EXHAUSTION = max and nil or function()
 			--Update Rested XP
 			local _, gainedRestedXP = UpdateXPValues()
 			if gainedRestedXP <= 0 then return end
@@ -2131,7 +2131,7 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		PLAYER_UPDATE_RESTING = function()
+		PLAYER_UPDATE_RESTING = max and nil or function()
 			--Notification
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and not IsResting() then
 				print((RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update and (wt.Color(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
@@ -2155,24 +2155,24 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		UNIT_ENTERING_VEHICLE = function(_, unit, swapUI) if unit == "player" and swapUI then
+		UNIT_ENTERING_VEHICLE = max and nil or function(_, unit, swapUI) if unit == "player" and swapUI then
 			frames.display.frame:Hide()
 			frames.integration.frame:Hide()
 		end end,
-		UNIT_EXITING_VEHICLE = function(_, unit) if unit == "player" then
+		UNIT_EXITING_VEHICLE = max and nil or function(_, unit) if unit == "player" then
 			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.enhancement.enabled then frames.integration.frame:Show() end
 		end end,
-		PET_BATTLE_OPENING_START = function()
+		PET_BATTLE_OPENING_START = max and nil or function()
 			frames.display.frame:Hide()
 			frames.integration.frame:Hide()
 		end,
-		PET_BATTLE_CLOSE = function()
+		PET_BATTLE_CLOSE = max and nil or function()
 			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.enhancement.enabled then frames.integration.frame:Show() end
 		end,
 	},
-	initialize = function(_, _, _, name)
+	initialize = max and nil or function(_, _, _, name)
 
 		--[ Main Display ]
 

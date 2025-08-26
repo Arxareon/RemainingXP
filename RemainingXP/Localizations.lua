@@ -315,13 +315,13 @@ ns.localizations.enUS = {
 		lvlUp = {
 			text = "You reached level #LEVEL.",
 			disabled = {
-				text = "#ADDON is now disabled #REASON.",
+				text = "#ADDON features are now disabled for this character #REASON.",
 				reason = "(you reached level #MAX)",
 			},
 			congrats = "Congrats!",
 		},
 		status = {
-			disabled = "#ADDON is disabled",
+			disabled = "#ADDON features are disabled",
 			max = "(you are level #MAX).",
 			visible = "The XP display is visible (#FADE).",
 			hidden = "The XP display is hidden (#FADE).",
