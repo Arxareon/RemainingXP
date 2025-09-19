@@ -327,26 +327,9 @@ ns.textures = {
 --[[ DATA ]]
 
 --Defaults
+---@type RemainingXPProfileData
 ns.profileDefault = {
 	customPreset = {
-		name = ns.strings.misc.custom, --Custom
-		data = {
-			position = {
-				anchor = "TOP",
-				offset = { x = 0, y = -58 }
-			},
-			layer = {
-				strata = "HIGH",
-				keepOnTop = false,
-			},
-			background = {
-				visible = true,
-				size = { width = 116, height = 16, },
-			},
-		},
-	},
-	display = {
-		hidden = false,
 		position = {
 			anchor = "TOP",
 			offset = { x = 0, y = -58 }
@@ -355,41 +338,67 @@ ns.profileDefault = {
 			strata = "HIGH",
 			keepOnTop = false,
 		},
+		background = {
+			visible = true,
+			size = { w = 116, h = 16, },
+		},
+	},
+	display = {
+		hidden = false,
+		position = {
+			anchor = "TOP",
+			relativePoint = "TOP",
+			offset = { x = 0, y = -58 }
+		},
+		keepInBounds = true,
+		layer = {
+			strata = "HIGH",
+			keepOnTop = false,
+		},
+		text = {
+			visible = true,
+			details = false,
+		},
+		font = {
+			family = ns.fonts[1].path,
+			size = 11,
+			alignment = "CENTER",
+			colors = {
+				base = { r = 1, g = 1, b = 1, a = 1 },
+				gathered = { r = 1, g = 1, b = 1, a = 1 },
+				needed = { r = 1, g = 1, b = 1, a = 1 },
+				remaining = { r = 1, g = 1, b = 1, a = 1 },
+				rested = { r = 1, g = 1, b = 1, a = 1 },
+				banked = { r = 1, g = 1, b = 1, a = 1 },
+			},
+		},
+		background = {
+			visible = true,
+			size = { w = 116, h = 16, },
+			colors = {
+				bg = { r = 0, g = 0, b = 0, a = 0.8 },
+				gathered = { r = 0.8, g = 0.1, b = 0.8, a = 0.8 },
+				rested = { r = 0.1, g = 0.5, b = 1, a = 0.8 },
+				border = { r = 1, g = 1, b = 1, a = 0.4 },
+			},
+		},
 		fade = {
 			enabled = false,
 			text = 1,
 			background = 0.6,
 		},
-		text = {
-			visible = true,
-			details = false,
-			font = {
-				family = ns.fonts[1].path,
-				size = 11,
-				color = { r = 1, g = 1, b = 1, a = 1 },
-			},
-			alignment = "CENTER",
-		},
-		background = {
-			visible = true,
-			size = { width = 116, height = 16, },
-			colors = {
-				bg = { r = 0, g = 0, b = 0, a = 0.8 },
-				xp = { r = 0.8, g = 0.1, b = 0.8, a = 0.8 },
-				rested = { r = 0.1, g = 0.5, b = 1, a = 0.8 },
-				border = { r = 1, g = 1, b = 1, a = 0.4 },
-			},
-		},
 	},
-	enhancement = {
+	integration = {
 		enabled = true,
 		keep = false,
 		remaining = true,
-	},
-	removals = {
-		xpBar = false,
+		hideXPBar = false,
 	},
 	notifications = {
+		statusNotice = {
+			enabled = true,
+			maxReminder = true,
+		},
 		xpGained = true,
 		restedXP = {
 			gained = true,
@@ -403,10 +412,6 @@ ns.profileDefault = {
 		lvlUp = {
 			congrats = true,
 			timePlayed = false,
-		},
-		statusNotice = {
-			enabled = true,
-			maxReminder = true,
 		},
 	},
 }

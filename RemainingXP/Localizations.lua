@@ -88,8 +88,8 @@ ns.localizations.enUS = {
 				},
 			},
 			text = {
-				title = "Text & Font",
-				description = "Customize the font and select the information shown in the main display text overlay.",
+				title = "XP Text",
+				description = "Select the XP value information shown in the main display text overlay.",
 				visible = {
 					label = "Visible",
 					tooltip = "Toggle the visibility of the XP text overlay.",
@@ -98,33 +98,40 @@ ns.localizations.enUS = {
 					label = "Detailed XP Info",
 					tooltip = "Show more information in the main display (not just the xp needed to reach the next level).",
 				},
-				font = {
-					family = {
-						label = "Font Family", --font family or type
-						tooltip = "Select the font of the displayed XP value.",
-						default = "The default option is the font used by Blizzard.",
-						custom = {
-							"You may set the #OPTION_CUSTOM option to any font of your liking by replacing the #FILE_CUSTOM file with another TrueType Font file found in:",
-							"while keeping the original #FILE_CUSTOM name.",
-							"You may need to restart the game client after replacing the Custom font.",
-						},
-					},
-					size = {
-						label = "Font Size",
-						tooltip = "Specify the font size of the XP value shown on the main display.",
-					},
-					color = {
-						label = "Font Color",
+			},
+			font = {
+				title = "Font",
+				description = "Customize the font of the main display text overlay.",
+				family = {
+					label = "Font",
+					tooltip = "Select the font of the displayed XP value.",
+					default = "The default option is the font used by Blizzard.",
+					custom = {
+						"You may set the #OPTION_CUSTOM option to any font of your liking by replacing the #FILE_CUSTOM file with another TrueType Font file found in:",
+						"while keeping the original #FILE_CUSTOM name.",
+						"You may need to restart the game client after replacing the Custom font.",
 					},
 				},
+				size = {
+					label = "Size",
+					tooltip = "Specify the font size of the XP value shown on the main display.",
+				},
 				alignment = {
-					label = "Text Alignment",
+					label = "Alignment",
 					tooltip = "Select the horizontal alignment of the text inside the main XP display.",
+				},
+				colors = {
+					base = { label = "Base Color", },
+					gathered = { label = "Gathered XP Color", },
+					needed = { label = "Needed XP Color", },
+					remaining = { label = "Remaining XP Color", },
+					rested = { label = "Rested Color", },
+					banked = { label = "Banked Color", },
 				},
 			},
 			background = {
 				title = "Background: XP Bar",
-				description = "Customize the graphical elements of the XP bar background in the main XP display.",
+				description = "Customize the graphical elements of the XP bar background of the main XP display.",
 				visible = {
 					label = "Visible",
 					tooltip = "Toggle the visibility of the backdrop elements of the main XP display.",
@@ -143,14 +150,14 @@ ns.localizations.enUS = {
 					bg = {
 						label = "Background Color",
 					},
-					border = {
-						label = "Border Color",
-					},
-					xp = {
+					gathered = {
 						label = "Gathered XP Color",
 					},
 					rested = {
 						label = "Rested XP Color",
+					},
+					border = {
+						label = "Border Color",
 					},
 				},
 			},
@@ -173,31 +180,31 @@ ns.localizations.enUS = {
 		},
 		integration = {
 			title = "Integration",
-			description = "Integrate #ADDON into the default Blizzard XP bar.",
-			enhancement = {
-				title = "XP Bar Enhancement",
-				description = "Configure how the default XP bar integration should behave.",
-				toggle = {
-					label = "Enable Integration",
-					tooltip = "Replace the default text shown when the mouse is hovering over the default XP bar with a custom text that includes detailed XP values (and a detailed tooltip).",
-				},
-				keep = {
-					label = "Always Show",
-					tooltip = "Keep the XP value visible on the XP bar at all times not only when the bar is being hovered.",
-				},
-				remaining = {
-					label = "Remaining XP Only",
-					tooltip = "You may choose to only show the remaining XP value instead of the entire XP text when the mouse is not hovering the XP bar.",
-				},
+			description = "Integrate #ADDON with the default Blizzard XP bar.",
+			-- enhancement = { --REMOVE
+			-- 	title = "XP Bar Enhancement",
+			-- 	description = "Configure how the default XP bar integration should behave.",
+			hideXPBar = {
+				-- title = "Removals & Replacements", --REMOVE
+				-- description = "Choose to hide related elements of the default UI to remove or replace them.",
+				-- xpBar = {
+				label = "Hide the default XP bar",
+				tooltip = "Turn off the default XP bar so you may fully replace it with the custom #ADDON bar.",
+				-- },
 			},
-			removals = {
-				title = "Removals & Replacements",
-				description = "Choose to hide related elements of the default UI to remove or replace them.",
-				xpBar = {
-					label = "Hide default XP bar",
-					tooltip = "Turn off the default XP bar so you may replace it with the custom #ADDON bar.",
-				},
+			toggle = {
+				label = "Enable Integration",
+				tooltip = "Replace the default text shown when the mouse is hovering over the default XP bar with a custom text that includes detailed XP values (and a detailed tooltip).",
 			},
+			keep = {
+				label = "Always Show",
+				tooltip = "Keep the XP value visible on the XP bar at all times not only when the bar is being hovered.",
+			},
+			remaining = {
+				label = "Remaining XP Only",
+				tooltip = "You may choose to only show the remaining XP value instead of the entire XP text when the mouse is not hovering the XP bar.",
+			},
+			-- },
 		},
 		events = {
 			title = "Event Updates",
