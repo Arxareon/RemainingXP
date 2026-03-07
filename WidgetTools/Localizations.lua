@@ -4,15 +4,13 @@
 local ns = select(2, ...)
 
 
---[[ LOCALIZATIONS (WoW locales: https://warcraft.wiki.gg/wiki/API_GetLocale#Values) ]]
+--[[ LOCALIZATIONS ]]
 
+--List of localization tables for [WoW locales](https://warcraft.wiki.gg/wiki/API_GetLocale#Values)
 ns.localizations = {}
 
---TODO: verity AI translations (from enUS)
---TODO: adjust the date formats for the translated languages
-
---# flags will be replaced by text or number values via code
---\n represents the newline character
+--NOTE: #FLAGS will be replaced by text or number values via code; \n represents the newline character
+--CHECK AI translations (from enUS)
 
 --[ English ]
 
@@ -101,7 +99,6 @@ ns.localizations.enUS = {
 			error = "Run command failed.",
 		},
 	},
-	date = "#MONTH/#DAY/#YEAR",
 }
 
 --[ Portuguese (Brazil) ]
@@ -191,7 +188,6 @@ ns.localizations.ptBR = {
 			error = "Falha ao executar o comando.",
 		},
 	},
-	date = "#DAY/#MONTH/#YEAR",
 }
 
 --[ German ]
@@ -281,7 +277,6 @@ ns.localizations.deDE = {
 			error = "Befehl konnte nicht ausgeführt werden.",
 		},
 	},
-	date = "#DAY.#MONTH.#YEAR",
 }
 
 --[ French ]
@@ -371,7 +366,6 @@ ns.localizations.frFR = {
 			error = "Échec de l'exécution de la commande.",
 		},
 	},
-	date = "#DAY/#MONTH/#YEAR",
 }
 
 --[ Spanish (Spain) ]
@@ -461,7 +455,6 @@ ns.localizations.esES = {
 			error = "Error al ejecutar el comando.",
 		},
 	},
-	date = "#DAY/#MONTH/#YEAR",
 }
 
 --[ Spanish (Mexico) ]
@@ -551,7 +544,6 @@ ns.localizations.esMX = {
 			error = "Error al ejecutar el comando.",
 		},
 	},
-	date = "#DAY/#MONTH/#YEAR",
 }
 
 --[ Italian ]
@@ -641,7 +633,6 @@ ns.localizations.itIT = {
 			error = "Errore nell'esecuzione del comando.",
 		},
 	},
-	date = "#DAY/#MONTH/#YEAR",
 }
 
 --[ Korean ]
@@ -731,7 +722,6 @@ ns.localizations.koKR = {
 			error = "명령 실행에 실패했습니다.",
 		},
 	},
-	date = "#YEAR년 #MONTH월 #DAY일",
 }
 
 --[ Chinese (traditional, Taiwan) ]
@@ -821,7 +811,6 @@ ns.localizations.zhTW = {
 			error = "執行指令失敗。",
 		},
 	},
-	date = "#YEAR/#MONTH/#DAY",
 }
 
 --[ Chinese (simplified, PRC) ]
@@ -911,7 +900,6 @@ ns.localizations.zhCN = {
 			error = "运行命令失败。",
 		},
 	},
-	date = "#YEAR/#MONTH/#DAY",
 }
 
 --[ Russian ]
@@ -1001,5 +989,4 @@ ns.localizations.ruRU = {
 			error = "Ошибка выполнения команды.",
 		},
 	},
-	date = "#DAY.#MONTH.#YEAR",
 }

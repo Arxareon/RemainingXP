@@ -30,9 +30,27 @@ ns.chat = {
 --Changelog
 ns.changelog = {
 	{
-		"#V_Version 2.1_# #H_(21/1/2026)_#",
+		"#V_Version 2.3_# #H_(5/3/2026)_#",
+		"#N_New:_#",
+		"A shared list of custom fonts have been added that all addons using Widget Tools can now access through utilities and create Font Selectors for in their settings.",
+		"#C_Changes:_#",
+		"Tooltip data will no longer be injected into frame tables but housed in a toolbox-specific table accessible via frame ID.",
+		"Customizable Frames, Buttons and other widgets must now be created via new constructors, the customizable flags have been removed from their base counterparts."
+	},
+	{
+		"#V_Version 2.2_# #H_(23/2/2026)_#",
+		"#F_Hotfix:_#",
+		"Text in editboxes will once again be properly sized to fit the width of the boxes.",
+	},
+	{
+		"#V_Version 2.2_# #H_(13/2/2026)_#",
+		"#F_Hotfix:_#",
+		"Text in editboxes will once again be properly sized to fit the width of the boxes.",
+	},
+	{
+		"#V_Version 2.1_# #H_(13/2/2026)_#",
 		"#N_Updates:_#",
-		"Added Midnight 12.0, Mists of Pandaria 5.5.3, The Burning Crusade 2.5.5 & Classic 1.15.8 support.",
+		"Added Midnight 12.0.1, Mists of Pandaria 5.5.3, The Burning Crusade 2.5.5 & Classic 1.15.8 support.",
 		"Under the hood improvements.",
 	},
 	{
@@ -121,7 +139,7 @@ ns.changelog = {
 	{
 		"#V_Version 1.5_# #H_(11/28/2020)_#",
 		"#H_Widget Tools has been supporting other addons in the background for over a year. Now, it has been separated into its own addon for more visibility, transparency and to offer wider development options._#",
-     	"#N_Update:_#",
+		"#N_Update:_#",
 		"Added Dragonflight (Retail 10.0) support with backwards compatibility.",
 	},
 }
@@ -160,8 +178,6 @@ ns.colors = {
 ns.textures = {
 	logo = ns.root .. "Textures/Logo.tga",
 	missing = ns.root .. "Textures/MissingLogo.tga",
-	alphaBG = ns.root .. "Textures/AlphaBG.tga",
-	gradientBG = ns.root .. "Textures/GradientBG.tga",
 }
 
 

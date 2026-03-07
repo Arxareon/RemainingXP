@@ -46,7 +46,7 @@ local chatCommands
 
 --Check max level
 local maxLevel = GetMaxLevelForPlayerExpansion()
-local max = UnitLevel("player") >= maxLevel
+local atMax = UnitLevel("player") >= maxLevel
 
 local alwaysShow = C_CVar.GetCVar("xpBarText")
 
@@ -146,7 +146,7 @@ end
 
 ---Print visibility info
 ---@param load boolean ***Default:*** false
-local function PrintStatus(load)
+local function PrintStatus(load) --CHECK
 	if load == true and not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.enabled then return end
 
 	local status = wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
@@ -157,7 +157,7 @@ local function PrintStatus(load)
 		), ns.colors.blue[2])
 	)
 
-	if max then if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.maxReminder then
+	if atMax then if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.maxReminder then
 		status = wt.Color(ns.strings.chat.status.disabled:gsub(
 			"#ADDON", wt.Color(ns.title, ns.colors.purple[1])
 		) .." " ..  wt.Color(ns.strings.chat.status.max:gsub(
@@ -173,27 +173,29 @@ end
 ---Initiate or remove the cross-session variable storing the Rested XP accumulation while inside a Rested Area
 ---@param enabled boolean
 local function SetRestedAccumulation(enabled)
-	if not IsResting() then RemainingXPCSC.xp.accumulatedRested = nil else
-		if RemainingXPCSC.xp.accumulatedRested == nil then RemainingXPCSC.xp.accumulatedRested = 0 end
+	if not IsResting() then RemainingXPCSC.xp.accumulatedRested = nil return end
 
-		--Chat notification
-		if enabled then
-			local atMax = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
-			local atMaxLast = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
+	if RemainingXPCSC.xp.accumulatedRested == nil then RemainingXPCSC.xp.accumulatedRested = 0 end
 
-			--Stared resting status update
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update then
-				print(wt.Color(ns.strings.chat.restedStatus.resting, ns.colors.purple[1]) .. " " .. wt.Color(
-					(atMax or atMaxLast) and ns.strings.chat.restedStatus.notAccumulating or ns.strings.chat.restedStatus.accumulating, ns.colors.blue[1]
-				))
+	--| Chat notifications
 
-				--Max Rested XP reminder
-				if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.maxReminder then if atMax then
-					print(wt.Color(ns.strings.chat.restedStatus.atMax:gsub("#PERCENT", wt.Color("150%%", ns.colors.purple[2])), ns.colors.blue[2]))
-				elseif atMaxLast then
-					print(wt.Color(ns.strings.chat.restedStatus.atMaxLast:gsub("#PERCENT", wt.Color("100%%", ns.colors.purple[2])), ns.colors.blue[2]))
-				end end
-			end
+	if not enabled then return end
+	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update then return end
+
+	local isMaxed = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+	local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
+
+	--Stared resting status update
+	print(wt.Color(ns.strings.chat.restedStatus.resting, ns.colors.purple[1]) .. " " .. wt.Color(
+		(isMaxed or isMaxedLastLevel) and ns.strings.chat.restedStatus.notAccumulating or ns.strings.chat.restedStatus.accumulating, ns.colors.blue[1]
+	))
+
+	--Max Rested XP reminder
+	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.maxReminder then
+		if isMaxed then
+			print(wt.Color(ns.strings.chat.restedStatus.atMax:gsub("#PERCENT", wt.Color("150%%", ns.colors.purple[2])), ns.colors.blue[2]))
+		elseif isMaxedLastLevel then
+			print(wt.Color(ns.strings.chat.restedStatus.atMaxLast:gsub("#PERCENT", wt.Color("100%%", ns.colors.purple[2])), ns.colors.blue[2]))
 		end
 	end
 end
@@ -226,20 +228,11 @@ local function UpdateXPValues()
 	local gainedRestedXP = RemainingXPCSC.xp.rested - oldRestedXP
 
 	--Accumulating Rested XP
-	if gainedRestedXP > 0 and RemainingXPCSC.xp.accumulatedRested ~= nil and IsResting() then
+	if gainedRestedXP > 0 and RemainingXPCSC.xp.accumulatedRested ~= nil and IsResting() then --CHECK condition
 		RemainingXPCSC.xp.accumulatedRested = RemainingXPCSC.xp.accumulatedRested + gainedRestedXP
 	end
 
 	return gainedXP, gainedRestedXP, oldXP, oldRestedXP, oldNeededXP
-end
-
---Assemble the text containing the Banked XP details
-local function GetBankedText()
-	return (GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
-		"#VALUE", wt.Thousands(RemainingXPCSC.xp.banked)
-	):gsub(
-		"#LEVELS", RemainingXPCSC.xp.bankedLevels
-	) or ""
 end
 
 --Update the position, width and visibility of the main XP display bar segments with the current XP values
@@ -250,8 +243,8 @@ local function UpdateXPDisplaySegments()
 	--Rested XP segment
 	if RemainingXPCSC.xp.rested == 0 then frames.display.rested:Hide() else
 		frames.display.rested:Show()
-		if frames.display.xp:GetWidth() == 0 then frames.display.rested:SetPoint("LEFT") else frames.display.rested:SetPoint("LEFT", frames.display.xp, "RIGHT") end
-		frames.display.rested:SetWidth((RemainingXPCSC.xp.gathered + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.needed and RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.needed * frames.display.frame:GetWidth())
+		if frames.display.xp:GetWidth() == 0 then frames.display.rested:SetPoint("LEFT") else frames.display.rested:SetPoint("LEFT", frames.display.xp, "RIGHT") end --CHECK
+		frames.display.rested:SetWidth((RemainingXPCSC.xp.gathered + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.needed and RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.needed * frames.display.frame:GetWidth()) --CHECK if can bee simplified
 	end
 end
 
@@ -261,9 +254,14 @@ local function UpdateXPDisplayText()
 
 	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.details then
 		text = wt.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. wt.Thousands(RemainingXPCSC.xp.needed) .. " (" .. wt.Thousands(RemainingXPCSC.xp.remaining) .. ")"
-		text = text .. (RemainingXPCSC.xp.rested > 0 and " + " .. wt.Thousands(RemainingXPCSC.xp.rested) .. " (" .. wt.Thousands(
-			math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100
-		) .. "%)" or "") .. GetBankedText()
+		if RemainingXPCSC.xp.rested > 0 then
+			text = text .. " + " .. wt.Thousands(RemainingXPCSC.xp.rested) .. " (" .. wt.Thousands(
+				math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100
+			) .. "%)"
+		end
+		if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then
+			text = text.. " + " .. ns.strings.xpBar.banked:gsub("#VALUE", wt.Thousands(RemainingXPCSC.xp.banked)):gsub("#LEVELS", RemainingXPCSC.xp.bankedLevels)
+		end
 	else text = wt.Thousands(RemainingXPCSC.xp.remaining) end
 
 	frames.display.text:SetText(text)
@@ -274,12 +272,11 @@ end
 local function UpdateIntegrationText(keep, remaining)
 	if not frames.integration.frame:IsVisible() then return end
 
-	--Text base visibility
 	wt.SetVisibility(frames.integration.text, keep)
 
-	--Text content
-	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(wt.Thousands(RemainingXPCSC.xp.remaining))
-	else frames.integration.text:SetText(
+	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(wt.Thousands(RemainingXPCSC.xp.remaining)) return end
+
+	frames.integration.text:SetText(
 		ns.strings.xpBar.text:gsub( --REPLACE with pre-colored xpText
 			"#GATHERED", wt.Thousands(RemainingXPCSC.xp.gathered)
 		):gsub(
@@ -292,19 +289,16 @@ local function UpdateIntegrationText(keep, remaining)
 			):gsub(
 				"#PERCENT", wt.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
 			) or ""
-		) .. GetBankedText()
-	) end
+		) .. (GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
+			"#VALUE", wt.Thousands(RemainingXPCSC.xp.banked)
+		):gsub(
+			"#LEVELS", RemainingXPCSC.xp.bankedLevels
+		) or ""
+	)
 end
 
 ---Assemble the detailed text lines for xp tooltip
----@return table textLines Table containing text lines to be added to the tooltip [indexed, 0-based]
---- - **text** string ― Text to be added to the line
---- - **font**? string|FontObject *optional* ― The FontObject to set for this line ***Default:*** GameTooltipTextSmall
---- - **color**? table *optional* ― Table containing the RGB values to color this line with ***Default:*** HIGHLIGHT_FONT_COLOR (white)
---- 	- **r** number ― Red ***Range:*** (0, 1)
---- 	- **g** number ― Green ***Range:*** (0, 1)
---- 	- **b** number ― Blue ***Range:*** (0, 1)
---- - **wrap**? boolean *optional* ― Allow this line to be wrapped ***Default:*** true
+---@return tooltipLineData[] textLines
 local function GetXPTooltipTextlines()
 	local textLines = {
 		--Description
@@ -361,7 +355,8 @@ local function GetXPTooltipTextlines()
 		-- },
 	}
 
-	--Current Rested XP
+	--| Current Rested XP
+
 	if RemainingXPCSC.xp.rested > 0 then
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.rested:gsub(
@@ -402,59 +397,60 @@ local function GetXPTooltipTextlines()
 		})
 	end
 
-	--Resting status
+	--| Resting status
+
 	if IsResting() then
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.chat.restedStatus.resting,
 			font = GameTooltipText,
 			color = ns.colors.blue[1],
 		})
-		local atMax = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
-		local atMaxLast = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
+
+		local isMaxed = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+		local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
+
 		table.insert(textLines, {
-			text = (atMax or atMaxLast) and (ns.strings.xpTooltip.restedAtMax) or ns.strings.chat.restedStatus.accumulating,
+			text = (isMaxed or isMaxedLastLevel) and (ns.strings.xpTooltip.restedAtMax) or ns.strings.chat.restedStatus.accumulating,
 			color = ns.colors.blue[2],
 		})
 	end
 
-	--Accumulated Rested XP
-	if (RemainingXPCSC.xp.accumulatedRested or 0) > 0 then
-		table.insert(textLines, {
-			text = "\n" .. ns.strings.xpTooltip.accumulated:gsub(
-				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.accumulatedRested or 0), ns.colors.blue[2])
-			),
-			color = ns.colors.blue[3],
-		})
-	end
+	--| Accumulated Rested XP
 
-	--Banked XP & levels
-	if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then
-		table.insert(textLines, {
-			text = "\n" .. ns.strings.xpTooltip.banked:gsub(
-				"#VALUE", wt.Color(ns.strings.xpTooltip.bankedValue:gsub(
-					"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.banked), ns.colors.grey[2])
-				):gsub(
-					"#LEVELS", wt.Color(RemainingXPCSC.xp.bankedLevels, ns.colors.grey[2])
-				), ns.colors.grey[3])
-			),
-			font = GameTooltipText,
-			color = ns.colors.grey[1],
-		})
-	end
+	if (RemainingXPCSC.xp.accumulatedRested or 0) > 0 then table.insert(textLines, {
+		text = "\n" .. ns.strings.xpTooltip.accumulated:gsub(
+			"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.accumulatedRested or 0), ns.colors.blue[2])
+		),
+		color = ns.colors.blue[3],
+	}) end
 
-	--Hints
+	--| Banked XP & levels
+
+	if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then table.insert(textLines, {
+		text = "\n" .. ns.strings.xpTooltip.banked:gsub(
+			"#VALUE", wt.Color(ns.strings.xpTooltip.bankedValue:gsub(
+				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.banked), ns.colors.grey[2])
+			):gsub(
+				"#LEVELS", wt.Color(RemainingXPCSC.xp.bankedLevels, ns.colors.grey[2])
+			), ns.colors.grey[3])
+		),
+		font = GameTooltipText,
+		color = ns.colors.grey[1],
+	}) end
+
+	--| Hints
+
 	table.insert(textLines, {
 		text = "\n" .. ns.strings.xpTooltip.hintOptions,
 		font = GameFontNormalTiny,
 		color = ns.colors.grey[1],
 	})
-	if frames.display.border:IsMouseOver() then
-		table.insert(textLines, {
-			text = ns.strings.xpTooltip.hintMove:gsub("#SHIFT", ns.strings.keys.shift),
-			font = GameFontNormalTiny,
-			color = ns.colors.grey[1],
-		})
-	end
+
+	if frames.display.border:IsMouseOver() then table.insert(textLines, {
+		text = ns.strings.xpTooltip.hintMove:gsub("#SHIFT", ns.strings.keys.shift),
+		font = GameFontNormalTiny,
+		color = ns.colors.grey[1],
+	}) end
 
 	return textLines
 end
@@ -463,69 +459,41 @@ end
 local function UpdateXPTooltip()
 	if not ns.tooltip:IsVisible() then return end
 
-	--Find the active owner & update
-	local owner = frames.integration.frame:IsMouseOver() and frames.integration.frame or frames.display.border:IsMouseOver() and frames.display.border or nil
+	local owner = frames.integration.frame:IsMouseOver() and frames.integration.frame or frames.display.border:IsMouseOver() and frames.display.border or nil --CHECK if needed
 	if owner then wt.UpdateTooltip(owner, { lines = GetXPTooltipTextlines(), }) end
 end
 
 --[ Main XP Display ]
 
 ---Fade the main display in or out
----@param state? boolean Decides whether to fade our or fade in the display ***Default:*** db.display.fade.enabled
----@param textColor? table Table containing the text color values ***Default:*** db.display.font.colors.base
---- - **r** number ― Red (Range: 0 - 1)
---- - **g** number ― Green (Range: 0 - 1)
---- - **b** number ― Blue (Range: 0 - 1)
---- - **a**? number *optional* ― Opacity ***Range:*** (0, 1) | ***Default:*** 1
----@param bgColor? table Table containing the backdrop background color values ***Default:*** db.display.background.bg
---- - **r** number ― Red (Range: 0 - 1)
---- - **g** number ― Green (Range: 0 - 1)
---- - **b** number ― Blue (Range: 0 - 1)
---- - **a**? number *optional* ― Opacity ***Range:*** (0, 1) | ***Default:*** 1
----@param xpColor? table Table containing the backdrop background color values ***Default:*** db.display.background.xp
---- - **r** number ― Red (Range: 0 - 1)
---- - **g** number ― Green (Range: 0 - 1)
---- - **b** number ― Blue (Range: 0 - 1)
---- - **a**? number *optional* ― Opacity ***Range:*** (0, 1) | ***Default:*** 1
----@param restedColor? table Table containing the backdrop background color values ***Default:*** db.display.background.rested
---- - **r** number ― Red (Range: 0 - 1)
---- - **g** number ― Green (Range: 0 - 1)
---- - **b** number ― Blue (Range: 0 - 1)
---- - **a**? number *optional* ― Opacity ***Range:*** (0, 1) | ***Default:*** 1
----@param borderColor? table Table containing the backdrop border color values ***Default:*** db.display.background.border
---- - **r** number ― Red (Range: 0 - 1)
---- - **g** number ― Green (Range: 0 - 1)
---- - **b** number ― Blue (Range: 0 - 1)
---- - **a**? number *optional* ― Opacity ***Range:*** (0, 1) | ***Default:*** 1
----@param textIntensity? number Value determining how much to fade out the text ***Range:*** (0, 1) | ***Default:*** db.display.fade.text
----@param backdropIntensity? number Value determining how much to fade out the backdrop elements ***Range:*** (0, 1) | ***Default:*** db.display.fade.background
-local function Fade(state, textColor, bgColor, borderColor, xpColor, restedColor, textIntensity, backdropIntensity)
+---@param state? boolean ***Default:*** **RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled**
+local function Fade(state)
 	if state == nil then state = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled end
 
-	--Text
-	local r, g, b, a = wt.UnpackColor(textColor or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.base)
-	frames.display.text:SetTextColor(r, g, b, (a or 1) * (state and 1 - (textIntensity or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.text) or 1))
+	--| Text
 
-	--Background
-	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible then
-		backdropIntensity = backdropIntensity or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background
+	local r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.base)
+	frames.display.text:SetTextColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.text or 1))
 
-		--Backdrop
-		r, g, b, a = wt.UnpackColor(bgColor or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.bg)
-		frames.display.frame:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
+	--| Background
 
-		--Current XP segment
-		r, g, b, a = wt.UnpackColor(xpColor or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.gathered)
-		frames.display.xp:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
+	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible then return end
 
-		--Rested XP segment
-		r, g, b, a = wt.UnpackColor(restedColor or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.rested)
-		frames.display.rested:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
+	--Backdrop
+	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.bg)
+	frames.display.frame:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
 
-		--Border & Text holder
-		r, g, b, a = wt.UnpackColor(borderColor or RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.border)
-		frames.display.border:SetBackdropBorderColor(r, g, b, (a or 1) * (state and 1 - backdropIntensity or 1))
-	end
+	--Current XP segment
+	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.gathered)
+	frames.display.xp:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
+
+	--Rested XP segment
+	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.rested)
+	frames.display.rested:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
+
+	--Border & text overlay
+	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.border)
+	frames.display.border:SetBackdropBorderColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
 end
 
 ---Set the size of the main display elements
@@ -540,33 +508,13 @@ local function ResizeDisplay(width, height)
 	frames.display.rested:SetHeight(height)
 	UpdateXPDisplaySegments()
 
-	--Border & Text holder
+	--Border & text overlay
 	frames.display.border:SetSize(width, height)
 end
 
 ---Set the backdrop of the main display elements
 ---@param enabled boolean Whether to add or remove the backdrop elements of the main display
----@param backdropColors table Table containing the backdrop color values of all main display elements
---- - **bg** table
---- 	- **r** number ― Red (Range: 0 - 1)
---- 	- **g** number ― Green (Range: 0 - 1)
---- 	- **b** number ― Blue (Range: 0 - 1)
---- 	- **a** number ― Opacity (Range: 0 - 1)
---- - **xp** table
---- 	- **r** number ― Red (Range: 0 - 1)
---- 	- **g** number ― Green (Range: 0 - 1)
---- 	- **b** number ― Blue (Range: 0 - 1)
---- 	- **a** number ― Opacity (Range: 0 - 1)
---- - **rested** table
---- 	- **r** number ― Red (Range: 0 - 1)
---- 	- **g** number ― Green (Range: 0 - 1)
---- 	- **b** number ― Blue (Range: 0 - 1)
---- 	- **a** number ― Opacity (Range: 0 - 1)
---- - **border** table
---- 	- **r** number ― Red (Range: 0 - 1)
---- 	- **g** number ― Green (Range: 0 - 1)
---- 	- **b** number ― Blue (Range: 0 - 1)
---- 	- **a** number ― Opacity (Range: 0 - 1)
+---@param backdropColors displayBackgroundColorData
 local function SetDisplayBackdrop(enabled, backdropColors)
 	if not enabled then
 		frames.display.frame:SetBackdrop(nil)
@@ -586,7 +534,7 @@ local function SetDisplayBackdrop(enabled, backdropColors)
 			bgFile = "Interface/ChatFrame/ChatFrameBackground",
 			tile = true, tileSize = 5,
 		})
-		frames.display.xp:SetBackdropColor(wt.UnpackColor(backdropColors.xp))
+		frames.display.xp:SetBackdropColor(wt.UnpackColor(backdropColors.gathered))
 
 		--Rested XP segment
 		frames.display.rested:SetBackdrop({
@@ -595,7 +543,7 @@ local function SetDisplayBackdrop(enabled, backdropColors)
 		})
 		frames.display.rested:SetBackdropColor(wt.UnpackColor(backdropColors.rested))
 
-		--Border & Text holder
+		--Border & text overlay
 		frames.display.border:SetBackdrop({
 			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
 			edgeSize = 1,
@@ -642,7 +590,7 @@ end
 ---Set the visibility of the integrated display frame
 ---@param enabled boolean Whether or not the default XP bar integration is enabled
 local function SetIntegrationVisibility(enabled)
-	if enabled and not max then
+	if enabled and not atMax then
 		frames.integration.frame:Show()
 		C_CVar.SetCVar("xpBarText", 0)
 	else TurnOffIntegration() end
@@ -749,7 +697,8 @@ frames.main = wt.CreateFrame({
 					["display.position.point"] = { saveTo = data.display.position, saveKey = "anchor" },
 					["appearance.frameStrata"] = { saveTo = data.display.layer, saveKey = "strata" },
 					["display.visibility.frameStrata"] = { saveTo = data.display.layer, saveKey = "strata" },
-					["text.font.family"] = { saveTo = data.display.font, saveKey = "family" },
+					["text.font.family"] = { saveTo = data.display.font, saveKey = "path" },
+					["display.font.family"] = { saveTo = data.display.font, saveKey = "path" },
 					["text.font.size"] = { saveTo = data.display.font, saveKey = "size" },
 					["text.alignment"] = { saveTo = data.display.font, saveKey = "alignment" },
 					["text.font.color.r"] = { saveTo = data.display.font.colors.base, saveKey = "r" },
@@ -867,7 +816,7 @@ frames.main = wt.CreateFrame({
 									key = key,
 									onChange = {
 										DisplayToggle = function()
-											wt.SetVisibility(frames.display.frame, not (RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden or max))
+											wt.SetVisibility(frames.display.frame, not (RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden or atMax))
 										end,
 										EnsureVisibility = EnsureVisibility,
 									},
@@ -1834,7 +1783,7 @@ frames.main = wt.CreateFrame({
 									category = category,
 									key = key,
 									onChange = { UpdateRestedAccumulation = function()
-										SetRestedAccumulation(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and max)
+										SetRestedAccumulation(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and atMax)
 									end, },
 								},
 							})
@@ -1951,7 +1900,7 @@ frames.main = wt.CreateFrame({
 							"#INDEX", wt.Color(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[3])
 						),
 						handler = function(_, parameter)
-							if max then
+							if atMax then
 								PrintStatus()
 								return nil
 							end
@@ -2003,7 +1952,7 @@ frames.main = wt.CreateFrame({
 							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
 								RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden and ns.strings.chat.toggle.hiding or ns.strings.chat.toggle.unhiding, ns.colors.blue[2])
 							)
-							if max then PrintStatus() end
+							if atMax then PrintStatus() end
 						end,
 					},
 					{
@@ -2020,7 +1969,7 @@ frames.main = wt.CreateFrame({
 							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.fade.response:gsub(
 								"#STATE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 							), ns.colors.blue[2]))
-							if max then PrintStatus() end
+							if atMax then PrintStatus() end
 						end,
 					},
 					{
@@ -2041,7 +1990,7 @@ frames.main = wt.CreateFrame({
 							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.response:gsub(
 								"#VALUE", wt.Color(size, ns.colors.purple[2])
 							), ns.colors.blue[2]))
-							if max then PrintStatus() end
+							if atMax then PrintStatus() end
 						end,
 						onError = function()
 							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.unchanged, ns.colors.blue[1]))
@@ -2062,7 +2011,7 @@ frames.main = wt.CreateFrame({
 							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.integration.response:gsub(
 								"#STATE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 							), ns.colors.blue[2]))
-							if max then PrintStatus() end
+							if atMax then PrintStatus() end
 						end,
 					},
 					{
@@ -2133,7 +2082,7 @@ frames.main = wt.CreateFrame({
 
 			--[[ DISPLAYS ]]
 
-			if max then
+			if atMax then
 				--Hide displays
 				frames.display.frame:Hide()
 				TurnOffIntegration()
@@ -2156,7 +2105,7 @@ frames.main = wt.CreateFrame({
 			--Visibility notice
 			if not self:IsVisible() then PrintStatus(true) end
 		end,
-		PLAYER_ENTERING_WORLD = max and nil or function(self)
+		PLAYER_ENTERING_WORLD = atMax and nil or function(self)
 			self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 
 			--XP update
@@ -2195,7 +2144,7 @@ frames.main = wt.CreateFrame({
 				if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.hideXPBar then MainStatusTrackingBarContainer:Hide() end
 			end)
 		end,
-		PLAYER_XP_UPDATE = max and nil or function(_, unit)
+		PLAYER_XP_UPDATE = atMax and nil or function(_, unit)
 			if unit ~= "player" then return end
 
 			--XP update
@@ -2212,7 +2161,7 @@ frames.main = wt.CreateFrame({
 				print(wt.Color(ns.strings.chat.xpGained.text:gsub(
 					"#AMOUNT", wt.Color(wt.Thousands(gainedXP), ns.colors.purple[1])
 				):gsub(
-					"#REMAINING", wt.Color(max and ns.strings.chat.lvlUp.disabled.reason:gsub(
+					"#REMAINING", wt.Color(atMax and ns.strings.chat.lvlUp.disabled.reason:gsub(
 						"#MAX", maxLevel
 					) or ns.strings.chat.xpGained.remaining:gsub(
 						"#AMOUNT", wt.Color(wt.Thousands(RemainingXPCSC.xp.remaining), ns.colors.purple[3])
@@ -2225,10 +2174,10 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		PLAYER_LEVEL_UP = max and nil or function(_, newLevel)
-			max = newLevel >= maxLevel
+		PLAYER_LEVEL_UP = atMax and nil or function(_, newLevel)
+			atMax = newLevel >= maxLevel
 
-			if max then
+			if atMax then
 				frames.display.frame:Hide()
 				TurnOffIntegration()
 
@@ -2253,7 +2202,7 @@ frames.main = wt.CreateFrame({
 				UpdateXPTooltip()
 			end
 		end,
-		UPDATE_EXHAUSTION = max and nil or function()
+		UPDATE_EXHAUSTION = atMax and nil or function()
 			--Update Rested XP
 			local _, gainedRestedXP = UpdateXPValues()
 			if gainedRestedXP <= 0 then return end
@@ -2280,7 +2229,7 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		PLAYER_UPDATE_RESTING = max and nil or function()
+		PLAYER_UPDATE_RESTING = atMax and nil or function()
 			--Notification
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and not IsResting() then
 				print((RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update and (wt.Color(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
@@ -2304,45 +2253,42 @@ frames.main = wt.CreateFrame({
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
-		UNIT_ENTERING_VEHICLE = max and nil or function(_, unit, swapUI) if unit == "player" and swapUI then
+		UNIT_ENTERING_VEHICLE = atMax and nil or function(_, unit, swapUI) if unit == "player" and swapUI then
 			frames.display.frame:Hide()
 			frames.integration.frame:Hide()
 		end end,
-		UNIT_EXITING_VEHICLE = max and nil or function(_, unit) if unit == "player" then
+		UNIT_EXITING_VEHICLE = atMax and nil or function(_, unit) if unit == "player" then
 			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled then frames.integration.frame:Show() end
 		end end,
-		PET_BATTLE_OPENING_START = max and nil or function()
+		PET_BATTLE_OPENING_START = atMax and nil or function()
 			frames.display.frame:Hide()
 			frames.integration.frame:Hide()
 		end,
-		PET_BATTLE_CLOSE = max and nil or function()
+		PET_BATTLE_CLOSE = atMax and nil or function()
 			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled then frames.integration.frame:Show() end
 		end,
 	},
-	initialize = max and nil or function(_, _, _, name)
+	initialize = atMax and nil or function(_, _, _, name)
 
 		--[ Main Display ]
 
-		frames.display.frame = wt.CreateFrame({
+		frames.display.frame = wt.CreateCustomFrame({
 			parent = UIParent,
 			name = name .. "MainDisplay",
-			customizable = true,
 			initialize = function(display)
 				--Background: Current XP segment
-				frames.display.xp = wt.CreateFrame({
+				frames.display.xp = wt.CreateCustomFrame({
 					parent = display,
 					name = "CurrentXPSegment",
-					customizable = true,
 					position = { anchor = "LEFT", },
 				})
 
 				--Background: Rested XP segment
-				frames.display.rested = wt.CreateFrame({
+				frames.display.rested = wt.CreateCustomFrame({
 					parent = display,
 					name = "RestedXPSegment",
-					customizable = true,
 					position = {
 						anchor = "LEFT",
 						relativeTo = frames.display.xp,
@@ -2351,10 +2297,9 @@ frames.main = wt.CreateFrame({
 				})
 
 				--Background: Border overplay
-				frames.display.border = wt.CreateFrame({
+				frames.display.border = wt.CreateCustomFrame({
 					parent = display,
 					name = "BorderOverlay",
-					customizable = true,
 					position = { anchor = "CENTER", },
 					events = {
 						OnEnter = function() if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled then Fade(false) end end,
@@ -2378,10 +2323,9 @@ frames.main = wt.CreateFrame({
 
 		--[ Integrated Display ]
 
-		frames.integration.frame = wt.CreateFrame({
+		frames.integration.frame = wt.CreateCustomFrame({
 			parent = UIParent,
 			name = name .. "IntegratedDisplay",
-			customizable = true,
 			position = {
 				anchor = "BOTTOM",
 				relativeTo = MainStatusTrackingBarContainer,
