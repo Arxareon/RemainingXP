@@ -1,7 +1,7 @@
 --[[ NAMESPACE ]]
 
 ---Addon namespace table
----@class RemainingXPNamespace
+---@class addonNamespace
 ---@field name string Addon namespace name
 local ns = select(2, ...)
 

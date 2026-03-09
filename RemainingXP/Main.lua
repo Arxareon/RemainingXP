@@ -1,12 +1,12 @@
 --[[ NAMESPACE ]]
 
----@class RemainingXPNamespace
+---@class addonNamespace
 local ns = select(2, ...)
 
 
 --[[ REFERENCES ]]
 
----@class wt
+---@class widgetToolbox
 local wt = ns.WidgetToolbox
 
 local frames = {

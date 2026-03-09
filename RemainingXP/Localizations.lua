@@ -1,6 +1,6 @@
 --[[ NAMESPACE ]]
 
----@class RemainingXPNamespace
+---@class addonNamespace
 local ns = select(2, ...)
 
 
