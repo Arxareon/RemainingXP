@@ -442,13 +442,13 @@ local function GetXPTooltipTextlines()
 
 	table.insert(textLines, {
 		text = "\n" .. ns.strings.xpTooltip.hintOptions,
-		font = GameFontNormalTiny,
+		font = GameFontNormalSmall,
 		color = ns.colors.grey[1],
 	})
 
 	if frames.display.border:IsMouseOver() then table.insert(textLines, {
 		text = ns.strings.xpTooltip.hintMove:gsub("#SHIFT", ns.strings.keys.shift),
-		font = GameFontNormalTiny,
+		font = GameFontNormalSmall,
 		color = ns.colors.grey[1],
 	}) end
 
