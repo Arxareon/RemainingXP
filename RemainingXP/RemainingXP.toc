@@ -1,7 +1,7 @@
 ## Interface: 120001, 50503, 20505, 11508
 ## Title: Remaining XP
 ## Version: 3.0
-## X-Day: 8
+## X-Day: 20
 ## X-Month: 3
 ## X-Year: 2026
 ## Category: Quests & Leveling
@@ -16,7 +16,10 @@
 ## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
 ## SavedVariables: RemainingXPDB, RemainingXPCS
 ## SavedVariablesPerCharacter: RemainingXPDBC, RemainingXPCSC
+## LoadSavedVariablesFirst: 1
 ## Dependencies: WidgetTools
+## X-WidgetTools-ToolboxVersion: 3.0
+## X-WidgetTools-AddToNamespace: wt
 
 Localizations.lua
 Resources.lua

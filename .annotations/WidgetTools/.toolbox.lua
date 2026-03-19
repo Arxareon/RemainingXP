@@ -1,6 +1,11 @@
 --NOTE: Annotations are for development purposes only, providing documentation for use with LUA Language Server. This file does not need to be loaded by the game client.
 
 
+---Read-only reference to the Widget Toolbox table
+---@class widgetToolbox
+local toolbox
+
+
 --[[ MISC ]]
 
 ---@alias ModifierKey
@@ -13,7 +18,6 @@
 ---| "RSHIFT"
 ---| "LALT"
 ---| "RALT"
----| "any"
 
 ---@alias AnyFrameObject
 ---| Frame
@@ -137,6 +141,7 @@
 ---| "Action"
 ---| "Toggle"
 ---| "Selector"
+---| "SpecialSelector"
 ---| "Multiselector"
 ---| "Textbox"
 ---| "Numeric"
@@ -157,12 +162,19 @@
 
 --| Global functions
 
----Create a colored string from the provided value via escape sequences
+---Create a colored string via escape sequences
 ---***
 ---@param value string|number Value to add coloring to
 ---@param color colorData|colorRGBA Table containing the color values
 ---@return string
 function WrapTextInColor(value, color) return value end
+
+---Clamp a number between two limits
+---@param value number
+---@param min number
+---@param max number
+---@return number
+function Clamp(value, min, max) return value end
 
 --[[ TABLE MANAGEMENT ]]
 
@@ -248,7 +260,7 @@ function WrapTextInColor(value, color) return value end
 ---@field initialize? fun(container?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 ---@class initializableOptionsContainer : initializableContainer
----@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] A list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 ---@class arrangementRules
 ---@field newRow? boolean Place the frame into a new row within its container instead of adding it to a specified row | ***Default:*** true<ul><li>***Note:*** If the item would not fit in the row with other items in there, it will automatically be placed in a new row.</li></ul>
@@ -284,7 +296,7 @@ function WrapTextInColor(value, color) return value end
 ---@field onCancel? function Function to call when the movement of **frame** is cancelled (because the modifier key was released early as an example)
 
 ---@class movabilityData
----@field modifier? ModifierKey The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** nil *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** nil *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
 ---@field triggers? Frame[] List of frames that should handle inputs to initiate or stop the movement when interacted with | ***Default:*** **t.frame**
 ---@field events? movementEvents Table containing functions to call when certain movement events occur
 ---@field cursor? boolean If true, change the cursor to a movement cross when mousing over **t.frame** and **t.modifier** is pressed down if set | ***Default:*** **t.modifier** ~= nil
@@ -348,14 +360,13 @@ function WrapTextInColor(value, color) return value end
 ---@field style TBFFlags Comma separated string of font styling flags
 
 ---@class fontCreationData
----@field name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
 ---@field template? FontObject An existing [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to copy as a baseline
 ---@field font? fontData Table containing font properties used for [FontInstance:SetFont(...)](https://warcraft.wiki.gg/wiki/API_FontInstance_SetFont) (overriding **t.template**)
 ---@field color? colorData_whiteDefault|colorData Apply the specified color to the font (overriding **t.template**)
----@field spacing? number Set the character spacing of the text using this font (overriding **t.template**) | ***Default:*** 0
+---@field spacing? number Set the character spacing of the text using this font (overriding **t.template**)
 ---@field shadow? { offset: offsetData, color: colorData_blackDefault|colorData } Set a text shadow with the following parameters (overriding **t.template**)
 ---@field justify? justifyData_centered Set the justification of the text using font (overriding **t.template**)
----@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding **t.template**) | ***Default:*** true
+---@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding **t.template**)
 
 ---@class textCreationData : positionableObject
 ---@field parent? AnyFrameObject Reference to parent frame to create and assign the text to | ***Default:*** UIParent
@@ -397,22 +408,20 @@ function WrapTextInColor(value, color) return value end
 ---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 0.55
 
 ---@class titleCreationData
----@field parent AnyFrameObject Reference to the frame to add the title to
 ---@field anchor? FramePoint ***Default:*** "TOPLEFT"
 ---@field offset? offsetData The offset from the anchor point relative to the specified frame
 ---@field width? number ***Default:*** *width of the text*
----@field text string Text to be shown as the main title of the frame
+---@field text? string Text to be shown as the main title of the frame
 ---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontHighlight"
 ---@field color? colorData Apply the specified color to the title (overriding **t.font**)
 ---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding **t.font**) | ***Default:*** "LEFT"
 
 ---@class descriptionCreationData
----@field title FontString Reference to the already existing title to place the description next to
 ---@field offset? offsetData The offset from the default position (right side of the separator to the right of **t.title**)
 ---@field width? number ***Default:*** *width of the parent frame of **t.title** - width of **t.title** (& separator, offsets)*
 ---@field widthOffset? number Increase the calculated with by this amount | ***Default:*** 0
 ---@field spacer? number Space to leave between **t.title** & the separator and the separator & the description | ***Default:*** 5
----@field text string Text to be shown as the description of the frame
+---@field text? string Text to be shown as the description of the frame
 ---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontHighlightSmall2"
 ---@field color? descriptionColorData|colorData Apply the specified color to the description (overriding **t.font**)
 ---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding **t.font**) | ***Default:*** "LEFT"
@@ -473,7 +482,6 @@ function WrapTextInColor(value, color) return value end
 ---@field bottomRight vertexCoordinates_bottomRight
 
 ---@class textureCreationData : positionableObject, pathData_ChatFrameDefault
----@field parent AnyFrameObject Reference to the frame to set as the parent of the new texture
 ---@field name? string String appended to the name of **t.parent** used to set the name of the new texture | ***Default:*** "Texture"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData ***Default:*** *size of* **parent**
 ---@field atlas? string Name of the texture atlas to use instead of creating a texture based on **t.path**<ul><li>***Note:*** Settings this will override whatever **t.path** is set to.</li></ul>
@@ -510,10 +518,9 @@ function WrapTextInColor(value, color) return value end
 --[[ LINE ]]
 
 ---@class lineCreationData
----@field parent AnyFrameObject Reference to the frame to set as the parent of the new line
 ---@field name? string String appended to the name of **t.parent** used to set the name of the new line | ***Default:*** "Line"
----@field startPosition pointData Parameters to call [Line:SetStartPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetStartPoint) with
----@field endPosition pointData Parameters to call [Line:SetEndPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetEndPoint) with
+---@field startPosition? pointData Parameters to call [Line:SetStartPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetStartPoint) with | ***Default:*** "TOPLEFT"
+---@field endPosition? pointData Parameters to call [Line:SetEndPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetEndPoint) with | ***Default:*** "TOPLEFT"
 ---@field thickness? number ***Default:*** 4
 ---@field layer? DrawLayer 
 ---@field level? integer Sublevel to set within the draw layer specified with **t.layer** | ***Range:*** (-8, 7)
@@ -1553,7 +1560,7 @@ function WrapTextInColor(value, color) return value end
 
 ---@class sliderCreationData : numericCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, widgetWidthValue, visibleObject_base, liteObject, tooltipDescribableSettingsWidget
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Slider"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field valueBox? boolean Whether or not should the slider have an [EditBox](https://warcraft.wiki.gg/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** true
+---@field valuebox? boolean Whether or not should the slider have an [EditBox](https://warcraft.wiki.gg/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** true
 ---@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
 
 ---@class classicSliderCreationData : sliderCreationData
@@ -1624,7 +1631,7 @@ function WrapTextInColor(value, color) return value end
 ---@field default? colorData Default value of the widget | ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *(opaque white)*
 
 ---@class colorpickerCreationData : colormanagerCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject, tooltipDescribableSettingsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Color Picker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field name? string Unique string used to set the frame name | ***Default:*** "Colorpicker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field width? number The height is defaulted to 36, the width may be specified | ***Default:*** 120
 ---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
 
@@ -1713,7 +1720,7 @@ function WrapTextInColor(value, color) return value end
 ---@field custom? customPositionPresetData When set, add widgets to manage a user-modifiable custom preset
 
 ---@class movabilityData_positioning : movabilityData
----@field modifier? ModifierKey The specific (or any) modifier key required to be pressed down to move **frame** (if **frame** has the "OnUpdate" script defined) | ***Default:*** "SHIFT"<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **frame** (if **frame** has the "OnUpdate" script defined) | ***Default:*** "SHIFT"<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
 
 ---@class settingsData_position : settingsData_base
 ---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Position"
