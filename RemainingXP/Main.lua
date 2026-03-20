@@ -1,4 +1,6 @@
---[[ NAMESPACE ]]
+--[[ REFERENCES ]]
+
+--[ Namespace ]
 
 ---@class addonNamespace
 local ns = select(2, ...)
@@ -6,8 +8,24 @@ local ns = select(2, ...)
 
 --[[ REFERENCES ]]
 
----@class widgetToolbox
-local wt = ns.WidgetToolbox
+--[ Shortcuts ]
+
+---@type widgetToolbox
+local wt = ns[C_AddOns.GetAddOnMetadata(ns.name, "X-WidgetTools-AddToNamespace")]
+
+---@type widgetToolsResources
+local rs = WidgetTools.resources
+
+---@type widgetToolsUtilities
+local us = WidgetTools.utilities
+
+---@type widgetToolsUtilities
+local ds = WidgetTools.debugging
+
+local cr = WrapTextInColor
+
+--[ Locals ]
+
 
 local frames = {
 	display = { frame = {} },
