@@ -19,13 +19,12 @@ local rs = WidgetTools.resources
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities
 
----@type widgetToolsUtilities
+---@type widgetToolsDebugging
 local ds = WidgetTools.debugging
 
 local cr = WrapTextInColor
 
 --[ Locals ]
-
 
 local frames = {
 	display = { frame = {} },
@@ -71,25 +70,6 @@ local alwaysShow = C_CVar.GetCVar("xpBarText")
 
 --[[ UTILITIES ]]
 
---[ Resource Management ]
-
----Find the ID of the font provided
----@param fontPath string
----@return integer id ***Default:*** 1 *(if* **fontPath** *isn't found)*
-local function GetFontID(fontPath)
-	local id = 1
-
-	for i = 1, #ns.fonts do
-		if ns.fonts[i].path == fontPath then
-			id = i
-
-			break
-		end
-	end
-
-	return id
-end
-
 --[ Initialization ]
 
 --Set up a display context menu
@@ -98,7 +78,7 @@ local function CreateContextMenu(parent)
 		wt.CreateMenuTextline(menu, { text = ns.title, })
 		wt.CreateSubmenu(menu, { title = ns.strings.misc.options, initialize = function(optionsMenu)
 			wt.CreateMenuButton(optionsMenu, {
-				title = wt.GetStrings("about").title,
+				title = wt.strings.about.title,
 				tooltip = { lines = { { text = ns.strings.options.main.description:gsub("#ADDON", ns.title), }, } },
 				action = options.main.page.open,
 			})
@@ -118,14 +98,14 @@ local function CreateContextMenu(parent)
 				action = options.events.page.open,
 			})
 			wt.CreateMenuButton(optionsMenu, {
-				title = wt.GetStrings("dataManagement").title,
-				tooltip = { lines = { { text = wt.GetStrings("dataManagement").description:gsub("#ADDON", ns.title), }, } },
+				title = wt.strings.dataManagement.title,
+				tooltip = { lines = { { text = wt.strings.dataManagement.description:gsub("#ADDON", ns.title), }, } },
 				action = options.dataManagement.page.open,
 			})
 		end })
-		wt.CreateSubmenu(menu, { title = wt.GetStrings("apply").label, initialize = function(presetsMenu)
-			for i = 1, #options.display.position.presetList do wt.CreateMenuButton(presetsMenu, {
-				title = options.display.position.presetList[i].title,
+		wt.CreateSubmenu(menu, { title = wt.strings.presets.apply.label, initialize = function(presetsMenu)
+			for i = 1, #options.display.position.presets do wt.CreateMenuButton(presetsMenu, {
+				title = options.display.position.presets[i].title,
 				action = function() options.display.position.applyPreset(i) end,
 			}) end
 		end })
@@ -161,25 +141,26 @@ local function EnsureVisibility()
 end
 
 --[ Chat Control ]
+--CHECK
 
 ---Print visibility info
 ---@param load boolean ***Default:*** false
-local function PrintStatus(load) --CHECK
+local function PrintStatus(load)
 	if load == true and not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.enabled then return end
 
-	local status = wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
+	local status = cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(
 		frames.display.frame:IsVisible() and ns.strings.chat.status.visible or ns.strings.chat.status.hidden, ns.colors.blue[1]
 	):gsub(
-		"#FADE", wt.Color(ns.strings.chat.status.fade:gsub(
-			"#STATE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+		"#FADE", cr(ns.strings.chat.status.fade:gsub(
+			"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 		), ns.colors.blue[2])
 	)
 
 	if atMax then if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.maxReminder then
-		status = wt.Color(ns.strings.chat.status.disabled:gsub(
-			"#ADDON", wt.Color(ns.title, ns.colors.purple[1])
-		) .." " ..  wt.Color(ns.strings.chat.status.max:gsub(
-			"#MAX", wt.Color(maxLevel, ns.colors.purple[2])
+		status = cr(ns.strings.chat.status.disabled:gsub(
+			"#ADDON", cr(ns.title, ns.colors.purple[1])
+		) .." " ..  cr(ns.strings.chat.status.max:gsub(
+			"#MAX", cr(maxLevel, ns.colors.purple[2])
 		), ns.colors.blue[2]), ns.colors.blue[1])
 	else return end end
 
@@ -200,20 +181,20 @@ local function SetRestedAccumulation(enabled)
 	if not enabled then return end
 	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update then return end
 
-	local isMaxed = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
-	local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
+	local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+	local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
 
 	--Stared resting status update
-	print(wt.Color(ns.strings.chat.restedStatus.resting, ns.colors.purple[1]) .. " " .. wt.Color(
+	print(cr(ns.strings.chat.restedStatus.resting, ns.colors.purple[1]) .. " " .. cr(
 		(isMaxed or isMaxedLastLevel) and ns.strings.chat.restedStatus.notAccumulating or ns.strings.chat.restedStatus.accumulating, ns.colors.blue[1]
 	))
 
 	--Max Rested XP reminder
 	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.maxReminder then
 		if isMaxed then
-			print(wt.Color(ns.strings.chat.restedStatus.atMax:gsub("#PERCENT", wt.Color("150%%", ns.colors.purple[2])), ns.colors.blue[2]))
+			print(cr(ns.strings.chat.restedStatus.atMax:gsub("#PERCENT", cr("150%%", ns.colors.purple[2])), ns.colors.blue[2]))
 		elseif isMaxedLastLevel then
-			print(wt.Color(ns.strings.chat.restedStatus.atMaxLast:gsub("#PERCENT", wt.Color("100%%", ns.colors.purple[2])), ns.colors.blue[2]))
+			print(cr(ns.strings.chat.restedStatus.atMaxLast:gsub("#PERCENT", cr("100%%", ns.colors.purple[2])), ns.colors.blue[2]))
 		end
 	end
 end
@@ -271,16 +252,16 @@ local function UpdateXPDisplayText()
 	local text = "" --REPLACE with pre-colored xpText
 
 	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.details then
-		text = wt.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. wt.Thousands(RemainingXPCSC.xp.needed) .. " (" .. wt.Thousands(RemainingXPCSC.xp.remaining) .. ")"
+		text = us.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. us.Thousands(RemainingXPCSC.xp.needed) .. " (" .. us.Thousands(RemainingXPCSC.xp.remaining) .. ")"
 		if RemainingXPCSC.xp.rested > 0 then
-			text = text .. " + " .. wt.Thousands(RemainingXPCSC.xp.rested) .. " (" .. wt.Thousands(
+			text = text .. " + " .. us.Thousands(RemainingXPCSC.xp.rested) .. " (" .. us.Thousands(
 				math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100
 			) .. "%)"
 		end
 		if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then
-			text = text.. " + " .. ns.strings.xpBar.banked:gsub("#VALUE", wt.Thousands(RemainingXPCSC.xp.banked)):gsub("#LEVELS", RemainingXPCSC.xp.bankedLevels)
+			text = text.. " + " .. ns.strings.xpBar.banked:gsub("#VALUE", us.Thousands(RemainingXPCSC.xp.banked)):gsub("#LEVELS", RemainingXPCSC.xp.bankedLevels)
 		end
-	else text = wt.Thousands(RemainingXPCSC.xp.remaining) end
+	else text = us.Thousands(RemainingXPCSC.xp.remaining) end
 
 	frames.display.text:SetText(text)
 end
@@ -292,26 +273,26 @@ local function UpdateIntegrationText(keep, remaining)
 
 	wt.SetVisibility(frames.integration.text, keep)
 
-	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(wt.Thousands(RemainingXPCSC.xp.remaining)) return end
+	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(us.Thousands(RemainingXPCSC.xp.remaining)) return end
 
 	frames.integration.text:SetText(
 		ns.strings.xpBar.text:gsub( --REPLACE with pre-colored xpText
-			"#GATHERED", wt.Thousands(RemainingXPCSC.xp.gathered)
+			"#GATHERED", us.Thousands(RemainingXPCSC.xp.gathered)
 		):gsub(
-			"#NEEDED", wt.Thousands(RemainingXPCSC.xp.needed)
+			"#NEEDED", us.Thousands(RemainingXPCSC.xp.needed)
 		):gsub(
-			"#REMAINING", wt.Thousands(RemainingXPCSC.xp.remaining)
+			"#REMAINING", us.Thousands(RemainingXPCSC.xp.remaining)
 		) .. (
 			RemainingXPCSC.xp.rested > 0 and " + " .. ns.strings.xpBar.rested:gsub(
-				"#RESTED", wt.Thousands(RemainingXPCSC.xp.rested)
+				"#RESTED", us.Thousands(RemainingXPCSC.xp.rested)
 			):gsub(
-				"#PERCENT", wt.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
+				"#PERCENT", us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
 			) or ""
-		) .. (GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
-			"#VALUE", wt.Thousands(RemainingXPCSC.xp.banked)
+		) .. ((GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
+			"#VALUE", us.Thousands(RemainingXPCSC.xp.banked)
 		):gsub(
 			"#LEVELS", RemainingXPCSC.xp.bankedLevels
-		) or ""
+		) or "")
 	)
 end
 
@@ -325,14 +306,14 @@ local function GetXPTooltipTextlines()
 		--Current XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.gathered:gsub(
-				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.gathered), ns.colors.purple[2])
+				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.gathered), ns.colors.purple[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.purple[1],
 		},
 		{
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", wt.Color(wt.Thousands(math.floor(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
+				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
 			),
 			color = ns.colors.purple[3],
 		},
@@ -340,14 +321,14 @@ local function GetXPTooltipTextlines()
 		--Remaining XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.remaining:gsub(
-				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.remaining), ns.colors.rose[2])
+				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.remaining), ns.colors.rose[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.rose[1],
 		},
 		{
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", wt.Color(wt.Thousands(math.floor((RemainingXPCSC.xp.remaining / RemainingXPCSC.xp.needed) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
+				"#PERCENT", cr(us.Thousands(math.floor((RemainingXPCSC.xp.remaining / RemainingXPCSC.xp.needed) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
 			),
 			color = ns.colors.rose[3],
 		},
@@ -355,14 +336,14 @@ local function GetXPTooltipTextlines()
 		--Required XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.required:gsub(
-				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.needed), ns.colors.peach[2])
+				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.needed), ns.colors.peach[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.peach[1],
 		},
 		{
 			text = ns.strings.xpTooltip.requiredLevelUp:gsub(
-				"#LEVEL", wt.Color(UnitLevel("player") + 1, ns.colors.peach[2])
+				"#LEVEL", cr(UnitLevel("player") + 1, ns.colors.peach[2])
 			),
 			color = ns.colors.peach[3],
 		},
@@ -378,20 +359,20 @@ local function GetXPTooltipTextlines()
 	if RemainingXPCSC.xp.rested > 0 then
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.rested:gsub(
-				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.rested), ns.colors.blue[2])
+				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.blue[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.blue[1],
 		})
 		table.insert(textLines, {
 			text = ns.strings.xpTooltip.percentRemaining:gsub(
-				"#PERCENT", wt.Color(wt.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
+				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
 		table.insert(textLines, {
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", wt.Color(wt.Thousands(math.floor(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
+				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
@@ -399,17 +380,17 @@ local function GetXPTooltipTextlines()
 		--Description
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.restedMax:gsub(
-				"#PERCENT_MAX", wt.Color("150%%", ns.colors.blue[2])
+				"#PERCENT_MAX", cr("150%%", ns.colors.blue[2])
 			):gsub(
-				"#PERCENT_REMAINING", wt.Color("100%%", ns.colors.blue[2])
+				"#PERCENT_REMAINING", cr("100%%", ns.colors.blue[2])
 			):gsub(
-				"#LEVEL", wt.Color(maxLevel - 1, ns.colors.blue[2])
+				"#LEVEL", cr(maxLevel - 1, ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.restedDescription:gsub(
-				"#PERCENT", wt.Color("200%%", ns.colors.blue[2])
+				"#PERCENT", cr("200%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
@@ -424,8 +405,8 @@ local function GetXPTooltipTextlines()
 			color = ns.colors.blue[1],
 		})
 
-		local isMaxed = wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
-		local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and wt.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
+		local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+		local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
 
 		table.insert(textLines, {
 			text = (isMaxed or isMaxedLastLevel) and (ns.strings.xpTooltip.restedAtMax) or ns.strings.chat.restedStatus.accumulating,
@@ -437,7 +418,7 @@ local function GetXPTooltipTextlines()
 
 	if (RemainingXPCSC.xp.accumulatedRested or 0) > 0 then table.insert(textLines, {
 		text = "\n" .. ns.strings.xpTooltip.accumulated:gsub(
-			"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.accumulatedRested or 0), ns.colors.blue[2])
+			"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.accumulatedRested or 0), ns.colors.blue[2])
 		),
 		color = ns.colors.blue[3],
 	}) end
@@ -446,10 +427,10 @@ local function GetXPTooltipTextlines()
 
 	if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then table.insert(textLines, {
 		text = "\n" .. ns.strings.xpTooltip.banked:gsub(
-			"#VALUE", wt.Color(ns.strings.xpTooltip.bankedValue:gsub(
-				"#VALUE", wt.Color(wt.Thousands(RemainingXPCSC.xp.banked), ns.colors.grey[2])
+			"#VALUE", cr(ns.strings.xpTooltip.bankedValue:gsub(
+				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.banked), ns.colors.grey[2])
 			):gsub(
-				"#LEVELS", wt.Color(RemainingXPCSC.xp.bankedLevels, ns.colors.grey[2])
+				"#LEVELS", cr(RemainingXPCSC.xp.bankedLevels, ns.colors.grey[2])
 			), ns.colors.grey[3])
 		),
 		font = GameTooltipText,
@@ -682,7 +663,7 @@ frames.main = wt.CreateFrame({
 			RemainingXPDBC = RemainingXPDBC or {}
 
 			---@type RemainingXPCS
-			RemainingXPCS = wt.AddMissing(RemainingXPCS, {
+			RemainingXPCS = us.Fill(RemainingXPCS, {
 				compactBackup = true,
 				keepInPlace = true,
 			})
@@ -750,17 +731,17 @@ frames.main = wt.CreateFrame({
 					options.events.page.load(true)
 					options.dataManagement.page.load(true)
 
-					chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", wt.Color(title, ns.colors.blue[3])))
+					chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
 				end,
-				onProfileDeleted = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", wt.Color(title, ns.colors.blue[3]))) end,
-				onProfileReset = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", wt.Color(title, ns.colors.blue[3]))) end,
+				onProfileDeleted = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
+				onProfileReset = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
 				onImport = function(success) if success then
 					options.display.page.load(true)
 					options.integration.page.load(true)
 					options.events.page.load(true)
 					options.dataManagement.page.load(true)
-				else chatCommands.print(wt.GetStrings("backup").error) end end,
-				onImportAllProfiles = function(success) if not success then chatCommands.print(wt.GetStrings("backup").error) end end,
+				else chatCommands.print(wt.strings.backup.error) end end,
+				onImportAllProfiles = function(success) if not success then chatCommands.print(wt.strings.backup.error) end end,
 			})
 
 			--| Addon info
@@ -790,18 +771,18 @@ frames.main = wt.CreateFrame({
 					},
 				},
 				onLoad = EnsureVisibility,
-				onSave = function() RemainingXPDB = wt.Clone(RemainingXPDB) end,
+				onSave = function() RemainingXPDB = us.Clone(RemainingXPDB) end,
 				onDefault = function(user)
 					-- ResetCustomPreset() --REPLACE
 
 					if not user then return end
 
 					--Notification
-					-- print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.reset.response:gsub(
-					-- 	"#CUSTOM", wt.Color(presets[1].name, ns.colors.purple[3]) --REPLACE
+					-- print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.reset.response:gsub(
+					-- 	"#CUSTOM", cr(presets[1].name, ns.colors.purple[3]) --REPLACE
 					-- ), ns.colors.blue[3]))
-					-- print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.default.response:gsub(
-					-- 	"#CATEGORY", wt.Color(ns.strings.options.display.title, ns.colors.purple[3])
+					-- print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.default.response:gsub(
+					-- 	"#CATEGORY", cr(ns.strings.options.display.title, ns.colors.purple[3])
 					-- ), ns.colors.blue[3]))
 				end,
 				arrangement = {},
@@ -882,13 +863,12 @@ frames.main = wt.CreateFrame({
 
 					--Add Custom preset
 					table.insert(ns.presets, 1, {
-						title = ns.strings.misc.custom,
-						onSelect = function() options.display.position.presetList[1].data.position.relativePoint = options.display.position.presetList[1].data.position.anchor end,
+						title = CUSTOM,
+						onSelect = function() options.display.position.presets[1].data.position.relativePoint = options.display.position.presets[1].data.position.anchor end,
 					})
 
-					options.display.position = wt.CreatePositionOptions(ns.name, {
+					options.display.position = wt.CreatePositionOptions(ns.name, frames.display.frame, {
 						canvas = canvas,
-						frame = frames.display.frame,
 						frameName = ns.strings.options.display.referenceName,
 						presets = {
 							items = ns.presets,
@@ -903,7 +883,7 @@ frames.main = wt.CreateFrame({
 								if not ns.presets[i].data.background.visible then options.display.text.visible.setData(true) end
 
 								chatCommands.print(ns.strings.chat.preset.response:gsub(
-									"#PRESET", wt.Color(options.display.position.presetList[i].title, ns.colors.blue[3])
+									"#PRESET", cr(options.display.position.presets[i].title, ns.colors.blue[3])
 								))
 							end,
 							custom = {
@@ -911,12 +891,12 @@ frames.main = wt.CreateFrame({
 								defaultsTable = ns.profileDefault.customPreset,
 								onSave = function()
 									chatCommands.print(ns.strings.chat.save.response:gsub(
-										"#CUSTOM", wt.Color(ns.strings.misc.custom, ns.colors.blue[3])
+										"#CUSTOM", cr(CUSTOM, ns.colors.blue[3])
 									))
 								end,
 								onReset = function()
 									chatCommands.print(ns.strings.chat.reset.response:gsub(
-										"#CUSTOM", wt.Color(ns.strings.misc.custom, ns.colors.blue[3])
+										"#CUSTOM", cr(CUSTOM, ns.colors.blue[3])
 									))
 								end
 							}
@@ -927,7 +907,7 @@ frames.main = wt.CreateFrame({
 								onStop = function() chatCommands.print(ns.strings.chat.position.save) end,
 								onCancel = function()
 									chatCommands.print(ns.strings.chat.position.cancel)
-									print(wt.Color(ns.strings.chat.position.error, ns.colors.blue[3]))
+									print(cr(ns.strings.chat.position.error, ns.colors.blue[3]))
 								end,
 							},
 						},
@@ -1016,7 +996,7 @@ frames.main = wt.CreateFrame({
 								fontItems[i].tooltip = {
 									title = ns.fonts[i].name,
 									lines = i == 1 and { { text = ns.strings.options.display.font.family.default, }, } or (i == #ns.fonts and {
-										{ text = ns.strings.options.display.font.family.custom[1]:gsub("#OPTION_CUSTOM", ns.strings.misc.custom):gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
+										{ text = ns.strings.options.display.font.family.custom[1]:gsub("#OPTION_CUSTOM", CUSTOM):gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
 										{ text = "[WoW]\\Interface\\AddOns\\" .. ns.name .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
 										{ text = ns.strings.options.display.font.family.custom[2]:gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
 										{ text = "\n" .. ns.strings.options.display.font.family.custom[3], color = { r = 0.89, g = 0.65, b = 0.40 }, },
@@ -1024,7 +1004,7 @@ frames.main = wt.CreateFrame({
 								}
 							end
 
-							options.display.font.family = wt.CreateDropdownSelector({
+							options.display.font.family = wt.CreateDropdownRadiogroup({
 								parent = panel,
 								name = "FontFamily",
 								title = ns.strings.options.display.font.family.label,
@@ -1035,9 +1015,9 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.text.visible, },
 								},
-								getData = function() return GetFontID(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family) end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family = ns.fonts[value or 1].path end,
-								default = GetFontID(ns.profileDefault.display.font.family),
+								-- getData = function() return GetFontID(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family) end,
+								-- saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family = ns.fonts[value or 1].path end,
+								-- default = GetFontID(ns.profileDefault.display.font.family),
 								dataManagement = {
 									category = category,
 									key = key,
@@ -1079,11 +1059,11 @@ frames.main = wt.CreateFrame({
 
 							--| Font size
 
-							options.display.font.size = wt.CreateNumericSlider({
+							options.display.font.size = wt.CreateSlider({
 								parent = panel,
 								name = "FontSize",
 								title = ns.strings.options.display.font.size.label,
-								tooltip = { lines = { { text = ns.strings.options.display.font.size.tooltip .. "\n\n" .. ns.strings.misc.default .. ": " .. ns.profileDefault.display.font.size, }, } },
+								tooltip = { lines = { { text = ns.strings.options.display.font.size.tooltip .. "\n\n" .. DEFAULT .. ": " .. ns.profileDefault.display.font.size, }, } },
 								arrange = { newRow = false, }, 
 								min = 8,
 								max = 64,
@@ -1105,7 +1085,7 @@ frames.main = wt.CreateFrame({
 
 							--| Alignment
 
-							options.display.font.alignment = wt.CreateSpecialRadioSelector("justifyH", {
+							options.display.font.alignment = wt.CreateSpecialRadiogroup("justifyH", {
 								parent = panel,
 								name = "Alignment",
 								title = ns.strings.options.display.font.alignment.label,
@@ -1131,7 +1111,7 @@ frames.main = wt.CreateFrame({
 
 							--| Base text color
 
-							options.display.font.colors.base = wt.CreateColorPickerFrame({
+							options.display.font.colors.base = wt.CreateColorpicker({
 								parent = panel,
 								name = "FontColor",
 								title = ns.strings.options.display.font.colors.base.label,
@@ -1155,7 +1135,7 @@ frames.main = wt.CreateFrame({
 
 							--| Gathered text color
 
-							options.display.font.colors.gathered = wt.CreateColorPickerFrame({
+							options.display.font.colors.gathered = wt.CreateColorpicker({
 								parent = panel,
 								name = "FontColor",
 								title = ns.strings.options.display.font.colors.gathered.label,
@@ -1179,7 +1159,7 @@ frames.main = wt.CreateFrame({
 
 							--| Needed text color
 
-							options.display.font.colors.needed = wt.CreateColorPickerFrame({
+							options.display.font.colors.needed = wt.CreateColorpicker({
 								parent = panel,
 								name = "FontColor",
 								title = ns.strings.options.display.font.colors.needed.label,
@@ -1203,7 +1183,7 @@ frames.main = wt.CreateFrame({
 
 							--| Remaining text color
 
-							options.display.font.colors.remaining = wt.CreateColorPickerFrame({
+							options.display.font.colors.remaining = wt.CreateColorpicker({
 								parent = panel,
 								name = "FontColor",
 								title = ns.strings.options.display.font.colors.remaining.label,
@@ -1227,7 +1207,7 @@ frames.main = wt.CreateFrame({
 
 							--| Rested text color
 
-							options.display.font.colors.rested = wt.CreateColorPickerFrame({
+							options.display.font.colors.rested = wt.CreateColorpicker({
 								parent = panel,
 								name = "FontColor",
 								title = ns.strings.options.display.font.colors.rested.label,
@@ -1251,7 +1231,7 @@ frames.main = wt.CreateFrame({
 
 							--| Banked text color
 
-							options.display.font.colors.banked = wt.CreateColorPickerFrame({
+							options.display.font.colors.banked = wt.CreateColorpicker({
 								parent = panel,
 								name = "FontColor",
 								title = ns.strings.options.display.font.colors.banked.label,
@@ -1311,7 +1291,7 @@ frames.main = wt.CreateFrame({
 
 							--| Width
 
-							options.display.background.size.w = wt.CreateNumericSlider({
+							options.display.background.size.w = wt.CreateSlider({
 								parent = panel,
 								name = "Width",
 								title = ns.strings.options.display.background.size.width.label,
@@ -1337,7 +1317,7 @@ frames.main = wt.CreateFrame({
 
 							--| Height
 
-							options.display.background.size.h = wt.CreateNumericSlider({
+							options.display.background.size.h = wt.CreateSlider({
 								parent = panel,
 								name = "Height",
 								title = ns.strings.options.display.background.size.height.label,
@@ -1363,7 +1343,7 @@ frames.main = wt.CreateFrame({
 
 							--| Background color
 
-							options.display.background.colors.bg = wt.CreateColorPickerFrame({
+							options.display.background.colors.bg = wt.CreateColorpicker({
 								parent = panel,
 								name = "Color",
 								title = ns.strings.options.display.background.colors.bg.label,
@@ -1389,7 +1369,7 @@ frames.main = wt.CreateFrame({
 
 							--| Border color
 
-							options.display.background.colors.border = wt.CreateColorPickerFrame({
+							options.display.background.colors.border = wt.CreateColorpicker({
 								parent = panel,
 								name = "BorderColor",
 								title = ns.strings.options.display.background.colors.border.label,
@@ -1415,7 +1395,7 @@ frames.main = wt.CreateFrame({
 
 							--| Current XP color
 
-							options.display.background.colors.gathered = wt.CreateColorPickerFrame({
+							options.display.background.colors.gathered = wt.CreateColorpicker({
 								parent = panel,
 								name = "XPColor",
 								title = ns.strings.options.display.background.colors.gathered.label,
@@ -1441,7 +1421,7 @@ frames.main = wt.CreateFrame({
 
 							--| Rested XP color
 
-							options.display.background.colors.rested = wt.CreateColorPickerFrame({
+							options.display.background.colors.rested = wt.CreateColorpicker({
 								parent = panel,
 								name = "RestedColor",
 								title = ns.strings.options.display.background.colors.rested.label,
@@ -1499,7 +1479,7 @@ frames.main = wt.CreateFrame({
 
 							--| Text fade intensity
 
-							options.display.fade.text = wt.CreateNumericSlider({
+							options.display.fade.text = wt.CreateSlider({
 								parent = panel,
 								name = " TextFade",
 								title = ns.strings.options.display.fade.text.label,
@@ -1526,7 +1506,7 @@ frames.main = wt.CreateFrame({
 
 							--| Background fade intensity
 
-							options.display.fade.background = wt.CreateNumericSlider({
+							options.display.fade.background = wt.CreateSlider({
 								parent = panel,
 								name = "BackgroundFade",
 								title = ns.strings.options.display.fade.background.label,
@@ -1573,8 +1553,8 @@ frames.main = wt.CreateFrame({
 					if not user then return end
 
 					--Notification
-					print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.default.response:gsub(
-						"#CATEGORY", wt.Color(ns.strings.options.integration.title, ns.colors.purple[3])
+					print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.default.response:gsub(
+						"#CATEGORY", cr(ns.strings.options.integration.title, ns.colors.purple[3])
 					), ns.colors.blue[3]))
 				end,
 				arrangement = {},
@@ -1709,8 +1689,8 @@ frames.main = wt.CreateFrame({
 					if not user then return end
 
 					--Notification
-					print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.default.response:gsub(
-						"#CATEGORY", wt.Color(ns.strings.options.events.title, ns.colors.purple[3])
+					print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.default.response:gsub(
+						"#CATEGORY", cr(ns.strings.options.events.title, ns.colors.purple[3])
 					), ns.colors.blue[3]))
 				end,
 				arrangement = {},
@@ -1905,6 +1885,7 @@ frames.main = wt.CreateFrame({
 
 			--[[ CHAT CONTROL ]]
 
+			---@type chatCommandManager
 			chatCommands = wt.RegisterChatCommands(ns.name, { ns.chat.keyword }, {
 				commands = {
 					{
@@ -1915,7 +1896,7 @@ frames.main = wt.CreateFrame({
 					{
 						command = ns.chat.commands.preset,
 						description = ns.strings.chat.preset.description:gsub(
-							"#INDEX", wt.Color(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[3])
+							"#INDEX", cr(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[3])
 						),
 						handler = function(_, parameter)
 							if atMax then
@@ -1925,16 +1906,16 @@ frames.main = wt.CreateFrame({
 
 							return options.display.position.applyPreset(tonumber(parameter))
 						end,
-						error = ns.strings.chat.preset.unchanged .. "\n" .. wt.Color(ns.strings.chat.preset.error:gsub(
-							"#INDEX", wt.Color(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[2])
+						error = ns.strings.chat.preset.unchanged .. "\n" .. cr(ns.strings.chat.preset.error:gsub(
+							"#INDEX", cr(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[2])
 						), ns.colors.blue[2]),
 						onError = function()
-							print(wt.Color(ns.strings.chat.preset.list, ns.colors.blue[1]))
-							for i = 1, #options.display.position.presetList, 2 do
-								local list = "    " .. wt.Color(i, ns.colors.purple[3]) .. wt.Color(" • " .. options.display.position.presetList[i].title, ns.colors.blue[3])
+							print(cr(ns.strings.chat.preset.list, ns.colors.blue[1]))
+							for i = 1, #options.display.position.presets, 2 do
+								local list = "    " .. cr(i, ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i].title, ns.colors.blue[3])
 
-								if i + 1 <= #options.display.position.presetList then
-									list = list .. "    " .. wt.Color(i + 1, ns.colors.purple[3]) .. wt.Color(" • " .. options.display.position.presetList[i + 1].title, ns.colors.blue[3])
+								if i + 1 <= #options.display.position.presets then
+									list = list .. "    " .. cr(i + 1, ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i + 1].title, ns.colors.blue[3])
 								end
 
 								print(list)
@@ -1943,31 +1924,29 @@ frames.main = wt.CreateFrame({
 					},
 					{
 						command = ns.chat.commands.save,
-						description = function() return ns.strings.chat.save.description:gsub(
-						"#CUSTOM", wt.Color(options.display.position.presetList[1].title, ns.colors.purple[3])
-						)
+						description = function() return (ns.strings.chat.save.description:gsub("#CUSTOM", cr(options.display.position.presets[1].title, ns.colors.purple[3])))
 						end,
 						handler = function() options.display.position.saveCustomPreset() end,
 					},
 					{
 						command = ns.chat.commands.reset,
 						description = ns.strings.chat.reset.description:gsub(
-							"#CUSTOM", wt.Color(options.display.position.presetList[1].title, ns.colors.purple[3])
+							"#CUSTOM", cr(options.display.position.presets[1].title, ns.colors.purple[3])
 						),
 						handler = function() options.display.position.resetCustomPreset() end,
 					},
 					{
 						command = ns.chat.commands.toggle,
-						description = function() return ns.strings.chat.toggle.description:gsub(
-							"#HIDDEN", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.notHidden, ns.colors.purple[3])
-						) end,
+						description = function() return (ns.strings.chat.toggle.description:gsub(
+							"#HIDDEN", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.notHidden, ns.colors.purple[3])
+						)) end,
 						handler = function()
 							options.display.visibility.hidden.setData(not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden)
 
 							return true
 						end,
 						onSuccess = function()
-							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(
+							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(
 								RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden and ns.strings.chat.toggle.hiding or ns.strings.chat.toggle.unhiding, ns.colors.blue[2])
 							)
 							if atMax then PrintStatus() end
@@ -1975,17 +1954,17 @@ frames.main = wt.CreateFrame({
 					},
 					{
 						command = ns.chat.commands.fade,
-						description = function() return ns.strings.chat.fade.description:gsub(
-							"#STATE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[3])
-						) end,
+						description = function() return (ns.strings.chat.fade.description:gsub(
+							"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[3])
+						)) end,
 						handler = function()
 							options.display.fade.toggle.setData(not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled)
 
 							return true
 						end,
 						onSuccess = function()
-							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.fade.response:gsub(
-								"#STATE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.fade.response:gsub(
+								"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 							), ns.colors.blue[2]))
 							if atMax then PrintStatus() end
 						end,
@@ -1993,7 +1972,7 @@ frames.main = wt.CreateFrame({
 					{
 						command = ns.chat.commands.size,
 						description = ns.strings.chat.size.description:gsub(
-							"#SIZE", wt.Color(ns.chat.commands.size .. " " .. ns.profileDefault.display.font.size, ns.colors.purple[3])
+							"#SIZE", cr(ns.chat.commands.size .. " " .. ns.profileDefault.display.font.size, ns.colors.purple[3])
 						),
 						handler = function(parameter)
 							local size = tonumber(parameter)
@@ -2005,15 +1984,15 @@ frames.main = wt.CreateFrame({
 							return true, size
 						end,
 						onSuccess = function(_, size)
-							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.response:gsub(
-								"#VALUE", wt.Color(size, ns.colors.purple[2])
+							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.size.response:gsub(
+								"#VALUE", cr(size, ns.colors.purple[2])
 							), ns.colors.blue[2]))
 							if atMax then PrintStatus() end
 						end,
 						onError = function()
-							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.size.unchanged, ns.colors.blue[1]))
-							print(wt.Color(ns.strings.chat.size.error:gsub(
-								"#SIZE", wt.Color(ns.chat.commands.size .. " " .. ns.profileDefault.display.font.size, ns.colors.purple[2])
+							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.size.unchanged, ns.colors.blue[1]))
+							print(cr(ns.strings.chat.size.error:gsub(
+								"#SIZE", cr(ns.chat.commands.size .. " " .. ns.profileDefault.display.font.size, ns.colors.purple[2])
 							), ns.colors.blue[2]))
 						end,
 					},
@@ -2026,8 +2005,8 @@ frames.main = wt.CreateFrame({
 							return true
 						end,
 						onSuccess = function()
-							print(wt.Color(ns.title .. ":", ns.colors.purple[1]) .. " " .. wt.Color(ns.strings.chat.integration.response:gsub(
-								"#STATE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.integration.response:gsub(
+								"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 							), ns.colors.blue[2]))
 							if atMax then PrintStatus() end
 						end,
@@ -2035,19 +2014,19 @@ frames.main = wt.CreateFrame({
 					{
 						command = ns.chat.commands.profile,
 						description = ns.strings.chat.profile.description:gsub(
-							"#INDEX", wt.Color(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
+							"#INDEX", cr(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
 						),
 						handler = function(_, p) return options.dataManagement.activateProfile(tonumber(p)) end,
-						error = ns.strings.chat.profile.unchanged .. "\n" .. wt.Color(ns.strings.chat.profile.error:gsub(
-							"#INDEX", wt.Color(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
+						error = ns.strings.chat.profile.unchanged .. "\n" .. cr(ns.strings.chat.profile.error:gsub(
+							"#INDEX", cr(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
 						), ns.colors.blue[3]),
 						onError = function()
-							print(wt.Color(ns.strings.chat.profile.list, ns.colors.blue[1]))
+							print(cr(ns.strings.chat.profile.list, ns.colors.blue[1]))
 							for i = 1, #RemainingXPDB.profiles, 4 do
-								local list = "    " .. wt.Color(i, ns.colors.purple[3]) .. wt.Color(" • " .. RemainingXPDB.profiles[i].title, ns.colors.blue[3])
+								local list = "    " .. cr(i, ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[i].title, ns.colors.blue[3])
 
 								for j = i + 1, min(i + 3, #RemainingXPDB.profiles) do
-									list = list .. "    " .. wt.Color(j, ns.colors.purple[3]) .. wt.Color(" • " .. RemainingXPDB.profiles[j].title, ns.colors.blue[3])
+									list = list .. "    " .. cr(j, ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[j].title, ns.colors.blue[3])
 								end
 
 								print(list)
@@ -2056,9 +2035,9 @@ frames.main = wt.CreateFrame({
 					},
 					{
 						command = ns.chat.commands.default,
-						description = function() return ns.strings.chat.default.description:gsub(
-							"#PROFILE", wt.Color(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].title, ns.colors.blue[1])
-						) end,
+						description = function() return (ns.strings.chat.default.description:gsub(
+							"#PROFILE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].title, ns.colors.blue[1])
+						)) end,
 						handler = function() return options.dataManagement.resetProfile() end,
 					},
 					{
@@ -2067,18 +2046,18 @@ frames.main = wt.CreateFrame({
 						handler = function(manager) manager.welcome() end,
 					},
 					{
-						command = "dump",
+						command = "dump", --REMOVE
 						hidden = true,
-						handler = function() wt.Dump(RemainingXPDB) end,
+						handler = function() ds.Dump(RemainingXPDB) end,
 					},
-					-- {
-					-- 	command = "delete", --REMOVE
-					-- 	hidden = true,
-					-- 	handler = function()
-					-- 		RemainingXPDB = nil
-					-- 		ReloadUI()
-					-- 	end,
-					-- },
+					{
+						command = "delete", --REMOVE
+						hidden = true,
+						handler = function()
+							RemainingXPDB = nil
+							ReloadUI()
+						end,
+					},
 				},
 				colors = {
 					title = ns.colors.purple[1],
@@ -2087,10 +2066,10 @@ frames.main = wt.CreateFrame({
 					description = ns.colors.blue[3]
 				},
 				onWelcome = function()
-					print(wt.Color(ns.strings.chat.help.thanks:gsub("#ADDON", wt.Color(ns.title, ns.colors.purple[1])), ns.colors.blue[1]))
+					print(cr(ns.strings.chat.help.thanks:gsub("#ADDON", cr(ns.title, ns.colors.purple[1])), ns.colors.blue[1]))
 					PrintStatus()
-					print(wt.Color(ns.strings.chat.help.hint:gsub("#HELP_COMMAND", wt.Color("/" .. ns.chat.keyword .. " " .. ns.chat.commands.help, ns.colors.purple[3])), ns.colors.blue[3]))
-					print(wt.Color(ns.strings.chat.help.move:gsub("#ADDON", ns.title), ns.colors.blue[3]))
+					print(cr(ns.strings.chat.help.hint:gsub("#HELP_COMMAND", cr("/" .. ns.chat.keyword .. " " .. ns.chat.commands.help, ns.colors.purple[3])), ns.colors.blue[3]))
+					print(cr(ns.strings.chat.help.move:gsub("#ADDON", ns.title), ns.colors.blue[3]))
 				end,
 			})
 
@@ -2112,8 +2091,8 @@ frames.main = wt.CreateFrame({
 				RemainingXPCSC.xp = RemainingXPCSC.xp or {}
 
 				--Main display
-				SetDisplayValues(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data, RemainingXPDBC)
-				wt.SetPosition(frames.display.frame, wt.AddMissing({ relativePoint = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position.anchor, }, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position))
+				SetDisplayValues(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data)
+				wt.SetPosition(frames.display.frame, us.Fill({ relativePoint = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position.anchor, }, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position))
 				-- wt.SetPosition(self, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position)
 
 				--Integrated display
@@ -2176,13 +2155,13 @@ frames.main = wt.CreateFrame({
 
 			--Notification
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.xpGained then
-				print(wt.Color(ns.strings.chat.xpGained.text:gsub(
-					"#AMOUNT", wt.Color(wt.Thousands(gainedXP), ns.colors.purple[1])
+				print(cr(ns.strings.chat.xpGained.text:gsub(
+					"#AMOUNT", cr(us.Thousands(gainedXP), ns.colors.purple[1])
 				):gsub(
-					"#REMAINING", wt.Color(atMax and ns.strings.chat.lvlUp.disabled.reason:gsub(
+					"#REMAINING", cr(atMax and ns.strings.chat.lvlUp.disabled.reason:gsub(
 						"#MAX", maxLevel
 					) or ns.strings.chat.xpGained.remaining:gsub(
-						"#AMOUNT", wt.Color(wt.Thousands(RemainingXPCSC.xp.remaining), ns.colors.purple[3])
+						"#AMOUNT", cr(us.Thousands(RemainingXPCSC.xp.remaining), ns.colors.purple[3])
 					):gsub(
 						"#NEXT", UnitLevel("player") + 1
 					), ns.colors.blue[3])
@@ -2200,19 +2179,19 @@ frames.main = wt.CreateFrame({
 				TurnOffIntegration()
 
 				--Notification
-				print(wt.Color(ns.strings.chat.lvlUp.disabled.text:gsub(
-					"#ADDON", wt.Color(ns.title, ns.colors.purple[1])
+				print(cr(ns.strings.chat.lvlUp.disabled.text:gsub(
+					"#ADDON", cr(ns.title, ns.colors.purple[1])
 				):gsub(
-					"#REASON", wt.Color(ns.strings.chat.lvlUp.disabled.reason:gsub(
+					"#REASON", cr(ns.strings.chat.lvlUp.disabled.reason:gsub(
 						"#MAX", maxLevel
 					), ns.colors.blue[3])
 				) .. " " .. ns.strings.chat.lvlUp.congrats, ns.colors.blue[1]))
 			else
 				--Notification
 				if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.congrats then
-					print(wt.Color(ns.strings.chat.lvlUp.text:gsub(
-						"#LEVEL", wt.Color(newLevel, ns.colors.purple[1])
-					) .. " " .. wt.Color(ns.strings.chat.lvlUp.congrats, ns.colors.purple[3]), ns.colors.blue[1]))
+					print(cr(ns.strings.chat.lvlUp.text:gsub(
+						"#LEVEL", cr(newLevel, ns.colors.purple[1])
+					) .. " " .. cr(ns.strings.chat.lvlUp.congrats, ns.colors.purple[3]), ns.colors.blue[1]))
 					if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
 				end
 
@@ -2232,13 +2211,13 @@ frames.main = wt.CreateFrame({
 
 			--Notification
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and not (RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
-				print(wt.Color(ns.strings.chat.restedXPGained.text:gsub(
-						"#AMOUNT", wt.Color(gainedRestedXP, ns.colors.purple[1])
+				print(cr(ns.strings.chat.restedXPGained.text:gsub(
+						"#AMOUNT", cr(gainedRestedXP, ns.colors.purple[1])
 					):gsub(
-						"#TOTAL", wt.Color(wt.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
+						"#TOTAL", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
 					):gsub(
-						"#PERCENT", wt.Color(ns.strings.chat.restedXPGained.percent:gsub(
-							"#VALUE", wt.Color(wt.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[3])
+						"#PERCENT", cr(ns.strings.chat.restedXPGained.percent:gsub(
+							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[3])
 						), ns.colors.blue[3])
 					), ns.colors.blue[1])
 				)
@@ -2250,18 +2229,18 @@ frames.main = wt.CreateFrame({
 		PLAYER_UPDATE_RESTING = atMax and nil or function()
 			--Notification
 			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and not IsResting() then
-				print((RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update and (wt.Color(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
-					(RemainingXPCSC.xp.accumulatedRested or 0) > 0 and wt.Color(ns.strings.chat.restedXPAccumulated.text:gsub(
-						"#AMOUNT", wt.Color(wt.Thousands(RemainingXPCSC.xp.accumulatedRested), ns.colors.purple[1])
+				print((RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update and (cr(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
+					(RemainingXPCSC.xp.accumulatedRested or 0) > 0 and cr(ns.strings.chat.restedXPAccumulated.text:gsub(
+						"#AMOUNT", cr(us.Thousands(RemainingXPCSC.xp.accumulatedRested), ns.colors.purple[1])
 					):gsub(
-						"#TOTAL", wt.Color(wt.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
+						"#TOTAL", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
 					):gsub(
-						"#PERCENT", wt.Color(ns.strings.chat.restedXPAccumulated.percent:gsub(
-							"#VALUE", wt.Color(wt.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
+						"#PERCENT", cr(ns.strings.chat.restedXPAccumulated.percent:gsub(
+							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
 						):gsub(
-							"#NEXT", wt.Color(UnitLevel("player") + 1, ns.colors.purple[3])
+							"#NEXT", cr(UnitLevel("player") + 1, ns.colors.purple[3])
 						), ns.colors.blue[3])
-					), ns.colors.blue[1]) or wt.Color(ns.strings.chat.restedXPAccumulated.zero, ns.colors.blue[1])
+					), ns.colors.blue[1]) or cr(ns.strings.chat.restedXPAccumulated.zero, ns.colors.blue[1])
 				))
 			end
 
@@ -2367,7 +2346,7 @@ frames.main = wt.CreateFrame({
 								GameTooltip:SetOwner(MainStatusTrackingBarContainer, "ANCHOR_RIGHT", 0, -14)
 								local text = TRIAL_CAP_BANKED_XP_TOOLTIP
 								if RemainingXPCSC.xp.bankedLevels > 0 then text = TRIAL_CAP_BANKED_LEVELS_TOOLTIP:format(RemainingXPCSC.xp.bankedLevels) end
-								GameTooltip:SetText(text, nil, nil, nil, nil, true)
+								GameTooltip:SetText(text, 1, 1, 1, nil, true)
 								GameTooltip:Show()
 
 								--Flash the store button

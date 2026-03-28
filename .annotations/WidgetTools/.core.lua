@@ -186,7 +186,7 @@ function Thousands(value, decimals, round, trim) return "" end
 ---***
 ---@return string s Formatted output string
 ---@return "Frame"|"FrameScriptObject"|"table"|"boolean"|"number"|"string"|"any" t Recognized object type
----<hr><p></p>
+---<p></p>
 function ToString(object) return "", "any" end
 
 --| TableToString
@@ -315,7 +315,7 @@ function Clone(object) end
 ---@alias Merge_param2 # source
 ---| table
 
----Merge a table to another table, deep copying all its values over under new integer keys
+---Merge a table into an array, deep copying all its values over under new integer keys
 ---***
 ---@param target Merge_param1 Table to add the values to
 ---@param source Merge_param2 Table to copy all values from

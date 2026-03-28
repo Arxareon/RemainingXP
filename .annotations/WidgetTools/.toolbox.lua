@@ -570,7 +570,7 @@ function Clamp(value, min, max) return value end
 
 ---@class backdropUpdateRule
 ---@field triggers? AnyFrameObject[] References to the frames to add the listener script to | ***Default:*** { **frame** }
----@field rules table<AnyScriptType, string|fun(self: AnyFrameObject, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil> List of events and update actions returning backdrop values to update the backdrop with, or, if they are set but not valid functions to call, restore the base **backdrop** unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and true for **fill** in order to restore the base **backdrop** after evaluation.</li><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and false or nil for **fill** to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `self` AnyFrameObject ― Reference to **updates[*key*].frame**</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** nil *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in **backdropUpdates** with the values provided in **backdrop** at matching keys, if false, fill them with their corresponding values from the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure), **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) and **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) | ***Default:*** `false`</p>
+---@field rules table<AnyScriptType, string|fun(frame: AnyFrameObject, self: AnyFrameObject, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil> List of events and update actions returning backdrop values to update the backdrop with, or, if they are set but not valid functions to call, restore the base **backdrop** unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and true for **fill** in order to restore the base **backdrop** after evaluation.</li><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and false or nil for **fill** to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `frame` AnyFrameObject ― Reference to backdrop frame</p><p>@*param* `self` AnyFrameObject ― Reference to the specific trigger frame</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** nil *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in **backdropUpdates** with the values provided in **backdrop** at matching keys, if false, fill them with their corresponding values from the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure), **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) and **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) | ***Default:*** `false`</p>
 
 ---@class customizableObject
 ---@field backdrop? backdropData Parameters to set the custom backdrop with
@@ -801,7 +801,7 @@ function Clamp(value, min, max) return value end
 --| Parameters
 
 ---@class sizeData_panel
----@field w? number Width | ***Default:*** **t.parent** and *width of the parent frame* - 32 or 0
+---@field w? number Width | ***Default:*** **t.parent** and *width of the parent frame* - 20 or 0
 ---@field h? number Height | ***Default:*** 0<ul><li>***Note:*** If content is added, arranged and **t.arrangeContent.resize** is true, the height will be set dynamically based on the calculated height of the content.</li></ul>
 
 ---@class backgroundColorData_panel
@@ -1075,8 +1075,8 @@ function Clamp(value, min, max) return value end
 ---@field h? number Height | ***Default:*** 26
 
 ---@class sizeData_radiobutton
----@field w? number Width | ***Default:***  **t.label** and 160 or **t.size.h**
----@field h? number Height | ***Default:*** 16
+---@field w? number Width | ***Default:***  **t.label** and 180 or **t.size.h**
+---@field h? number Height | ***Default:*** 18
 
 --| Constructors
 
@@ -1351,7 +1351,7 @@ function Clamp(value, min, max) return value end
 ---@field clearable? boolean If true, the selector input should be clearable by right clicking on its radio buttons, setting the selected value to nil | ***Default:*** `false`
 
 ---@class radiogroupCreationData : selectorCreationData, selectorFrameCreationData, radiogroupCreationData_base
----@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
+---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 180 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
 ---@field items? (selectorItem|selectorRadiobutton)[] Table containing subtables with data used to create item widgets, or already existing radio buttons
 ---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
 ---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
@@ -1366,6 +1366,8 @@ function Clamp(value, min, max) return value end
 
 ---@class dropdownRadiogroupCreationData : radiogroupCreationData, widgetWidthValue, tooltipDescribableSettingsWidget
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Dropdown"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field width? number The width of the dropdown frame containing the toggle (and optionally) cycle buttons and the label (if **t.label** is true) | ***Default:*** 180
+---@field scrollThreshold? integer Number of items to show before changing the dropdown menu to be scrollable | ***Default:*** 15<ul><li>***Note:*** Scrollability does not change when the number of items change after the initial setup.</li></ul>
 ---@field text? string The default text to display on the dropdown when no item is selected | ***Default:*** ""
 ---@field clearable? boolean If true, the selector input should be clearable by right clicking on its radio buttons, or, if **t.utilityMenu** is false, the dropdown toggle button itself (if true, a clear selection option is added to the utility menu instead), setting the selected value to nil | ***Default:*** `false`
 ---@field autoClose? boolean Close the dropdown menu after an item is selected by the user | ***Default:*** `true`
@@ -1746,6 +1748,10 @@ function Clamp(value, min, max) return value end
 
 --| Text font
 
+---@class textColorInfo
+---@field index? integer Ordering index of the color | ***Default:*** *unspecified*
+---@field name? string Display name to set their widget and tooltip titles paired to their data management keys | ***Default:*** *data management key in Title case*
+
 ---@class textColorData_base
 ---@field base colorData
 
@@ -1759,8 +1765,7 @@ function Clamp(value, min, max) return value end
 ---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Font"
 
 ---@class fontManagementCreationData : settingsWidgetPanel_text
----@field colorOrder? string[] If set, use this array of the data management keys of managed colors to order of their widgets by
----@field colorNames? table<string, string> If set, use this list of color display names paired with their data management keys to set their widget and tooltip titles shown as "Color **t.colorNames[*key*]**" *(localized)* | ***Default:*** *data management **key*****:sub(1,1):upper() .. key:sub(2)**
+---@field colors? table<string, textColorInfo> If set, use this list of specifications to set the order and displayed name of the colors | ***Default:*** *unspecified order; data management key in Title case*
 ---@field getData fun(): table: fontOptionsData Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
 ---@field defaultsTable fontOptionsData Reference to the table containing the default values
 ---@field dataManagement? settingsData_font Register the widgets to settings data management to be linked with the specified key under the specified category

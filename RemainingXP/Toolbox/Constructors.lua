@@ -329,7 +329,7 @@ end
 ---@return FontString text
 function wt.CreateText(t)
 	t = type(t) == "table" and t or {}
-	t.parent = WidgetTools.utilities.IsFrame(t.parent) and t.parent or UIParent
+	t.parent = us.IsFrame(t.parent) and t.parent or UIParent
 
 	local text = t.parent:CreateFontString((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
 
@@ -362,7 +362,7 @@ end
 function wt.CreateTitle(frame, t)
 	t = type(t) == "table" and t or {}
 
-	if not WidgetTools.utilities.IsFrame(frame) then return end
+	if not us.IsFrame(frame) then return end
 
 	return wt.CreateText({
 		parent = frame,
@@ -389,11 +389,11 @@ end
 function wt.CreateDescription(title, t)
 	t = type(t) == "table" and t or {}
 
-	if not type(title) ~= "table" or not type(title.GetFont) == "function" then return end
+	if type(title) ~= "table" or type(title.GetFont) ~= "function" then return end
 
 	local parent = title:GetParent()
 
-	if not WidgetTools.utilities.IsFrame(parent) then return end
+	if not us.IsFrame(parent) then return end
 
 	t.justify = type(t.justify) == "string" and t.justify or "LEFT"
 	local anchor = t.justify ~= "RIGHT" and "LEFT" or "RIGHT"
@@ -447,7 +447,7 @@ end
 ---***
 ---@return Texture? texture ***Default:*** nil
 function wt.CreateTexture(frame, t, updates)
-	if not WidgetTools.utilities.IsFrame(frame) then return end
+	if not us.IsFrame(frame) then return end
 
 	t = type(t) == "table" and t or {}
 
@@ -548,7 +548,7 @@ end
 function wt.CreateLine(frame, t)
 	t = type(t) == "table" and t or {}
 
-	if not WidgetTools.utilities.IsFrame(frame) then return end
+	if not us.IsFrame(frame) then return end
 
 	t.startPosition.offset = t.startPosition.offset or {}
 	t.endPosition.offset = t.endPosition.offset or {}
@@ -668,6 +668,7 @@ end
 ---@return ScrollFrame scrollFrame
 function wt.CreateScrollFrame(t)
 	t = type(t) == "table" and t or {}
+	t.scrollSize = type(t.scrollSize) == "table" and t.scrollSize or {}
 
 	--[ Frame Setup ]
 
@@ -689,9 +690,9 @@ function wt.CreateScrollFrame(t)
 		anchor = "RIGHT",
 		relativeTo = scrollFrame,
 		relativePoint = "RIGHT",
-		offset = { x = -4, y = 0 }
+		offset = { x = -4, y = 1 }
 	})
-	scrollFrame.ScrollBar:SetHeight(t.size.h - 4)
+	scrollFrame.ScrollBar:SetHeight(t.size.h - 10)
 
 	--[ Scroll Child ]
 
@@ -745,7 +746,7 @@ function wt.CreatePanel(t)
 	--| Position & dimensions
 
 	t.size = t.size or {}
-	t.size.w = t.size.w or t.parent and t.parent:GetWidth() - 32 or 0
+	t.size.w = t.size.w or t.parent and t.parent:GetWidth() - 20 or 0
 	t.size.h = t.size.h or 0
 
 	if t.keepInBounds then panel:SetClampedToScreen(true) end
@@ -769,11 +770,10 @@ function wt.CreatePanel(t)
 		font = "GameFontHighlightLarge",
 	}) or nil
 
-	panel.description = t.description and wt.CreateDescription({
-		title = panel.title,
+	if type(t.description) == "string" then panel.description = wt.CreateDescription(panel.title, {
 		widthOffset = -22,
 		text = t.description,
-	}) or nil
+	}) end
 
 	--| Backdrop
 
@@ -850,7 +850,7 @@ function wt.CreateContextMenu(t)
 	--| Trigger events
 
 	if type(t.triggers) ~= "table" then t.triggers = { { frame = UIParent, }, } else for i = 1, #t.triggers do
-		if not WidgetTools.utilities.IsFrame(t.triggers[i].frame) then t.triggers[i].frame = UIParent end
+		if not us.IsFrame(t.triggers[i].frame) then t.triggers[i].frame = UIParent end
 
 		if t.triggers[i].rightClick ~= false or t.triggers[i].leftClick then t.triggers[i].frame:HookScript("OnMouseUp", function(_, button, isInside)
 			if not isInside or (button == "RightButton" and t.triggers[i].rightClick == false) or (button == "LeftButton" and not t.triggers[i].leftClick) then return end
@@ -885,7 +885,7 @@ function wt.CreatePopupMenu(t)
 		events = t.events,
 		onEvent = t.onEvent,
 		initialize = function(frame)
-			wt.CreateText({
+			local label = wt.CreateText({
 				parent = frame,
 				name = "Label",
 				text = t.title,
@@ -895,7 +895,7 @@ function wt.CreatePopupMenu(t)
 				font = "GameFontNormal",
 			})
 
-			wt.CreateText({
+			local arrow = wt.CreateText({
 				parent = frame,
 				name = "Arrow",
 				text = "►",
@@ -927,6 +927,11 @@ function wt.CreatePopupMenu(t)
 			},
 			{ { rules = {
 				OnEnter = function()
+					local r, g, b = HIGHLIGHT_FONT_COLOR:GetRGB()
+
+					label:SetTextColor(r, g, b)
+					arrow:SetTextColor(r, g, b)
+
 					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -935,7 +940,14 @@ function wt.CreatePopupMenu(t)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function() return {}, true end,
+				OnLeave = function()
+					local r, g, b = NORMAL_FONT_COLOR:GetRGB()
+
+					label:SetTextColor(r, g, b)
+					arrow:SetTextColor(r, g, b)
+
+					return {}, true
+				end,
 				OnMouseDown = function() return IsMouseButtonDown("LeftButton") and {
 					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -1054,7 +1066,9 @@ function wt.CreateSettingsPage(addon, t)
 		t.dataManagement.keys = type((t.dataManagement.keys or {})[1]) == "string" and t.dataManagement.keys or { t.name or addon }
 	end
 	local width, height = 0, 0
-	local defaultsWarning
+
+	---@type string, simpleButton, simpleButton, FontString
+	local resetWarning, resetButton, revertButton, saveNotice
 
 	---@class settingsPage
 	---@field canvas? canvasFrame|Frame The settings page main canvas frame
@@ -1068,18 +1082,30 @@ function wt.CreateSettingsPage(addon, t)
 	---Returns the type of this object
 	---***
 	---@return "SettingsPage" string
-	---<hr><p></p>
+	---<p></p>
 	function page.getType() return "SettingsPage" end
 
 	---Checks and returns if the type of this object is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function page.isType(type) return type == "SettingsPage" end
 
-	---Returns the unique identifier key representing the defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
+	---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
+	---***
+	---@param state boolean? ***Default:*** `true`
+	function page.setStatic(state)
+		state = state == false
+
+		resetButton.setEnabled(state)
+		revertButton.setEnabled(state)
+
+		if state then saveNotice:Show() else saveNotice:Hide() end
+	end
+
+	---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 	---@return string
-	function page.getDefaultsPopupKey() return defaultsWarning end
+	function page.getResetPopupKey() return resetWarning end
 
 	--| Utilities
 
@@ -1142,7 +1168,7 @@ function wt.CreateSettingsPage(addon, t)
 	---Revert any changes made in this category page and reload all linked widget data
 	---***
 	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	function page.cancel(user)
+	function page.revert(user)
 		--Update settings widgets
 		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.RevertSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
 
@@ -1153,7 +1179,7 @@ function wt.CreateSettingsPage(addon, t)
 	---Reset all settings data of this category page to default values
 	---***
 	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	function page.default(user)
+	function page.reset(user)
 		--Update with default values
 		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ResetSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
 
@@ -1178,15 +1204,15 @@ function wt.CreateSettingsPage(addon, t)
 		page.content = t.scroll and wt.CreateScrollFrame({
 			parent = page.canvas,
 			name = "Content",
-			size = { w = width - 12, h = height - 50 },
-			position = { offset = { y = -51 }, },
-			scrollSize = { h = t.scroll.height, },
+			size = { w = width - 8, h = height - 51 },
+			position = { offset = { y = -52 }, },
+			scrollSize = { w = width - 24, h = t.scroll.height, },
 			scrollSpeed = t.scroll.speed,
 		}) or wt.CreateFrame({
 			parent = page.canvas,
 			name = "Content",
-			size = { w = width - 12, h = height - 50 },
-			position = { offset = { y = -51 }, },
+			size = { w = width - 12, h = height - 52 },
+			position = { offset = { y = -52 }, },
 		})
 
 		--| Title & description
@@ -1200,8 +1226,7 @@ function wt.CreateSettingsPage(addon, t)
 			font = "GameFontHighlightHuge",
 		})
 
-		if type(t.description) == "string" then page.description = wt.CreateDescription({
-			title = page.title,
+		if type(t.description) == "string" then page.description = wt.CreateDescription(page.title, {
 			widthOffset = -161,
 			spacer = 7,
 			text = t.description,
@@ -1209,8 +1234,10 @@ function wt.CreateSettingsPage(addon, t)
 
 		--| Icon texture
 
+		page.iconTexture = type(t.icon) == "string" and t.icon or C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+
 		page.icon = wt.CreateTexture(page.canvas, {
-			name = "Logo",
+			name = "Icon",
 			position = {
 				anchor = "BOTTOMLEFT",
 				relativeTo = SettingsPanel.Container,
@@ -1218,7 +1245,7 @@ function wt.CreateSettingsPage(addon, t)
 				offset = { x = 8, }
 			},
 			size = { w = 42, h = 42 },
-			path = type(t.icon) == "string" and t.icon or C_AddOns.GetAddOnMetadata(addon, "IconTexture"),
+			path = page.iconTexture,
 		})
 
 		--| Divider texture
@@ -1232,13 +1259,14 @@ function wt.CreateSettingsPage(addon, t)
 
 		--| Defaults button
 
-		defaultsWarning = wt.RegisterPopupDialog(addon, (t.name or "") .. "DEFAULT", {
+		resetWarning = wt.RegisterPopupDialog(addon, (t.name or "") .. "DEFAULT", {
 			text = wt.strings.settings.warningSingle:gsub("#PAGE", cr(title, NORMAL_FONT_COLOR)),
 			accept = ACCEPT,
-			onAccept = function() page.default(true) end,
+			onAccept = function() page.reset(true) end,
 		})
 
-		wt.CreateButton({
+		---@type simpleButton
+		resetButton = wt.CreateButton({
 			parent = page.canvas,
 			name = "Defaults",
 			title = DEFAULTS,
@@ -1248,13 +1276,13 @@ function wt.CreateSettingsPage(addon, t)
 				offset = { x = -36, y = -16 }
 			},
 			size = { w = 96, },
-			action = function() StaticPopup_Show(defaultsWarning) end,
+			action = function() StaticPopup_Show(resetWarning) end,
 			disabled = t.static,
 		})
 
-		--| Cancel button
+		--| Revert Changes button
 
-		wt.CreateButton({
+		revertButton = wt.CreateButton({
 			parent = page.canvas,
 			name = "Cancel",
 			title = wt.strings.settings.cancel.label,
@@ -1264,12 +1292,12 @@ function wt.CreateSettingsPage(addon, t)
 				offset = { x = -18, y = -31 }
 			},
 			size = { w = 140, },
-			action = function() page.cancel(true) end,
+			action = function() page.revert(true) end,
 			disabled = t.static,
 		})
 
 		--Add save notice text
-		wt.CreateText({
+		saveNotice = wt.CreateText({
 			parent = page.canvas,
 			name = "SaveNotice",
 			position = {
@@ -1279,6 +1307,8 @@ function wt.CreateSettingsPage(addon, t)
 			text = wt.strings.settings.save,
 			justify = { h = "RIGHT", },
 		})
+
+		if t.static then saveNotice:Hide() end
 	end
 
 	--[ Category Resources ]
@@ -1318,7 +1348,7 @@ end
 ---***
 ---@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified **parent** was invalid
 function wt.CreateSettingsCategory(addon, parent, pages, t)
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or type(parent) ~= "table" and not parent.category then return end
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return end
 
 	t = type(t) == "table" and t or {}
 
@@ -1367,21 +1397,19 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 
 	--| Parent
 
-	local parentTitle = parent.title:GetText() or ""
-
-	-- if type(parent.isType) ~= "function" and not parent.isType("SettingsPage") then parent = wt.CreateSettingsPage(addon, parent) end --CHECK if needed
+	local parentTitle = parent.title and parent.title:GetText() or ""
 
 	table.insert(category.pages, parent)
 
 	wt.RegisterSettingsPage(parent)
 
 	--Override defaults warning and add all defaults option to dialog
-	wt.UpdatePopupDialog(parent.getDefaultsPopupKey(), {
+	wt.UpdatePopupDialog(parent.getResetPopupKey(), {
 		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
 		onAccept = function() category.defaults(true) end,
-		onAlt = function() parent.default(true) end,
+		onAlt = function() parent.reset(true) end,
 	})
 
 	--| Subcategories
@@ -1394,14 +1422,14 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
 
 		--Override defaults warning and add all defaults option to dialog
-		wt.UpdatePopupDialog(pages[i].getDefaultsPopupKey(), {
+		wt.UpdatePopupDialog(pages[i].getResetPopupKey(), {
 			text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
-				"#PAGE", cr(pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
+				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
 			onAccept = function() category.defaults(true) end,
-			onAlt = function() pages[i].default(true) end,
+			onAlt = function() pages[i].reset(true) end,
 		})
 	end end end
 
@@ -1437,7 +1465,7 @@ local function addListener(listeners, event, listener, callIndex)
 	listeners[event] = type(listeners[event]) == "table" and listeners[event] or {}
 
 	if type(callIndex) ~= "number" then table.insert(listeners[event], listener)
-	else table.insert(listeners[event], Clamp(WidgetTools.utilities.Round(callIndex), 1, #listeners[event] + 1), listener) end
+	else table.insert(listeners[event], Clamp(us.Round(callIndex), 1, #listeners[event] + 1), listener) end
 end
 
 ---Call registered listeners for **event**
@@ -1480,13 +1508,13 @@ function wt.CreateAction(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Action" string
-	---<hr><p></p>
+	---<p></p>
 	function action.getType() return "Action" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function action.isType(type) return type == "Action" end
 
 	--| Event handling
@@ -1563,8 +1591,10 @@ end
 ---Set the parameters of a GUI button widget frame
 ---@param button simpleButton|customButton
 ---@param t simpleButtonCreationData|customButtonCreationData
+---@param name string
+---@param title string
 ---@param useHighlight boolean
-local function setUpButtonFrame(button, t, useHighlight)
+local function setUpButtonFrame(button, t, name, title, useHighlight)
 
 	--[ Frame Setup ]
 
@@ -1574,42 +1604,70 @@ local function setUpButtonFrame(button, t, useHighlight)
 	t.size.w = t.size.w or 80
 	t.size.h = t.size.h or 22
 
-	if t.arrange then button.frame.arrangementInfo = t.arrange else wt.SetPosition(button.frame, t.position) end
+	if t.arrange then button.widget.arrangementInfo = t.arrange else wt.SetPosition(button.widget, t.position) end
 
-	button.frame:SetSize(t.size.w, t.size.h)
+	button.widget:SetSize(t.size.w, t.size.h)
 
 	--| Visibility
 
-	wt.SetVisibility(button.frame, t.visible ~= false)
+	wt.SetVisibility(button.widget, t.visible ~= false)
 
-	if t.frameStrata then button.frame:SetFrameStrata(t.frameStrata) end
-	if t.frameLevel then button.frame:SetFrameLevel(t.frameLevel) end
-	if t.keepOnTop then button.frame:SetToplevel(t.keepOnTop) end
+	if t.frameStrata then button.widget:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then button.widget:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then button.widget:SetToplevel(t.keepOnTop) end
+
+	--| Hover target
+
+	button.frame = CreateFrame("Frame", name .. "HoverTarget", button.widget)
+	button.frame:SetPoint("TOPLEFT")
+	button.frame:SetSize(button.widget:GetSize())
 
 	--[ Events ]
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then button.frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		else button.frame:HookScript(key, value) end
+		if key == "attribute" then button.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		else button.widget:HookScript(key, value) end
 	end end
 
 	--| UX
 
-	button.frame:HookScript("OnClick", function()
+	button.widget:HookScript("OnClick", function(_, mouseButton)
+		if mouseButton ~= "LeftButton" or not button.widget:IsEnabled() then return end
+
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 
 		button.trigger(true)
 	end)
 
-	if button.label and useHighlight then
-		button.frame:HookScript("OnEnter", function() button.label:SetFontObject(t.font.highlight) end)
-		button.frame:HookScript("OnLeave", function() button.label:SetFontObject(t.font.normal) end)
-	end
+	--Linked mouse interactions
+	button.frame:HookScript("OnEnter", function() if button.widget:IsEnabled() then
+		button.widget:LockHighlight()
+		if IsMouseButtonDown("LeftButton") then button.widget:SetButtonState("PUSHED") end
+		if button.label and useHighlight then button.label:SetFontObject(t.font.highlight) end
+	end end)
+	button.frame:HookScript("OnLeave", function() if button.widget:IsEnabled() then
+		button.widget:UnlockHighlight()
+		button.widget:SetButtonState("NORMAL")
+		if button.label and useHighlight then button.label:SetFontObject(t.font.normal) end
+	end end)
+	button.frame:HookScript("OnMouseDown", function(_, b) if button.widget:IsEnabled() and b == "LeftButton" then
+		button.widget:SetButtonState("PUSHED")
+	end end)
+	button.frame:HookScript("OnMouseUp", function(_, b, isInside) if button.widget:IsEnabled() then
+		button.widget:SetButtonState("NORMAL")
+
+		if isInside and b == "LeftButton" then button.widget:Click(b) end
+	end end)
 
 	--| Tooltip
 
-	if type(t.tooltip) == "table" then button.setTooltip() end
+	if type(t.tooltip) == "table" then wt.AddTooltip(button.frame, {
+		title = t.tooltip.title or title,
+		lines = t.tooltip.lines,
+		anchor = "ANCHOR_TOPLEFT",
+		offset = { x = 20, },
+	}, { triggers = { button.frame, }, }) end
 
 	--| State
 
@@ -1617,17 +1675,11 @@ local function setUpButtonFrame(button, t, useHighlight)
 	---@param _ simpleButton
 	---@param state boolean
 	local function updateState(_, state)
-		button.frame:SetEnabled(state)
+		button.widget:SetEnabled(state)
 
-		if state then
-			if button.label then
-				if useHighlight and button.frame:IsMouseOver() then button.label:SetFontObject(t.font.highlight) else button.label:SetFontObject(t.font.normal) end
-			end
-			if button.hoverTarget then button.hoverTarget:Hide() end
-		else
-			if button.label then button.label:SetFontObject(t.font.disabled) end
-			if button.hoverTarget then button.hoverTarget:Show() end
-		end
+		if button.label then if state then
+			if useHighlight and button.widget:IsMouseOver() then button.label:SetFontObject(t.font.highlight) else button.label:SetFontObject(t.font.normal) end
+		else button.label:SetFontObject(t.font.disabled) end end
 	end
 
 	--Set up starting state
@@ -1650,20 +1702,20 @@ function wt.CreateButton(t, action)
 	if WidgetToolsDB.lite and t.lite ~= false then return action end
 
 	---@class simpleButton : action
+	---@field frame Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
 	local button = action
 
 	--[ Frame Setup ]
 
 	local name = (t.append ~= false and t.parent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Button")
 
-	button.frame = CreateFrame("Button", name, t.parent, "UIPanelButtonTemplate")
+	button.widget = CreateFrame("Button", name, t.parent, "UIPanelButtonTemplate")
 
 	--| Label
 
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Button"
 	local customFonts = t.font ~= nil
 	t.font = t.font or {}
-	local useHighlight = t.font.highlight ~= nil
 	t.font.normal = t.font.normal or "GameFontNormal"
 	t.font.highlight = t.font.highlight or "GameFontHighlight"
 	t.font.disabled = t.font.disabled or "GameFontDisable"
@@ -1671,7 +1723,7 @@ function wt.CreateButton(t, action)
 	if t.label ~= false then
 		if customFonts then
 			button.label = wt.CreateText({
-				parent = button.frame,
+				parent = button.widget,
 				name = "Label",
 				position = { anchor = "CENTER", },
 				width = t.size.w,
@@ -1687,36 +1739,9 @@ function wt.CreateButton(t, action)
 		button.label:SetText(title)
 	else _G[name .. "Text"]:Hide() end
 
-	--[ Getters & Setters ]
+	--| Shared setup
 
-	---Modify the tooltip set for the button with this to make sure it works even when the button is disabled
-	---***
-	---@param tooltip? widgetTooltipTextData List of text lines to set as the tooltip of the button | ***Default:*** **t.tooltip** or *no changes will be made*
-	function button.setTooltip(tooltip)
-		tooltip = tooltip or t.tooltip
-
-		if not tooltip then return end
-
-		--Create a trigger to show the tooltip when the button is disabled
-		if not button.hoverTarget then
-			button.hoverTarget = CreateFrame("Frame", name .. "HoverTarget", button.frame)
-			button.hoverTarget:SetPoint("TOPLEFT")
-			button.hoverTarget:SetSize(button.frame:GetSize())
-			button.hoverTarget:Hide()
-		end
-
-		--Set the tooltip
-		wt.AddTooltip(button.frame, {
-			title = tooltip.title or title,
-			lines = tooltip.lines,
-			anchor = "ANCHOR_TOPLEFT",
-			offset = { x = 20, },
-		}, { triggers = { button.hoverTarget, }, })
-	end
-
-	--[ Initialization ]
-
-	setUpButtonFrame(button, t, useHighlight)
+	setUpButtonFrame(button, t, name, title, t.font.highlight ~= nil)
 
 	return button
 end
@@ -1734,13 +1759,14 @@ function wt.CreateCustomButton(t, action)
 	if WidgetToolsDB.lite and t.lite ~= false then return action end
 
 	---@class customButton : action
+	---@field frame Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
 	local button = action
 
 	--[ Frame Setup ]
 
 	local name = (t.append ~= false and t.parent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Button")
 
-	button.frame = CreateFrame("Button", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
+	button.widget = CreateFrame("Button", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
 
 	--| Label
 
@@ -1752,7 +1778,7 @@ function wt.CreateCustomButton(t, action)
 
 	if t.label ~= false then
 		button.label = wt.CreateText({
-			parent = button.frame,
+			parent = button.widget,
 			name = "Label",
 			position = { anchor = "CENTER", },
 			width = t.size.w,
@@ -1764,40 +1790,18 @@ function wt.CreateCustomButton(t, action)
 		button.label:SetText(title)
 	end
 
+	--| Shared setup
+
+	setUpButtonFrame(button, t, name, title, true)
+
 	--| Backdrop
 
-	wt.SetBackdrop(button.frame, t.backdrop, t.backdropUpdates)
+	if type(t.backdropUpdates) == "table" then for i = 1, #t.backdropUpdates do
+		if type(t.backdropUpdates[i].triggers) ~= "table" then t.backdropUpdates[i].triggers = {} end
+		table.insert(t.backdropUpdates[i].triggers, button.frame)
+	end end
 
-	--[ Getters & Setters ]
-
-	---Modify the tooltip set for the button with this to make sure it works even when the button is disabled
-	---***
-	---@param tooltip? widgetTooltipTextData List of text lines to set as the tooltip of the button | ***Default:*** **t.tooltip** or *no changes will be made*
-	function button.setTooltip(tooltip)
-		tooltip = tooltip or t.tooltip
-
-		if not tooltip then return end
-
-		--Create a trigger to show the tooltip when the button is disabled
-		if not button.hoverTarget then
-			button.hoverTarget = CreateFrame("Frame", name .. "HoverTarget", button.frame)
-			button.hoverTarget:SetPoint("TOPLEFT")
-			button.hoverTarget:SetSize(button.frame:GetSize())
-			button.hoverTarget:Hide()
-		end
-
-		--Set the tooltip
-		wt.AddTooltip(button.frame, {
-			title = tooltip.title or title,
-			lines = tooltip.lines,
-			anchor = "ANCHOR_TOPLEFT",
-			offset = { x = 20, },
-		}, { triggers = { button.hoverTarget, }, })
-	end
-
-	--[ Initialization ]
-
-	setUpButtonFrame(button, t, true)
+	wt.SetBackdrop(button.widget, t.backdrop, t.backdropUpdates)
 
 	return button
 end
@@ -1840,13 +1844,13 @@ function wt.CreateToggle(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Toggle" string
-	---<hr><p></p>
+	---<p></p>
 	function toggle.getType() return "Toggle" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function toggle.isType(type) return type == "Toggle" end
 
 	--| Event handling
@@ -2185,7 +2189,7 @@ function wt.CreateCheckbox(t, toggle)
 				checkbox.setState(wt.clipboard.toggle, true)
 			end }):SetEnabled(wt.clipboard.toggle ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox.revertData() end })
-			if t.default ~= nil then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.resetData() end }) end
 		end
 	}) end
 
@@ -2226,10 +2230,10 @@ local function setUpToggleFrame(toggle, title, t)
 	--| Position & dimensions
 
 	if t.arrange then toggle.frame.arrangementInfo = t.arrange else wt.SetPosition(toggle.frame, t.position) end
-	toggle.button:SetPoint("TOPLEFT")
+	toggle.button:SetPoint("LEFT", (t.size.h - 16) / 2, 0)
 
 	toggle.frame:SetSize(t.size.w, t.size.h)
-	toggle.button:SetSize(t.size.h, t.size.h) --1:1 aspect ratio applies
+	toggle.button:SetSize(16, 16)
 
 	--| Visibility
 
@@ -2299,7 +2303,7 @@ local function setUpToggleFrame(toggle, title, t)
 				toggle.setState(wt.clipboard.toggle, true)
 			end }):SetEnabled(wt.clipboard.toggle ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() toggle.revertData() end })
-			if t.default ~= nil then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle.resetData() end }) end
 		end
 	}) end
 
@@ -2450,7 +2454,7 @@ function wt.CreateRadiobutton(t, toggle)
 		radiobutton.label = _G[name .. "RadioButtonText"]
 
 		radiobutton.label:SetPoint("LEFT", radiobutton.button, "RIGHT", 3, 0)
-		radiobutton.label:SetFontObject("GameFontHighlightSmall")
+		radiobutton.label:SetFontObject("GameFontNormal")
 
 		radiobutton.label:SetText(title)
 	else _G[name .. "RadioButtonText"]:Hide() end
@@ -2458,8 +2462,8 @@ function wt.CreateRadiobutton(t, toggle)
 	--| Shared setup
 
 	t.size = t.size or {}
-	t.size.h = t.size.h or 16
-	t.size.w = t.label == false and t.size.h or t.size.w or 160
+	t.size.h = t.size.h or 18
+	t.size.w = t.label == false and t.size.h or t.size.w or 180
 
 	setUpToggleFrame(radiobutton, title, t)
 
@@ -2505,7 +2509,7 @@ function wt.CreateRadiobutton(t, toggle)
 	local function updateState(_, state)
 		radiobutton.button:SetEnabled(state)
 
-		if radiobutton.label then radiobutton.label:SetFontObject(state and "GameFontHighlightSmall" or "GameFontDisableSmall") end
+		if radiobutton.label then radiobutton.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 	end
 
 	--Handle widget updates
@@ -2614,13 +2618,13 @@ function wt.CreateSelector(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Selector" string
-	---<hr><p></p>
+	---<p></p>
 	function selector.getType() return "Selector" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function selector.isType(type) return type == "Selector" end
 
 	--| Event handling
@@ -2716,7 +2720,7 @@ function wt.CreateSelector(t)
 
 	---Update the list of items currently set for the selector widget, updating its parameters and toggle widgets
 	--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
-	--- - ***Note:*** The currently selected item may not be the same after item were removed. In that case, the new item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Make sure to use **selector.setSelected(...)** to correct the selection if needed!
+	--- - ***Note:*** The currently selected item may not be the same after an item was removed. In that case, the item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Make sure to use **selector.setSelected(...)** to correct the selection if needed!
 	---***
 	---@param newItems (selectorItem|toggle|selectorToggle)[] Table containing subtables with data used to update the toggle widgets, or already existing toggle widgets
 	---@param silent? boolean If false, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
@@ -2742,7 +2746,7 @@ function wt.CreateSelector(t)
 
 		if not silent then selector.invoke.updated() end
 
-		selector.setSelected(value)
+		selector.setSelected(value, nil, silent)
 	end
 
 	--| Options data management
@@ -2911,18 +2915,18 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	--| Data
 
-	local default = itemsets[itemset][1].value
+	local default = 1
 
 	---Data verification utility
 	---@param v any
-	---@return specialSelectorValueTypes|nil
 	---@return integer|nil
 	local function verify(v)
-		local index = type(v) == "number" and Clamp(math.floor(v), 1, #itemsets[itemset]) or v
-		if type(v) == "string" then for i = 1, #itemsets[itemset] do if itemsets[itemset][i].value == v then index = i break end end end
-		v = itemsets[itemset][index]
+		if type(v) == "number" then return Clamp(math.floor(v), 1, #itemsets[itemset]) end
 
-		return type(v) == "table" and v.value or not clearable and default or nil, index
+		if type(v) == "table" and type(v.value) == "string" then v = v.value end
+		if type(v) == "string" then for i = 1, #itemsets[itemset] do if itemsets[itemset][i].value == v then return i end end end
+
+		return not clearable and default or nil
 	end
 
 	default = verify(t.default)
@@ -2943,13 +2947,13 @@ function wt.CreateSpecialSelector(itemset, t)
 	---Returns the object type of this widget
 	---***
 	---@return "SpecialSelector" string
-	---<hr><p></p>
+	---<p></p>
 	function selector.getType() return "SpecialSelector" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function selector.isType(type) return type == "SpecialSelector" end
 
 	---Return the itemset type specified for this special selector on creation
@@ -3026,7 +3030,7 @@ function wt.CreateSpecialSelector(itemset, t)
 	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 	function selector.saveData(data, silent)
 		if type(t.saveData) == "function" then
-			t.saveData(type(data) == "table" and verify(data.value) or value)
+			t.saveData(itemsets[itemset][verify(data or value)].value)
 
 			if not silent then selector.invoke.saved(true) end
 		elseif not silent then selector.invoke.saved(false) end
@@ -3048,19 +3052,19 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	---Get the currently set default value
 	---@return specialSelectorValueTypes|nil default
-	function selector.getDefault() return default end
+	function selector.getDefault() return itemsets[itemset][default].value end
 
 	---Set the default value
 	---***
 	---@param selected integer|specialSelectorValueTypes|nil | ***Default:*** *no change*
-	---<hr><p></p>
+	---<p></p>
 	function selector.setDefault(selected) default = verify(selected) end
 
 	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
 	---***
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.resetData(handleChanges, silent) selector.setData({ value = default }, handleChanges, silent) end
+	function selector.resetData(handleChanges, silent) selector.setData(default, handleChanges, silent) end
 
 	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
 	---***
@@ -3071,23 +3075,23 @@ function wt.CreateSpecialSelector(itemset, t)
 	---***
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.revertData(handleChanges, silent) selector.setData({ value = snapshot }, handleChanges, silent) end
+	function selector.revertData(handleChanges, silent) selector.setData(snapshot, handleChanges, silent) end
 
 	---Returns the value of the currently selected item or nil if there is no selection
 	---@return specialSelectorValueTypes|nil selected
-	---<hr><p></p>
-	function selector.getSelected() return value end
+	---<p></p>
+	function selector.getSelected() return itemsets[itemset][value].value end
 
 	---Set the specified item as selected
 	---***
 	---@param selected? integer|specialSelectorValueTypes|nil The index or the value of the item to be set as selected ***Default:*** nil *(no selection)*
 	---@param user? boolean If true, mark the change as being initiated via a user interaction and call change handlers | ***Default:*** `false`
 	---@param silent? boolean If false, invoke a "selected" event and call registered listeners | ***Default:*** `false`
-	---<hr><p></p>
+	---<p></p>
 	function selector.setSelected(selected, user, silent)
-		_, selected = verify(selected)
+		value = verify(selected)
 
-		for i = 1, #selector.toggles do selector.toggles[i].setState(i == selected, user, silent) end
+		for i = 1, #selector.toggles do selector.toggles[i].setState(i == value, user, silent) end
 
 		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
 
@@ -3213,13 +3217,13 @@ function wt.CreateMultiselector(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Multiselector" string
-	---<hr><p></p>
+	---<p></p>
 	function selector.getType() return "Multiselector" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function selector.isType(type) return type == "Multiselector" end
 
 	--| Event handling
@@ -3353,7 +3357,7 @@ function wt.CreateMultiselector(t)
 		if t.limits.min > #t.items then t.limits.min = #t.items end
 		if t.limits.max > #t.items then t.limits.max = #t.items end
 
-		selector.setSelections(value, silent)
+		selector.setSelections(value, nil, silent)
 	end
 
 	--| Options data management
@@ -3649,7 +3653,7 @@ function wt.CreateRadiogroup(t, selector)
 	---@param item selectorToggle|selectorRadiobutton|checkbox|radiobutton|toggle
 	---@param active boolean
 	local function setRadioButton(item, active)
-		if active and not item.frame then
+		if active and not us.IsFrame(item.frame) then
 			local sameRow = (item.index - 1) % t.columns > 0
 
 			wt.CreateRadiobutton({
@@ -3677,10 +3681,8 @@ function wt.CreateRadiogroup(t, selector)
 			if item.label then item.label:SetText(t.items[item.index].title) end
 
 			--Update tooltip
-			wt.AddTooltip(item.frame, {
-				title = type(
-					t.items[item.index].tooltip.title
-				) == "string" and t.items[item.index].tooltip.title or type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Toggle",
+			if type(t.items[item.index].tooltip) == "table" then wt.AddTooltip(item.frame, {
+				title = type(t.items[item.index].tooltip.title) == "string" and t.items[item.index].tooltip.title or type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Toggle",
 				lines = t.items[item.index].tooltip.lines,
 				anchor = "ANCHOR_NONE",
 				position = {
@@ -3688,7 +3690,9 @@ function wt.CreateRadiogroup(t, selector)
 					relativeTo = item.button,
 					relativePoint = "TOPRIGHT",
 				},
-			}, { triggers = { item.button, }, })
+			}, { triggers = { item.button, }, }) end
+
+			wt.SetVisibility(item.frame, true)
 		else wt.SetVisibility(item.frame, false) end
 	end
 
@@ -3702,7 +3706,7 @@ function wt.CreateRadiogroup(t, selector)
 
 	--Handle item list updates
 	if radiogroup.setListener.updated and radiogroup.setListener.added then
-		radiogroup.setListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.toggles) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+		radiogroup.setListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.toggles) / t.columns) * 18 + (t.label ~= false and 14 or 0)) end, 1)
 		radiogroup.setListener.added(function (_, toggle)
 			setRadioButton(toggle, true)
 
@@ -3755,7 +3759,7 @@ function wt.CreateRadiogroup(t, selector)
 				radiogroup.setSelected(wt.clipboard.selection.index, true)
 			end }):SetEnabled(wt.clipboard.selection ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
 		end
 	}) end
 
@@ -3790,7 +3794,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	if t.arrange then holderFrame.arrangementInfo = t.arrange else wt.SetPosition(holderFrame, t.position) end
 
-	holderFrame:SetSize(t.width + 4, 40)
+	holderFrame:SetSize(t.width + 4, 44)
 
 	--| Visibility
 
@@ -3802,34 +3806,16 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--| Dropdown menu
 
-	local menuPanel = wt.CreatePanel({
-		parent = holderFrame,
-		label = false,
-		position = {
-			anchor = "TOP",
-			relativeTo = holderFrame,
-			relativePoint = "BOTTOM",
-		},
-		visible = false,
-		frameStrata = "DIALOG",
-		keepInBound = true,
-		background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-		border =  { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } },
-		size = { w = t.width, h = 12 + #t.items * 16 },
-		initialize = function(panel)
-		end,
-	})
+	t.scrollThreshold = t.scrollThreshold or 15
 
 	---@class dropdownRadiogroup : radiogroup
 	---@field holderFrame Frame Main holder frame for the dropdown toggle, buttons and title
 	---@field menu panel|Frame Panel frame holding the dropdown selector widget
 	local dropdown = wt.CreateRadiogroup({
-		parent = menuPanel,
 		name = name,
 		append = false,
 		label = false,
-		position = { anchor = "CENTER", },
-		width = t.width - 12,
+		width = t.width - (#t.items > t.scrollThreshold and 28 or 12),
 		items = t.items,
 		clearable = clearable,
 		listeners = t.listeners,
@@ -3839,10 +3825,44 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		default = t.default,
 		instantSave = t.instantSave,
 		dataManagement = t.dataManagement,
+		utilityMenu = false,
 	}, selector)
 
 	dropdown.holderFrame = holderFrame
-	dropdown.menu = menuPanel
+
+	dropdown.menu = wt.CreatePanel({
+		parent = UIParent,
+		name = dropdown.frame:GetName() .. "Menu",
+		label = false,
+		position = {
+			anchor = "TOP",
+			relativeTo = dropdown.holderFrame,
+			relativePoint = "BOTTOM",
+			offset = { y = 3 }
+		},
+		visible = false,
+		frameStrata = "DIALOG",
+		keepInBound = true,
+		background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+		border =  { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } },
+		size = { w = t.width, h = 12 + min(#t.items, t.scrollThreshold) * dropdown.toggles[1].frame:GetHeight() },
+	})
+
+	dropdown.menu:SetClampedToScreen(true)
+
+	dropdown.content = #t.items > t.scrollThreshold and wt.CreateScrollFrame({
+		parent = dropdown.menu,
+		position = { anchor = "CENTER", },
+		size = { w = dropdown.menu:GetWidth() - 12, h = dropdown.menu:GetHeight() - 12 },
+		scrollSize = { h = dropdown.frame:GetHeight() },
+		scrollSpeed = 0.38,
+	}) or dropdown.menu
+
+	dropdown.frame:SetParent(dropdown.content)
+	wt.SetPosition(dropdown.frame, {
+		relativeTo = dropdown.content,
+		offset = #t.items <= t.scrollThreshold and { x = 6, y = -6 } or nil
+	})
 
 	--| Label
 
@@ -3869,11 +3889,11 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			{ text = "\n" .. wt.strings.dropdown.open, },
 		} },
 		position = { anchor = "BOTTOM", offset = { y = 2 }, },
-		size = { w = t.width - (t.cycleButtons ~= false and 44 or 0), },
+		size = { w = t.width - (t.cycleButtons ~= false and 46 or 0), h = 24 },
 		font = {
-			normal = "GameFontNormalSmall2",
-			highlight = "GameFontHighlightSmall2",
-			disabled = "GameFontDisableSmall2",
+			normal = "GameFontNormal",
+			highlight = "GameFontHighlight",
+			disabled = "GameFontDisable",
 		},
 		backdrop = {
 			background = {
@@ -3890,7 +3910,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		},
 		backdropUpdates = {
 			{ rules = {
-				OnEnter = function()
+				OnEnter = function(frame)
+					if not frame:IsEnabled() then return {} end
+
 					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -3902,21 +3924,25 @@ function wt.CreateDropdownRadiogroup(t, selector)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					})
 				end,
-				OnLeave = function()
+				OnLeave = function(frame)
+					if not frame:IsEnabled() then return {} end
+
 					if open then return {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.6, g = 0.6, b = 0.6, a = 0.9 } }
 					} end
 					return {}, true
 				end,
-				OnMouseDown = function(self)
-					return IsMouseButtonDown("LeftButton") and self:IsEnabled() and {
+				OnMouseDown = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					} or {}
 				end,
-				OnMouseUp = function(_, button)
-					if button == "LeftButton" then return {} end
+				OnMouseUp = function(frame, _, button)
+					if not frame:IsEnabled() or button == "LeftButton" then return {} end
 
 					return (open and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
@@ -3929,10 +3955,10 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			}, },
 			{
 				triggers = { dropdown.holderFrame },
-				rules = { OnAttributeChanged = function(_, attribute, state)
-					if attribute ~= "open" then return {} end
+				rules = { OnAttributeChanged = function(frame, _, attribute, state)
+					if not frame:IsEnabled() or attribute ~= "open" then return {} end
 
-					if dropdown.toggle.frame:IsMouseOver() then return state and {
+					if dropdown.toggle.widget:IsMouseOver() then return state and {
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					} or {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
@@ -3943,7 +3969,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			},
 		},
 		events = clearable and t.utilityMenu == false and { OnMouseUp = function(_, button, isInside)
-			if button == "RightButton" and isInside and dropdown.toggle.frame:IsEnabled() then dropdown.setText(nil, true) end
+			if button == "RightButton" and isInside and dropdown.toggle.widget:IsEnabled() then dropdown.setText(nil, true) end
 		end, } or nil,
 		dependencies = t.dependencies
 	})
@@ -3953,15 +3979,16 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	local previousDependencies, nextDependencies
 
 	if t.cycleButtons ~= false then
+
 		--| Create a custom fonts
 
-		wt.CreateFont("ChatFontNormalSmall", {
-			template = "ChatFontSmall",
+		wt.CreateFont("ChatFontGold", {
+			template = "ChatFontNormal",
 			color = wt.PackColor(GameFontNormal:GetTextColor()),
 		})
 
-		wt.CreateFont("ChatFontDisableSmall", {
-			template = "ChatFontSmall",
+		wt.CreateFont("ChatFontDisable", {
+			template = "ChatFontNormal",
 			color = wt.PackColor(GameFontDisable:GetTextColor()),
 		})
 
@@ -3976,17 +4003,17 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			parent = dropdown.holderFrame,
 			name = "SelectPrevious",
 			title = "◄",
-			titleOffset = { x = -1, y = 0.5 },
+			titleOffset = { x = -1, },
 			tooltip = {
 				title = wt.strings.dropdown.previous.label,
 				lines = { { text = wt.strings.dropdown.previous.tooltip, }, },
 			},
 			position = { anchor = "BOTTOMLEFT", offset = { x = 2, y = 2 }, },
-			size = { w = 22, },
+			size = { w = 24, h = 24 },
 			font = {
-				normal = "ChatFontNormalSmall",
-				highlight = "ChatFontSmall",
-				disabled = "ChatFontDisableSmall",
+				normal = "ChatFontGold",
+				highlight = "ChatFontNormal",
+				disabled = "ChatFontDisable",
 			},
 			backdrop = {
 				background = {
@@ -4002,7 +4029,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function()
+				OnEnter = function(frame)
+					if not frame:IsEnabled() then return {} end
+
 					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -4011,15 +4040,23 @@ function wt.CreateDropdownRadiogroup(t, selector)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function() return {}, true end,
-				OnMouseDown = function(self)
-					return IsMouseButtonDown("LeftButton") and self:IsEnabled() and {
+				OnLeave = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return {}, true
+				end,
+				OnMouseDown = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					} or {}
 				end,
-				OnMouseUp = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
+				OnMouseUp = function(frame, self)
+					if not frame:IsEnabled() then return {} end
+
+					return self:IsMouseOver() and {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					} or {}
@@ -4044,17 +4081,17 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			parent = dropdown.holderFrame,
 			name = "SelectNext",
 			title = "►",
-			titleOffset = { x = 2, y = 0.5 },
+			titleOffset = { x = 1, },
 			tooltip = {
 				title = wt.strings.dropdown.next.label,
 				lines = { { text = wt.strings.dropdown.next.tooltip, }, }
 			},
 			position = { anchor = "BOTTOMRIGHT", offset = { x = -2, y = 2 }, },
-			size = { w = 22, },
+			size = { w = 24, h = 24 },
 			font = {
-				normal = "ChatFontNormalSmall",
-				highlight = "ChatFontSmall",
-				disabled = "ChatFontDisableSmall",
+				normal = "ChatFontGold",
+				highlight = "ChatFontNormal",
+				disabled = "ChatFontDisable",
 			},
 			backdrop = {
 				background = {
@@ -4070,7 +4107,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function()
+				OnEnter = function(frame)
+					if not frame:IsEnabled() then return {} end
+
 					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -4079,15 +4118,23 @@ function wt.CreateDropdownRadiogroup(t, selector)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function() return {}, true end,
-				OnMouseDown = function(self)
-					return IsMouseButtonDown("LeftButton") and self:IsEnabled() and {
+				OnLeave = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return {}, true
+				end,
+				OnMouseDown = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return IsMouseButtonDown("LeftButton") and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					} or {}
 				end,
-				OnMouseUp = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
+				OnMouseUp = function(frame, self)
+					if not frame:IsEnabled() then return {} end
+
+					return self:IsMouseOver() and {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					} or {}
@@ -4112,17 +4159,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		local index = dropdown.getSelected()
 		local item = t.items[index] or {}
 		text = type(text) == "string" and text or item.title or "…"
-		local tooltip = us.Clone(item.tooltip) or {}
-		tooltip = us.Fill(tooltip, {
-			title = text,
-			lines = {
-				{ text = index and wt.strings.dropdown.selected or wt.strings.dropdown.none, },
-				{ text = "\n" .. wt.strings.dropdown.open, },
-			}
-		})
 
 		dropdown.toggle.label:SetText(text)
-		dropdown.toggle.setTooltip(tooltip)
+		wt.UpdateTooltipData(dropdown.toggle.frame, { title = text, })
 
 		if not silent then dropdown.invoke._("labeled", text) end
 	end
@@ -4154,7 +4193,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	---@diagnostic disable-next-line: inject-field
 	function dropdown.menu:GLOBAL_MOUSE_DOWN()
-		if dropdown.toggle.frame:IsMouseOver() then return end
+		if dropdown.toggle.widget:IsMouseOver() then return end
 
 		dropdown.menu:UnregisterEvent("GLOBAL_MOUSE_DOWN")
 		dropdown.menu:RegisterEvent("GLOBAL_MOUSE_UP")
@@ -4174,8 +4213,11 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 		if t.autoClose then dropdown.toggleMenu(false) end
 	end, 1)
-	dropdown.setListener._("open", function(state) if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end end)
-	dropdown.setListener.updated(function(self) self.menu:SetHeight(#self.toggles * 16 + 12) end, 1)
+	dropdown.setListener._("open", function(state)
+		dropdown.holderFrame:SetAttribute("open", state)
+		if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end
+	end)
+	dropdown.setListener.updated(function(self) self.menu:SetHeight(#self.toggles * 18 + 12) end, 1) --TODO add size & scroll update
 
 	--| Backdrop
 
@@ -4183,7 +4225,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		texture = { size = 5, },
 		color = { r = 1, g = 1, b = 1, a = 0 }
 	}, }, { {
-		triggers = { dropdown.holderFrame, dropdown.toggle.frame, dropdown.previous.frame, dropdown.next.frame },
+		triggers = { dropdown.holderFrame, dropdown.toggle.frame, dropdown.previous.frame, dropdown.next.frame, },
 		rules = {
 			OnEnter = function() return dropdown.isEnabled() and { background = { color = { a = 0.1 } } } or {} end,
 			OnLeave = "",
@@ -4205,7 +4247,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			defaultValue = crc(default and t.items[default].title or tostring(default), "FFFFFFFF")
 		end
 
-		wt.AddWidgetTooltipLines({ dropdown.holderFrame, dropdown.toggle.frame, dropdown.previous.frame, dropdown.next.frame }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ dropdown.holderFrame, dropdown.toggle.widget, dropdown.previous.widget, dropdown.next.widget }, defaultValue, t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -4237,7 +4279,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				dropdown.setSelected(wt.clipboard.selection.index, true)
 			end }):SetEnabled(wt.clipboard.selection ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown.revertData() end })
-			if dropdown.getDefault() then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.resetData() end }) end
 		end
 	}) end
 
@@ -4285,8 +4327,10 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
 
-	local showDefault = t.showDefault
-	local utilityMenu = t.utilityMenu
+	--[ Properties ]
+
+	local showDefault = t.showDefault ~= false
+	local utilityMenu = t.utilityMenu ~= false
 
 	---@type specialRadiogroupCreationData|radiogroupCreationData
 	t = us.Pull(t or {}, {
@@ -4296,6 +4340,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		utilityMenu = false,
 	})
 
+	--[ Frame Setup ]
+
 	---@type specialRadiogroup
 	local radiogroup = wt.CreateRadiogroup(t, selector)
 
@@ -4303,17 +4349,17 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if type(t.tooltip) == "table" then
 		local defaultValue
-		if showDefault ~= false then crc(radiogroup.getDefault(), "FFFFFFFF") end
+		if showDefault then defaultValue = crc(radiogroup.getDefault(), "FFFFFFFF") end
 
 		local frames = { radiogroup.frame }
 		for i = 1, #radiogroup.toggles do table.insert(frames, radiogroup.toggles[i].frame) end
 
-		wt.AddWidgetTooltipLines(frames, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines(frames, defaultValue, utilityMenu)
 	end
 
 	--| Utility menu
 
-	if utilityMenu ~= false then wt.CreateContextMenu({
+	if utilityMenu then wt.CreateContextMenu({
 		triggers = { {
 			frame = radiogroup.frame,
 			condition = radiogroup.isEnabled,
@@ -4413,10 +4459,8 @@ function wt.CreateCheckgroup(t, selector)
 			if item.label then item.label:SetText(t.items[item.index].title) end
 
 			--Update tooltip
-			wt.AddTooltip(item.frame, {
-				title = type(
-					t.items[item.index].tooltip.title
-				) == "string" and t.items[item.index].tooltip.title or type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Toggle",
+			if type(t.items[item.index].tooltip) == "table" then wt.AddTooltip(item.frame, {
+				title = type(t.items[item.index].tooltip.title) == "string" and t.items[item.index].tooltip.title or type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Toggle",
 				lines = t.items[item.index].tooltip.lines,
 				anchor = "ANCHOR_NONE",
 				position = {
@@ -4424,7 +4468,7 @@ function wt.CreateCheckgroup(t, selector)
 					relativeTo = item.button,
 					relativePoint = "TOPRIGHT",
 				},
-			}, { triggers = { item.button, }, })
+			}, { triggers = { item.button, }, }) end
 		else wt.SetVisibility(item.frame, false) end
 	end
 
@@ -4495,7 +4539,7 @@ function wt.CreateCheckgroup(t, selector)
 				checkgroup.setSelections(wt.clipboard.selections.states, true)
 			end }):SetEnabled(wt.clipboard.selections ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
 		end
 	}) end
 
@@ -4541,13 +4585,13 @@ function wt.CreateTextbox(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Textbox" string
-	---<hr><p></p>
+	---<p></p>
 	function textbox.getType() return "Textbox" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function textbox.isType(type) return type == "Textbox" end
 
 	--| Event handling
@@ -4879,7 +4923,7 @@ local function setUpSingleLineEditbox(editbox, title, t)
 				editbox.setText(wt.clipboard.text, true)
 			end }):SetEnabled(wt.clipboard.text ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
 		end
 	}) end
 end
@@ -5134,7 +5178,7 @@ function wt.CreateMultilineEditbox(t, textbox)
 				editbox.setText(wt.clipboard.text, true)
 			end }):SetEnabled(wt.clipboard.text ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
 		end
 	}) end
 
@@ -5294,13 +5338,13 @@ function wt.CreateNumeric(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Numeric" string
-	---<hr><p></p>
+	---<p></p>
 	function numeric.getType() return "Numeric" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function numeric.isType(type) return type == "Numeric" end
 
 	--| Event handling
@@ -5669,18 +5713,18 @@ function wt.CreateSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
+				OnEnter = function(frame) return frame:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
 				OnLeave = "",
 			}, }, },
 			events = {
-				OnChar = function(self, _, text) self:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(self)
-					local v = self:GetNumber()
+				OnChar = function(frame, _, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
+				OnEnterPressed = function(frame)
+					local v = frame:GetNumber()
 					if t.increment then v = max(slider.getMin(), min(floor(v * (1 / t.increment) + 0.5) / (1 / t.increment)), slider.getMax()) end
 
 					slider.setNumber(v, true)
 				end,
-				OnEscapePressed = function(self) self.setText(tostring(WidgetTools.utilities.Round(slider.widget.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(slider.widget.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(slider.getNumber()):gsub(matchPattern, replacePattern),
 			showDefault = false,
@@ -5690,7 +5734,7 @@ function wt.CreateSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(WidgetTools.utilities.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ]
@@ -5796,7 +5840,7 @@ function wt.CreateSlider(t, numeric)
 				slider.setNumber(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
 		end
 	}) end
 
@@ -5954,18 +5998,18 @@ function wt.CreateClassicSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
+				OnEnter = function(frame) return frame:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
 				OnLeave = "",
 			}, }, },
 			events = {
-				OnChar = function(self, _, text) self:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(self)
-					local v = self:GetNumber()
+				OnChar = function(frame, _, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
+				OnEnterPressed = function(frame)
+					local v = frame:GetNumber()
 					if t.increment then v = max(slider.getMin(), min(floor(v * (1 / t.increment) + 0.5) / (1 / t.increment)), slider.getMax()) end
 
 					slider.setNumber(v, true)
 				end,
-				OnEscapePressed = function(self) self.setText(tostring(WidgetTools.utilities.Round(slider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(slider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(slider.getNumber()):gsub(matchPattern, replacePattern),
 			showDefault = false,
@@ -5975,7 +6019,7 @@ function wt.CreateClassicSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(WidgetTools.utilities.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--| Side buttons
@@ -6021,7 +6065,9 @@ function wt.CreateClassicSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function()
+				OnEnter = function(frame)
+					if not frame:IsEnabled() then return {} end
+
 					return IsMouseButtonDown() and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -6030,15 +6076,23 @@ function wt.CreateClassicSlider(t, numeric)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function() return {}, true end,
-				OnMouseDown = function(self)
-					return self:IsEnabled() and {
+				OnLeave = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return {}, true
+				end,
+				OnMouseDown = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {}
+					}
 				end,
-				OnMouseUp = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
+				OnMouseUp = function(frame, self)
+					if not frame:IsEnabled() then return {} end
+
+					return self:IsMouseOver() and {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					} or {}
@@ -6087,7 +6141,9 @@ function wt.CreateClassicSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function()
+				OnEnter = function(frame)
+					if not frame:IsEnabled() then return {} end
+
 					return IsMouseButtonDown() and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
@@ -6096,15 +6152,23 @@ function wt.CreateClassicSlider(t, numeric)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function() return {}, true end,
-				OnMouseDown = function(self)
-					return self:IsEnabled() and {
+				OnLeave = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return {}, true
+				end,
+				OnMouseDown = function(frame)
+					if not frame:IsEnabled() then return {} end
+
+					return {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					} or {}
 				end,
-				OnMouseUp = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
+				OnMouseUp = function(frame, self)
+					if not frame:IsEnabled() then return {} end
+
+					return self:IsMouseOver() and {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					} or {}
@@ -6187,7 +6251,7 @@ function wt.CreateClassicSlider(t, numeric)
 				slider.setNumber(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
 		end
 	}) end
 
@@ -6265,13 +6329,13 @@ function wt.CreateColormanager(t)
 	---Returns the object type of this widget
 	---***
 	---@return "Colorpicker" string
-	---<hr><p></p>
+	---<p></p>
 	function colormanager.getType() return "Colorpicker" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function colormanager.isType(type) return type == "Colorpicker" end
 
 	--| Event handling
@@ -6547,7 +6611,7 @@ function wt.CreateColorpicker(t, colormanager)
 	---Toggle the interactability of the color picker elements when [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) is opened
 	---@param unlocked boolean
 	local function setLock(unlocked)
-		colorpicker.button.frame:EnableMouse(unlocked)
+		colorpicker.button.widget:EnableMouse(unlocked)
 		colorpicker.hexBox.widget:EnableMouse(unlocked)
 
 		--| Fade inactive color pickers
@@ -6560,7 +6624,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	if not t.value and t.getData then t.value = us.Clone(t.getData()) else t.value = {} end
 
-	if not colorpicker.button.frame then wt.CreateCustomButton({
+	if not colorpicker.button.widget then wt.CreateCustomButton({
 		parent = colorpicker.frame,
 		name = "PickerButton",
 		label = false,
@@ -6584,26 +6648,34 @@ function wt.CreateColorpicker(t, colormanager)
 			}
 		},
 		backdropUpdates = { { rules = {
-			OnEnter = function()
+			OnEnter = function(frame)
+				if not frame:IsEnabled() then return {} end
+
 				return IsMouseButtonDown() and {
 					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 				} or {
 					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 				}
 			end,
-			OnLeave = function() return {
-				border = { color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 } }
-			} end,
-			OnMouseDown = function() return {
-				border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-			} end,
-			OnMouseUp = function(self) return self:IsMouseOver() and {
-				border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-			} or {} end,
+			OnLeave = function(frame)
+				if not frame:IsEnabled() then return {} end
+
+				return { border = { color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 } } }
+			end,
+			OnMouseDown = function(frame)
+				if not frame:IsEnabled() then return {} end
+
+				return { border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } } }
+			end,
+			OnMouseUp = function(frame, self)
+				if not frame:IsEnabled() then return {} end
+
+				return self:IsMouseOver() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {}
+			end,
 		}, }, },
 	}, colorpicker.button) end
 
-	colorpicker.button.gradient = wt.CreateTexture(colorpicker.button.frame, {
+	colorpicker.button.gradient = wt.CreateTexture(colorpicker.button.widget, {
 		name = "ColorGradient",
 		position = { offset = { x = 2.5, y = -2.5 } },
 		size = { w = 17, h = 17 },
@@ -6612,7 +6684,7 @@ function wt.CreateColorpicker(t, colormanager)
 		level = -7,
 	})
 
-	colorpicker.button.checker = wt.CreateTexture(colorpicker.button.frame, {
+	colorpicker.button.checker = wt.CreateTexture(colorpicker.button.widget, {
 		name = "AlphaBG",
 		position = { offset = { x = 2.5, y = -2.5 } },
 		size = { w = 29, h = 17 },
@@ -6636,10 +6708,10 @@ function wt.CreateColorpicker(t, colormanager)
 			),
 		}, } },
 		position = {
-			relativeTo = colorpicker.button.frame,
+			relativeTo = colorpicker.button.widget,
 			relativePoint = "TOPRIGHT",
 		},
-		size = { w = t.width - colorpicker.button.frame:GetWidth(), h = colorpicker.button.frame:GetHeight() },
+		size = { w = t.width - colorpicker.button.widget:GetWidth(), h = colorpicker.button.widget:GetHeight() },
 		insets = { l = 6, },
 		font = {
 			normal = "GameFontNormalSmall2",
@@ -6661,11 +6733,11 @@ function wt.CreateColorpicker(t, colormanager)
 			}
 		},
 		backdropUpdates = { { rules = {
-			OnEnter = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
+			OnEnter = function(frame) return frame:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
 			OnLeave = "",
 		}, }, },
 		events = {
-			OnChar = function(self, _, text) self.setText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
+			OnChar = function(frame, _, text) frame:SetText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
 			OnEnterPressed = function(_, text) colorpicker.setColor(wt.PackColor(wt.HexToColor(text)), true) end,
 			OnEscapePressed = function(self) self.setText(wt.ColorToHex(colorpicker.getColor())) end,
 		},
@@ -6690,7 +6762,7 @@ function wt.CreateColorpicker(t, colormanager)
 	---Update the widget UI based on the color value
 	---@param color colorData|colorRGBA
 	local function updateColor(color)
-		colorpicker.button.frame:SetBackdropColor(color.r, color.g, color.b, color.a)
+		colorpicker.button.widget:SetBackdropColor(color.r, color.g, color.b, color.a)
 		colorpicker.button.gradient:SetVertexColor(color.r, color.g, color.b, 1)
 		colorpicker.hexBox.setText(wt.ColorToHex(color))
 	end
@@ -6720,7 +6792,7 @@ function wt.CreateColorpicker(t, colormanager)
 			defaultValue = texture .. crc(wt.ColorToHex(default), "FFFFFFFF")
 		end
 
-		wt.AddWidgetTooltipLines({ colorpicker.frame, colorpicker.button.frame, colorpicker.hexBox.widget }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ colorpicker.frame, colorpicker.button.widget, colorpicker.hexBox.widget }, defaultValue, t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -6751,7 +6823,7 @@ function wt.CreateColorpicker(t, colormanager)
 				colorpicker.setColor(wt.clipboard.color, true)
 			end }):SetEnabled(wt.clipboard.color ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.resetData() end }) end
 		end
 	}) end
 
@@ -7210,13 +7282,13 @@ function wt.CreateDataManagementPage(addon, t)
 	---Returns the type of this object
 	---***
 	---@return "DataManagementPage" string
-	---<hr><p></p>
+	---<p></p>
 	function dataManagement.getType() return "DataManagementPage" end
 
 	---Checks and returns if the type of this object is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function dataManagement.isType(type) return type == "DataManagementPage" end
 
 	--[ Settings Page ]
@@ -7299,7 +7371,7 @@ function wt.CreateDataManagementPage(addon, t)
 				local i = 1
 
 				--Check profile list
-				for key, value in WidgetTools.utilities.SortedPairs(list) do
+				for key, value in us.SortedPairs(list) do
 					if key == i and type(value) == "table" then
 						--Check profile data
 						if type(list[i].data) == "table" then checkData(list[i].data) else list[i].data = us.Clone(t.defaultsTable) end
@@ -7338,11 +7410,7 @@ function wt.CreateDataManagementPage(addon, t)
 			---@param index integer Index of the profile to set as the currently active settings profile
 			---@return boolean # True on success, false if the operation failed
 			function dataManagement.activateProfile(index)
-				if not activateProfile(index) then return false end
-
-				--Update dropdown selection
-				if dataManagement.profiles then dataManagement.profiles.apply.setText(tostring(index)) end
-
+				if dataManagement.profiles then dataManagement.profiles.apply.setSelected(index) elseif not activateProfile(index) then return false end
 				return true
 			end
 
@@ -7608,7 +7676,7 @@ function wt.CreateDataManagementPage(addon, t)
 
 						--Update the backup box and load the current profile data of the selected scope to the backup string, formatted based on the compact setting
 						function dataManagement.refreshBackupBox()
-							dataManagement.backup.box.setText(WidgetTools.utilities.TableToString(t.accountData.profiles[t.characterData.activeProfile].data, t.settingsData.compactBackup))
+							dataManagement.backup.box.setText(us.TableToString(t.accountData.profiles[t.characterData.activeProfile].data, t.settingsData.compactBackup))
 
 							--Set focus after text change to set the scroll to the top and refresh the position character counter
 							dataManagement.backup.box.scrollFrame.EditBox:SetFocus()
@@ -7617,7 +7685,7 @@ function wt.CreateDataManagementPage(addon, t)
 
 						--Update the backup box and load all addon profile data of the selected scope to the backup string, formatted based on the compact setting
 						function dataManagement.refreshAllProfilesBackupBox()
-							dataManagement.backupAllProfiles.box.setText(WidgetTools.utilities.TableToString({
+							dataManagement.backupAllProfiles.box.setText(us.TableToString({
 								activeProfile = t.characterData.activeProfile,
 								profiles = t.accountData.profiles
 							}, t.settingsData.compactBackup))
@@ -7714,7 +7782,7 @@ function wt.CreateDataManagementPage(addon, t)
 							tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
 							position = {
 								anchor = "RIGHT",
-								relativeTo = dataManagement.backup.load.frame,
+								relativeTo = dataManagement.backup.load.widget,
 								relativePoint = "LEFT",
 								offset = { x = -8, }
 							},
@@ -7866,7 +7934,7 @@ function wt.CreateDataManagementPage(addon, t)
 							tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
 							position = {
 								anchor = "RIGHT",
-								relativeTo = dataManagement.backupAllProfiles.load.frame,
+								relativeTo = dataManagement.backupAllProfiles.load.widget,
 								relativePoint = "LEFT",
 								offset = { x = -8, }
 							},
@@ -7896,7 +7964,7 @@ local positioningVisualAids = {}
 ---***
 ---@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** nil
 function wt.CreatePositionOptions(addon, frame, t)
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not WidgetTools.utilities.IsFrame(frame) or type(t) ~= "table" then return end
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not us.IsFrame(frame) or type(t) ~= "table" then return end
 
 	if type(t.name) ~= "string" then t.name = frame:GetName() end
 	t.dataManagement = t.dataManagement or {}
@@ -7913,13 +7981,13 @@ function wt.CreatePositionOptions(addon, frame, t)
 	---Returns the type of this object
 	---***
 	---@return "PositionOptions" string
-	---<hr><p></p>
+	---<p></p>
 	function panel.getType() return "PositionOptions" end
 
 	---Checks and returns if the type of this object is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function panel.isType(type) return type == "PositionOptions" end
 
 	--[ Visual Aids ]
@@ -8485,7 +8553,7 @@ end
 
 --| Text font
 
-local fontItems
+local fonts, fontItems
 
 ---Create and set up font management for a specified text object ([FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString)) including access to a font family selector dropdown to pick a custom font from the Widget Tools fonts list
 ---***
@@ -8511,13 +8579,13 @@ function wt.CreateFontOptions(addon, text, t)
 	---Returns the type of this object
 	---***
 	---@return "FontOptions" string
-	---<hr><p></p>
+	---<p></p>
 	function panel.getType() return "FontOptions" end
 
 	---Checks and returns if the type of this object is equal to the string provided
 	---@param type string|AnyTypeName
 	---@return boolean
-	---<hr><p></p>
+	---<p></p>
 	function panel.isType(type) return type == "FontOptions" end
 
 	--[ Options Panel ]
@@ -8533,22 +8601,54 @@ function wt.CreateFontOptions(addon, text, t)
 
 			--| Font family
 
-			if not fontItems then
+			if not fonts or not fontItems then
 				fontItems = {}
-				local fonts = us.Clone(rs.fonts)
+
+				--| Add base fonts
+
+				fonts = us.Clone(rs.fonts)
+
+				table.insert(fonts, 1, {
+					name = wt.strings.font.path.default.label,
+					path = STANDARD_TEXT_FONT:gsub("\\", "/"),
+				})
 
 				for i = 1, #fonts do
 					fontItems[i] = {}
 					fontItems[i].title = fonts[i].name
 					fontItems[i].tooltip = {
 						title = fonts[i].name,
-						lines = i == 1 and { { text = wt.strings.font.path.default, }, } or (i == #fonts and {
-							{ text = wt.strings.font.path.custom:gsub(
-								"#FONTS_DIRECTORY", cr("[WoW]\\Interface\\AddOns\\" .. rs.addon .. "\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
-							):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
-							{ text = "\n" .. wt.strings.font.path.reminder, color = { r = 0.89, g = 0.65, b = 0.40 }, },
-						} or nil),
+						lines = {
+							{ text = fonts[i].path:match(rs.addon) and wt.strings.font.path.otf or wt.strings.font.path.base },
+							{ text = "\n" .. wt.strings.font.path.file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
+						}
 					}
+				end
+				fontItems[1].tooltip.lines[1] = { text = wt.strings.font.path.default.tooltip, }
+
+				--| Add custom fonts
+
+				if type(WidgetToolsDB.customFonts) == "table" then
+					for i = 1, #WidgetToolsDB.customFonts do table.insert(fonts, {
+						name = WidgetToolsDB.customFonts[i],
+						path = "Fonts/" .. WidgetToolsDB.customFonts[i] .. ".ttf",
+					}) end
+
+					for i = #fonts - #WidgetToolsDB.customFonts + 1, #fonts do
+						fontItems[i] = {}
+						fontItems[i].title = fonts[i].name
+						fontItems[i].tooltip = {
+							title = fonts[i].name,
+							lines = {
+								{ text = wt.strings.font.path.custom, },
+								{ text = "\n" .. wt.strings.font.path.replace:gsub( --TODO update the tooltip when full custom font management support is added
+									"#FONTS_DIRECTORY", cr("[WoW]\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
+								):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
+								{ text = "\n" .. wt.strings.font.path.reminder, color = { r = 0.89, g = 0.65, b = 0.40 }, }, --TODO update the tooltip when full custom font management support is added
+								{ text = "\n" .. wt.strings.font.path.file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
+							}
+						}
+					end
 				end
 			end
 
@@ -8557,42 +8657,46 @@ function wt.CreateFontOptions(addon, text, t)
 				name = "Path",
 				title = wt.strings.font.path.label,
 				tooltip = { lines = { { text = wt.strings.font.path.tooltip, }, } },
+				width = 184,
 				arrange = {},
 				items = fontItems,
 				dependencies = t.dependencies,
-				getData = function() return us.FindIndex(rs.fonts, t.getData().path) end,
-				saveData = function(value) t.getData().path = rs.fonts[value].path end,
-				default = us.FindIndex(rs.fonts, t.defaultsTable.path),
+				getData = function() return us.FindIndex(fonts, t.getData().path) end,
+				saveData = function(value) t.getData().path = fonts[value].path end,
+				default = us.FindIndex(fonts, t.defaultsTable.path),
 				dataManagement = {
 					category = t.dataManagement.category,
 					key = t.dataManagement.key,
 					onChange = {
 						CustomFontChangeHandler = function() if type(t.onChangeFont) == "function" then t.onChangeFont() end end,
 						UpdateTextFont = function() text:SetFont(t.getData().path, t.getData().size, "OUTLINE") end,
-						RefreshText = function() --WATCH if the text still needs to be refreshed so the font will be applied right away (if the font is loaded)
-							local s = text:GetText()
-							text:SetText("")
-							text:SetText(s)
-						end,
 						UpdateFontDropdownText = not WidgetToolsDB.lite and function()
 							--Update the font of the dropdown toggle button label
 							local _, size, flags = panel.widgets.path.toggle.label:GetFont()
-							panel.widgets.path.toggle.label:SetFont(rs.fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
-
-							--WATCH if its still needed to: Refresh the text so the font will be applied right away (if the font is loaded)
-							local s = panel.widgets.path.toggle.label:GetText()
-							panel.widgets.path.toggle.label:SetText("")
-							panel.widgets.path.toggle.label:SetText(s)
+							panel.widgets.path.toggle.label:SetFont(fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
 						end or nil,
 					},
 				},
+				events = { OnShow = function()
+					--Update the font of the dropdown toggle button label
+					local _, size, flags = panel.widgets.path.toggle.label:GetFont()
+					panel.widgets.path.toggle.label:SetFont(fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
+				end },
 			})
 
 			--Update the font of the dropdown items
-			if panel.widgets.path.frame then for i = 1, #panel.widgets.path.toggles do if panel.widgets.path.toggles[i].label then
-				local _, size, flags = panel.widgets.path.toggles[i].label:GetFont()
-				panel.widgets.path.toggles[i].label:SetFont(rs.fonts[i].path, size, flags)
-			end end end
+			if panel.widgets.path.frame then
+				for i = 1, #panel.widgets.path.toggles do if panel.widgets.path.toggles[i].label then
+					local _, size, flags = panel.widgets.path.toggles[i].label:GetFont()
+					panel.widgets.path.toggles[i].label:SetFont(fonts[i].path, size, flags)
+				end end
+
+				if panel.widgets.path.toggles[1].label then panel.widgets.path.toggles[1].label:SetTextColor(0.4, 1, 0.4) end
+
+				if type(WidgetToolsDB.customFonts) == "table" then for i = #fonts - #WidgetToolsDB.customFonts + 1, #fonts do
+					if panel.widgets.path.toggles[i].label then panel.widgets.path.toggles[i].label:SetTextColor(1, 0.4, 0.4) end
+				end end
+			end
 
 			--| Size
 
@@ -8645,21 +8749,22 @@ function wt.CreateFontOptions(addon, text, t)
 
 			--| Font color
 
-			if type(t.colorOrder) ~= "table" then t.colorOrder = {} end
-			if type(t.colorNames) ~= "table" then t.colorNames = {} end
+			if type(t.colors) ~= "table" then t.colors = {} end
 
 			---@type (colormanager|colorpicker)[]
 			panel.widgets.colors = {}
 
-			for key, _ in pairs(t.getData().colors) do
-				local name = key:sub(1,1):upper() .. key:sub(2)
+			for key in pairs(t.getData().colors) do
+				if type(t.colors[key]) ~= "table" then t.colors[key] = {} end
+
+				local name = t.colors[key].name == "string" and t.colors[key].name or (key:sub(1,1):upper() .. key:sub(2))
 
 				panel.widgets.colors[key] = wt.CreateColorpicker({
 					parent = panelFrame,
 					name = name .. "Colorpicker",
-					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", type(t.colorNames[key]) == "string" and t.colorNames[key] or name),
+					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", name),
 					tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
-					arrange = { newRow = not next(panel.widgets.colors), column = us.FindIndex(t.colorOrder, key) },
+					arrange = { newRow = not next(panel.widgets.colors), column = t.colors[key].index == "number" and t.colors[key].index or nil },
 					dependencies = t.dependencies,
 					getData = function() return t.getData().colors[key] end,
 					saveData = function(value) t.getData().colors[key] = value end,

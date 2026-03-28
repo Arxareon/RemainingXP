@@ -79,7 +79,8 @@
 			"CAP_REACHED_TRIAL",
 			"TRIAL_CAP_BANKED_LEVELS_TOOLTIP",
 			"PlayerFrame",
-			"ObjectiveTrackerFrame"
+			"ObjectiveTrackerFrame",
+			"PLAYER_LEVEL_UP"
 		],
 		"Lua.diagnostics.disable": [
 			"assign-type-mismatch"

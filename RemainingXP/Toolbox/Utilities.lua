@@ -56,7 +56,7 @@ end
 ---@param offsetY? number | ***Default:*** 0
 ---***
 ---@return positionData # Table containing the position values as used by WidgetTools
----<hr><p></p>
+---<p></p>
 function wt.PackPosition(anchor, relativeTo, relativePoint, offsetX, offsetY)
 	return {
 		anchor = type(anchor) == "string" and anchor or "TOPLEFT",
@@ -75,7 +75,7 @@ end
 ---@return FramePoint? relativePoint
 ---@return number|nil offsetX ***Default:*** 0
 ---@return number|nil offsetY ***Default:*** 0
----<hr><p></p>
+---<p></p>
 function wt.UnpackPosition(t)
 	if type(t) ~= "table" then return "TOPLEFT" end
 
@@ -214,7 +214,6 @@ end
 ---@return number|nil a Alpha | ***Range:*** (0, 1)
 function wt.HexToColor(hex)
 	if type(hex) ~= "string" then return 1, 1, 1 else hex = hex:gsub("#", "") end
-	if hex:len() ~= 6 or hex:len() ~= 8 then return 1, 1, 1 end
 
 	local r = tonumber(hex:sub(1, 2), 16) / 255
 	local g = tonumber(hex:sub(3, 4), 16) / 255
@@ -348,7 +347,7 @@ end
 ---@param text string Clickable text to be displayed as the hyperlink
 ---***
 ---@return string # ***Default:*** ""
----<hr><p></p>
+---<p></p>
 function wt.Hyperlink(linkType, content, text)
 	if not linkType or not content or not text then return "" else return "\124H" .. linkType .. ":" .. (content or "") .. "\124h" .. text .. "\124h" end
 end
@@ -409,7 +408,7 @@ end
 ---@param t any
 ---***
 ---@return boolean|AnyTypeName # Return the type name of the object if recognized, false if not
----<hr><p></p>
+---<p></p>
 function wt.IsWidget(t)
 	return type(t) == "table" and t.isType and t.getType and t.getType() or false
 end
@@ -480,7 +479,7 @@ end
 ---***
 ---@return number? offsetX The new horizontal offset value | ***Default:*** nil
 ---@return number? offsetY The new vertical offset value | ***Default:*** nil
----<hr><p></p>
+---<p></p>
 function wt.SetAnchor(frame, anchor)
 	if not us.IsFrame(frame) or type(anchor) ~= "string" then return end
 
@@ -841,7 +840,7 @@ function wt.SetBackdrop(frame, backdrop, updates)
 				end
 
 				--Conditional: Evaluate the rule
-				local backdropUpdate, fill = value(self, ...)
+				local backdropUpdate, fill = value(frame, self, ...)
 
 				--Remove the backdrop
 				if type(backdropUpdate) ~= "table" then
@@ -1111,7 +1110,7 @@ function wt.UpdateTooltipData(frame, t, linesUpdate)
 	elseif not tooltipData[id].tooltip or not (us.IsFrame(tooltipData[id].tooltip) and tooltipData[id].tooltip:IsObjectType("GameTooltip")) then
 		--Create the default reusable tooltip
 		if not defaultTooltip then
-			local name = "Widget Toolbox " .. C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-ToolboxVersion") .. "GameTooltip"
+			local name = "WidgetToolbox" .. C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-ToolboxVersion"):gsub("[^%w]", "_") .. "GameTooltip"
 
 			defaultTooltip = CreateFrame("GameTooltip", name, nil, "GameTooltipTemplate")
 
@@ -1422,12 +1421,14 @@ function wt.RegisterSettingsPage(page, parent, icon)
 	if WidgetToolsDB.lite or wt.IsWidget(page) ~= "SettingsPage" or page.category then return end
 
 	parent = wt.IsWidget(parent) == "SettingsPage" and parent or nil
-	icon = (icon or not parent and type(page.icon) == "table" and type(page.icon.GetTexture) == "function" and ("  " .. wt.Texture(page.icon:GetTexture())) or "")
-	local title = (type(page.title) == "table" and type(page.title.GetText) == "function" and page.title:GetText() or "") .. icon
+	if icon == nil then icon = parent == nil end
+
+	local iconTexture = (icon and type(page.iconTexture) == "string" and (" |T" .. page.iconTexture .. ":14:14:3:-1|t") or "")
+	local title = (type(page.title) == "table" and type(page.title.GetText) == "function" and page.title:GetText() or "") .. iconTexture
 
 	page.canvas.OnCommit = function() page.save(true) end
 	page.canvas.OnRefresh = function() page.load(nil, true) end
-	page.canvas.OnDefault = function() page.default(true) end
+	page.canvas.OnDefault = function() page.reset(true) end
 
 	if parent and type(parent.category) == "table" then page.category = Settings.RegisterCanvasLayoutSubcategory(parent.category, page.canvas, title)
 	else page.category = Settings.RegisterCanvasLayoutCategory(page.canvas, title) end
