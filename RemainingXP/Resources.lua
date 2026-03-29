@@ -36,7 +36,7 @@ ns.chat = {
 --Changelog
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(27/2/2026)_#",
+		"#V_Version 3.0_# #H_(29/3/2026)_#",
 		"#C_Changes:_#",
 		"Under the hood improvements.",
 	},
