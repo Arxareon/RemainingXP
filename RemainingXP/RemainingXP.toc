@@ -1,8 +1,8 @@
 ## Interface: 120001, 50503, 20505, 11508
 ## Title: Remaining XP
 ## Version: 3.0
-## X-Day: 29
-## X-Month: 3
+## X-Day: 4
+## X-Month: 4
 ## X-Year: 2026
 ## Category: Quests & Leveling
 ## Notes: Tracks your XP gain, and provides detailed XP information in customizable XP bar displays, tooltips & chat notifications.

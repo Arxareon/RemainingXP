@@ -71,11 +71,11 @@ end
 ---@param t? positionData Table containing parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with
 ---***
 ---@return FramePoint anchor ***Default:*** "TOPLEFT"
----@return AnyFrameObject|nil relativeTo ***Default:*** "nil" *(anchor relative to screen dimensions)*<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).
+---@return AnyFrameObject|nil relativeTo ***Default:*** "nil" *(anchor relative to screen dimensions)*<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).</li></ul>
 ---@return FramePoint? relativePoint
 ---@return number|nil offsetX ***Default:*** 0
 ---@return number|nil offsetY ***Default:*** 0
----<p></p>
+---<hr><p></p>
 function wt.UnpackPosition(t)
 	if type(t) ~= "table" then return "TOPLEFT" end
 
@@ -469,7 +469,7 @@ function wt.SetPosition(frame, position, unlink, userPlaced)
 	end
 
 	--Set user placed
-	if frame.SetUserPlaced and frame:IsMovable() then frame:SetUserPlaced(userPlaced ~= false) end
+	if frame.IsMovable and frame:IsMovable() then frame:SetUserPlaced(userPlaced ~= false) end
 end
 
 ---Set the anchor of a frame while keeping its positioning by updating its relative offsets
@@ -555,18 +555,9 @@ local arrangementSkipping = {}
 function wt.SetArrangementDirective(frame, index, wrap, skip)
 	if not us.IsFrame(frame) or not frame:GetParent() then return end
 
-	if index == nil then arrangementOrdering[frame] = nil else
-		if type(arrangementOrdering[frame]) ~= "table" then arrangementOrdering[frame] = {} end
-		arrangementOrdering[frame] = type(index) == "number" and us.Round(index) or nil
-	end
-	if wrap == nil then arrangementWrapping[frame] = nil else
-		if type(arrangementWrapping[frame]) ~= "table" then arrangementWrapping[frame] = {} end
-		arrangementWrapping[frame] = wrap == true
-	end
-	if skip == nil then arrangementSkipping[frame] = nil else
-		if type(arrangementSkipping[frame]) ~= "table" then arrangementSkipping[frame] = {} end
-		arrangementSkipping[frame] = skip == true
-	end
+	arrangementOrdering[frame] = type(index) == "number" and us.Round(index) or nil
+	if wrap == nil then arrangementWrapping[frame] = nil else arrangementWrapping[frame] = wrap == true end
+	if skip == nil then arrangementSkipping[frame] = nil else arrangementSkipping[frame] = skip == true end
 end
 
 ---Arrange the child frames of a container frame into stacked rows based on the parameters provided
@@ -605,8 +596,6 @@ function wt.ArrangeContent(container, t)
 
 	--Remove last rows that got left empty
 	if #arrangement[#arrangement] < 1 then arrangement[#arrangement] = nil end
-
-	ds.Dump(arrangement)
 
 	--| Arrange the child frames & resize the parent
 

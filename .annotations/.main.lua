@@ -44,7 +44,7 @@
 
 --| Font
 
----@class displayFontColorData
+---@class xpColorList
 ---@field base colorData Base text color
 ---@field gathered colorData Gathered XP text color
 ---@field needed colorData Needed XP text color
@@ -52,11 +52,8 @@
 ---@field rested colorData Rested XP text color
 ---@field banked colorData Banked text color
 
----@class displayFontData
----@field family string Path to font to use
----@field size integer Font size in pixels
----@field alignment JustifyHorizontal Horizontal text alignment
----@field colors displayFontColorData
+---@class displayFontData : fontOptionsData
+---@field colors xpColorList
 
 --| Background
 

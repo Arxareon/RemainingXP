@@ -144,7 +144,7 @@ end
 --CHECK
 
 ---Print visibility info
----@param load boolean ***Default:*** false
+---@param load? boolean ***Default:*** false
 local function PrintStatus(load)
 	if load == true and not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.enabled then return end
 
@@ -498,7 +498,7 @@ end
 ---Set the size of the main display elements
 ---@param width number
 ---@param height number
-local function ResizeDisplay(width, height)
+local function SetDisplaySize(width, height)
 	--Background
 	frames.display.frame:SetSize(width, height)
 
@@ -566,7 +566,7 @@ local function SetDisplayValues(data)
 	SetDisplayBackdrop(data.display.background.visible, data.display.background.colors)
 
 	--Font & text
-	frames.display.text:SetFont(data.display.font.family, data.display.font.size, "OUTLINE")
+	frames.display.text:SetFont(data.display.font.path, data.display.font.size, "OUTLINE")
 	frames.display.text:SetTextColor(wt.UnpackColor(data.display.font.colors.base))
 	frames.display.text:SetJustifyH(data.display.font.alignment)
 	wt.SetPosition(frames.display.text, {
@@ -594,49 +594,6 @@ local function SetIntegrationVisibility(enabled)
 		C_CVar.SetCVar("xpBarText", 0)
 	else TurnOffIntegration() end
 end
-
-
-
-
-
-
-
--- ---Apply a specific display preset
--- ---@param i integer Index of the preset
--- local function ApplyPreset(i)
--- 	if max then return end
-
--- 	--Update the display
--- 	frames.main:Show()
--- 	wt.SetPosition(frames.main, presets[i].data.position)
--- 	frames.main:SetFrameStrata(presets[i].data.layer.strata)
--- 	ResizeDisplay(presets[i].data.background.size.w, presets[i].data.background.size.h)
--- 	if not presets[i].data.background.visible then wt.SetVisibility(frames.display.text, true) end
--- 	SetDisplayBackdrop(presets[i].data.background.visible, RemainingXPDB.display.background.colors)
--- 	Fade(RemainingXPDB.display.fade.enable)
-
-
--- 	--Check the visibility options widgets
--- 	if not RemainingXPDB.display.background.visible then
--- 		options.display.text.visible.checkbox:SetButtonState("DISABLED")
--- 		options.display.text.visible.checkbox:UnlockHighlight()
--- 		options.display.text.visible:SetAlpha(0.4)
--- 	else
--- 		options.display.text.visible.checkbox:SetButtonState("NORMAL")
--- 		options.display.text.visible:SetAlpha(1)
--- 	end
-
--- end
-
-
-
-
-
-
-
-
-
-
 
 
 --[[ INITIALIZATION ]]
@@ -771,7 +728,10 @@ frames.main = wt.CreateFrame({
 					},
 				},
 				onLoad = EnsureVisibility,
-				onSave = function() RemainingXPDB = us.Clone(RemainingXPDB) end,
+				onSave = function() if atMax then
+					frames.display.frame:Hide()
+					PrintStatus()
+				end end,
 				onDefault = function(user)
 					-- ResetCustomPreset() --REPLACE
 
@@ -915,7 +875,7 @@ frames.main = wt.CreateFrame({
 						getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display end,
 						defaultsTable = ns.profileDefault.display,
 						settingsData = RemainingXPCS,
-						dataManagement = { category = ns.name .. "display", },
+						dataManagement = { category = category, },
 					})
 
 					--[ Text ]
@@ -977,282 +937,35 @@ frames.main = wt.CreateFrame({
 
 					--[ Font ]
 
-					wt.CreatePanel({
-						parent = canvas,
-						name = keys[4],
-						title = ns.strings.options.display.font.title,
-						description = ns.strings.options.display.font.description,
-						arrange = {},
-						arrangement = {},
-						initialize = function(panel, _, _, key)
-
-							--| Font family
-
-							local fontItems = {}
-
-							for i = 1, #ns.fonts do
-								fontItems[i] = {}
-								fontItems[i].title = ns.fonts[i].name
-								fontItems[i].tooltip = {
-									title = ns.fonts[i].name,
-									lines = i == 1 and { { text = ns.strings.options.display.font.family.default, }, } or (i == #ns.fonts and {
-										{ text = ns.strings.options.display.font.family.custom[1]:gsub("#OPTION_CUSTOM", CUSTOM):gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
-										{ text = "[WoW]\\Interface\\AddOns\\" .. ns.name .. "\\Fonts\\", color = { r = 0.185, g = 0.72, b = 0.84 }, wrap = false },
-										{ text = ns.strings.options.display.font.family.custom[2]:gsub("#FILE_CUSTOM", "CUSTOM.ttf"), },
-										{ text = "\n" .. ns.strings.options.display.font.family.custom[3], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-									} or nil),
-								}
-							end
-
-							options.display.font.family = wt.CreateDropdownRadiogroup({
-								parent = panel,
-								name = "FontFamily",
-								title = ns.strings.options.display.font.family.label,
-								tooltip = { lines = { { text = ns.strings.options.display.font.family.tooltip, }, } },
-								arrange = {},
-								items = fontItems,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								-- getData = function() return GetFontID(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family) end,
-								-- saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family = ns.fonts[value or 1].path end,
-								-- default = GetFontID(ns.profileDefault.display.font.family),
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										UpdateDisplayFont = function()
-											frames.display.text:SetFont(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.family, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.size, "OUTLINE")
-										end,
-										RefreshDisplayText = function()
-											--| Refresh the text so the font will be applied even the first time as well not just subsequent times
-
-											local text = frames.display.text:GetText()
-
-											frames.display.text:SetText("")
-											frames.display.text:SetText(text)
-										end,
-										UpdateFontFamilyDropdownText = not WidgetToolsDB.lite and function()
-											--| Update the font of the dropdown toggle button label
-
-											local _, size, flags = options.display.font.family.toggle.label:GetFont()
-
-											options.display.font.family.toggle.label:SetFont(ns.fonts[options.display.font.family.getSelected()].path, size, flags)
-
-											--| Refresh the text so the font will be applied right away (if the font is loaded)
-
-											local text = options.display.font.family.toggle.label:GetText()
-
-											options.display.font.family.toggle.label:SetText("")
-											options.display.font.family.toggle.label:SetText()
-										end or nil,
-									},
-								},
-							})
-
-							--Update the font of the dropdown items
-							if options.display.font.family.frame then for i = 1, #options.display.font.family.toggles do if options.display.font.family.toggles[i].label then
-								local _, size, flags = options.display.font.family.toggles[i].label:GetFont()
-								options.display.font.family.toggles[i].label:SetFont(ns.fonts[i].path, size, flags)
-							end end end
-
-							--| Font size
-
-							options.display.font.size = wt.CreateSlider({
-								parent = panel,
-								name = "FontSize",
-								title = ns.strings.options.display.font.size.label,
-								tooltip = { lines = { { text = ns.strings.options.display.font.size.tooltip .. "\n\n" .. DEFAULT .. ": " .. ns.profileDefault.display.font.size, }, } },
-								arrange = { wrap = false, },
-								min = 8,
-								max = 64,
-								increment = 1,
-								altStep = 3,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.size end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.size = value end,
-								default = ns.profileDefault.display.font.size,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { "UpdateDisplayFont", },
-								},
-							})
-
-							--| Alignment
-
-							options.display.font.alignment = wt.CreateSpecialRadiogroup("justifyH", {
-								parent = panel,
-								name = "Alignment",
-								title = ns.strings.options.display.font.alignment.label,
-								tooltip = { lines = { { text = ns.strings.options.display.font.alignment.tooltip, }, } },
-								arrange = { wrap = false, },
-								width = 140,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.alignment end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.alignment = value end,
-								default = ns.profileDefault.display.font.alignment,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { UpdateDisplayTextAlignment = function()
-										frames.display.text:SetJustifyH(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.alignment)
-										wt.SetPosition(frames.display.text, { anchor = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.alignment, })
-									end, },
-								},
-							})
-
-							--| Base text color
-
-							options.display.font.colors.base = wt.CreateColorpicker({
-								parent = panel,
-								name = "FontColor",
-								title = ns.strings.options.display.font.colors.base.label,
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.base end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.base = value end,
-								default = ns.profileDefault.display.font.colors.base,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										UpdateDisplayFontColor = function() frames.display.text:SetTextColor(wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.base)) end,
-										UpdateFade = Fade,
-									},
-								},
-							})
-
-							--| Gathered text color
-
-							options.display.font.colors.gathered = wt.CreateColorpicker({
-								parent = panel,
-								name = "FontColor",
-								title = ns.strings.options.display.font.colors.gathered.label,
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.gathered end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.gathered = value end,
-								default = ns.profileDefault.display.font.colors.gathered,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										"UpdateDisplayFontColor",
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Needed text color
-
-							options.display.font.colors.needed = wt.CreateColorpicker({
-								parent = panel,
-								name = "FontColor",
-								title = ns.strings.options.display.font.colors.needed.label,
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.needed end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.needed = value end,
-								default = ns.profileDefault.display.font.colors.needed,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										"UpdateDisplayFontColor",
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Remaining text color
-
-							options.display.font.colors.remaining = wt.CreateColorpicker({
-								parent = panel,
-								name = "FontColor",
-								title = ns.strings.options.display.font.colors.remaining.label,
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.remaining end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.remaining = value end,
-								default = ns.profileDefault.display.font.colors.remaining,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										"UpdateDisplayFontColor",
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Rested text color
-
-							options.display.font.colors.rested = wt.CreateColorpicker({
-								parent = panel,
-								name = "FontColor",
-								title = ns.strings.options.display.font.colors.rested.label,
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.rested end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.rested = value end,
-								default = ns.profileDefault.display.font.colors.rested,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										"UpdateDisplayFontColor",
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Banked text color
-
-							options.display.font.colors.banked = wt.CreateColorpicker({
-								parent = panel,
-								name = "FontColor",
-								title = ns.strings.options.display.font.colors.banked.label,
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.banked end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.banked = value end,
-								default = ns.profileDefault.display.font.colors.banked,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										"UpdateDisplayFontColor",
-										"UpdateFade",
-									},
-								},
-							})
+					options.display.font = wt.CreateFontOptions(ns.name, frames.display.text, {
+						canvas = canvas,
+						colors = {
+							-- percent = { --ADD colors
+							-- 	name = ns.strings.options.speedValue.units.list[1].label,
+							-- 	index = 1,
+							-- },
+							-- yards = {
+							-- 	name = ns.strings.options.speedValue.units.list[2].label,
+							-- 	index = 2,
+							-- },
+							-- coords = {
+							-- 	name = ns.strings.options.speedValue.units.list[3].label,
+							-- 	index = 3,
+							-- },
+						},
+						dependencies = {
+							{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+							{ frame = options.display.text.visible, },
+						},
+						getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font end,
+						defaultsTable = ns.profileDefault.display.font,
+						dataManagement = { category = category, },
+						onChangeFont = function() SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end,
+						onChangeSize = function() SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end,
+						onChangeAlignment = function()
+							wt.SetPosition(frames.display.text, { anchor = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.alignment, })
 						end,
+						onChangeColor = Fade,
 					})
 
 					--[ Background ]
@@ -1299,7 +1012,7 @@ frames.main = wt.CreateFrame({
 								arrange = { wrap = false, },
 								min = 64,
 								max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1),
-								increment = 2,
+								step = 2,
 								altStep = 8,
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1311,7 +1024,7 @@ frames.main = wt.CreateFrame({
 								dataManagement = {
 									category = category,
 									key = key,
-									onChange = { UpdateDisplaySize = function() ResizeDisplay(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end, },
+									onChange = { UpdateDisplaySize = function() SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end, },
 								},
 							})
 
@@ -1325,7 +1038,7 @@ frames.main = wt.CreateFrame({
 								arrange = { wrap = false, },
 								min = 2,
 								max = 80,
-								increment = 2,
+								step = 2,
 								altStep = 8,
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1346,7 +1059,7 @@ frames.main = wt.CreateFrame({
 							options.display.background.colors.bg = wt.CreateColorpicker({
 								parent = panel,
 								name = "Color",
-								title = ns.strings.options.display.background.colors.bg.label,
+								-- title = ns.strings.options.display.background.colors.bg.label, --REPLACE
 								arrange = {},
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1372,7 +1085,7 @@ frames.main = wt.CreateFrame({
 							options.display.background.colors.border = wt.CreateColorpicker({
 								parent = panel,
 								name = "BorderColor",
-								title = ns.strings.options.display.background.colors.border.label,
+								-- title = ns.strings.options.display.background.colors.border.label, --REPLACE
 								arrange = { wrap = false, },
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1398,7 +1111,7 @@ frames.main = wt.CreateFrame({
 							options.display.background.colors.gathered = wt.CreateColorpicker({
 								parent = panel,
 								name = "XPColor",
-								title = ns.strings.options.display.background.colors.gathered.label,
+								-- title = ns.strings.options.display.background.colors.gathered.label, --REPLACE
 								arrange = { wrap = false, },
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1424,7 +1137,7 @@ frames.main = wt.CreateFrame({
 							options.display.background.colors.rested = wt.CreateColorpicker({
 								parent = panel,
 								name = "RestedColor",
-								title = ns.strings.options.display.background.colors.rested.label,
+								-- title = ns.strings.options.display.background.colors.rested.label, --REPLACE
 								arrange = { wrap = false, },
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1487,7 +1200,7 @@ frames.main = wt.CreateFrame({
 								arrange = { wrap = false, },
 								min = 0,
 								max = 1,
-								increment = 0.05,
+								step = 0.05,
 								altStep = 0.2,
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1514,7 +1227,7 @@ frames.main = wt.CreateFrame({
 								arrange = { wrap = false, },
 								min = 0,
 								max = 1,
-								increment = 0.05,
+								step = 0.05,
 								altStep = 0.2,
 								dependencies = {
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
@@ -1979,7 +1692,7 @@ frames.main = wt.CreateFrame({
 
 							if not size then return false end
 
-							options.display.font.size.setData(size)
+							options.display.font.widgets.size.setData(size)
 
 							return true, size
 						end,
@@ -2109,7 +1822,7 @@ frames.main = wt.CreateFrame({
 			UpdateXPValues()
 
 			--Set up displays
-			ResizeDisplay(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h)
+			SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h)
 			UpdateXPDisplayText()
 			UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
 

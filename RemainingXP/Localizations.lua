@@ -98,36 +98,6 @@ ns.localizations.enUS = {
 					tooltip = "Show more information in the main display (not just the xp needed to reach the next level).",
 				},
 			},
-			font = {
-				title = "Font",
-				description = "Customize the font of the main display text overlay.",
-				family = {
-					label = "Font",
-					tooltip = "Select the font of the displayed XP value.",
-					default = "The default option is the font used by Blizzard.",
-					custom = {
-						"You may set the #OPTION_CUSTOM option to any font of your liking by replacing the #FILE_CUSTOM file with another TrueType Font file found in:",
-						"while keeping the original #FILE_CUSTOM name.",
-						"You may need to restart the game client after replacing the Custom font.",
-					},
-				},
-				size = {
-					label = "Size",
-					tooltip = "Specify the font size of the XP value shown on the main display.",
-				},
-				alignment = {
-					label = "Alignment",
-					tooltip = "Select the horizontal alignment of the text inside the main XP display.",
-				},
-				colors = {
-					base = { label = "Base Color", },
-					gathered = { label = "Gathered XP Color", },
-					needed = { label = "Needed XP Color", },
-					remaining = { label = "Remaining XP Color", },
-					rested = { label = "Rested Color", },
-					banked = { label = "Banked Color", },
-				},
-			},
 			background = {
 				title = "Background: XP Bar",
 				description = "Customize the graphical elements of the XP bar background of the main XP display.",
@@ -145,20 +115,8 @@ ns.localizations.enUS = {
 						tooltip = "Set the height of the background graphic of the main XP display.",
 					},
 				},
-				colors = {
-					bg = {
-						label = "Background Color",
-					},
-					gathered = {
-						label = "Gathered XP Color",
-					},
-					rested = {
-						label = "Rested XP Color",
-					},
-					border = {
-						label = "Border Color",
-					},
-				},
+				bg = "Background",
+				border = "Border",
 			},
 			fade = {
 				title = "Fade",
@@ -295,6 +253,14 @@ ns.localizations.enUS = {
 				error = "The provided backup string could not be validated and no data was loaded. It might be missing some characters, or errors may have been introduced if it was edited.",
 			},
 		},
+	},
+	types = {
+		base = { label = "Base", },
+		gathered = { label = "Gathered XP", },
+		needed = { label = "Needed XP", },
+		remaining = { label = "Remaining XP", },
+		rested = { label = "Rested", },
+		banked = { label = "Banked", },
 	},
 	chat = {
 		xpGained = {

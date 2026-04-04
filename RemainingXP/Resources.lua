@@ -36,7 +36,7 @@ ns.chat = {
 --Changelog
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(29/3/2026)_#",
+		"#V_Version 3.0_# #H_(4/4/2026)_#",
 		"#C_Changes:_#",
 		"Under the hood improvements.",
 	},
@@ -428,6 +428,7 @@ ns.presets = {
 		data = {
 			position = {
 				anchor = "BOTTOM",
+				relativePoint = "BOTTOM",
 				offset = { x = 0, y = 0 }
 			},
 			keepInBounds = true,
@@ -446,6 +447,7 @@ ns.presets = {
 		data = {
 			position = {
 				anchor = "BOTTOM",
+				relativePoint = "BOTTOM",
 				offset = { x = -256, y = 0 }
 			},
 			keepInBounds = true,
@@ -464,6 +466,7 @@ ns.presets = {
 		data = {
 			position = {
 				anchor = "BOTTOM",
+				relativePoint = "BOTTOM",
 				offset = { x = 252, y = 0 }
 			},
 			keepInBounds = true,
@@ -542,6 +545,7 @@ ns.presets = {
 		data = {
 			position = {
 				anchor = "BOTTOMLEFT",
+				relativePoint = "BOTTOMLEFT",
 				offset = { x = 188, y = 12 }
 			},
 			keepInBounds = true,
@@ -560,6 +564,7 @@ ns.presets = {
 		data = {
 			position = {
 				anchor = "BOTTOMRIGHT",
+				relativePoint = "BOTTOMRIGHT",
 				offset = { x = -188, y = 12 }
 			},
 			keepInBounds = true,
@@ -578,6 +583,7 @@ ns.presets = {
 		data = {
 			position = {
 				anchor = "TOP",
+				relativePoint = "TOP",
 				offset = { x = 0, y = 3 }
 			},
 			keepInBounds = true,
