@@ -26,10 +26,9 @@ local cr = WrapTextInColor
 
 --[ Locals ]
 
-local frames = {
-	display = { frame = {} },
-	integration = {},
-}
+local display = { frame = {} }
+
+local integration = {}
 
 local options = {
 	main = {},
@@ -57,6 +56,9 @@ local options = {
 
 --Custom Tooltip
 ns.tooltip = wt.CreateGameTooltip(ns.name)
+
+---@type profilemanager
+local profiles
 
 ---@type chatCommandManager
 local chatCommands
@@ -116,23 +118,23 @@ end
 
 --Make sure both the display text & background can't be turned off while the display is not set as hidden
 local function EnsureVisibility()
-	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible then
+	if not profiles.data.display.background.visible then
 		options.display.text.visible.setEnabled(false, true)
 		options.display.text.visible.button:EnableMouse(false)
 		options.display.text.visible.frame:SetAlpha(0.4)
 	else
-		if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then
+		if not profiles.data.display.hidden then
 			options.display.text.visible.setEnabled(true, true)
 			options.display.text.visible.button:EnableMouse(true)
 		end
 		options.display.text.visible.frame:SetAlpha(1)
 	end
-	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.visible then
+	if not profiles.data.display.text.visible then
 		options.display.background.visible.setEnabled(false, true)
 		options.display.background.visible.button:EnableMouse(false)
 		options.display.background.visible.frame:SetAlpha(0.4)
 	else
-		if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then
+		if not profiles.data.display.hidden then
 			options.display.background.visible.setEnabled(true, true)
 			options.display.background.visible.button:EnableMouse(true)
 		end
@@ -146,17 +148,17 @@ end
 ---Print visibility info
 ---@param load? boolean ***Default:*** false
 local function PrintStatus(load)
-	if load == true and not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.enabled then return end
+	if load == true and not profiles.data.notifications.statusNotice.enabled then return end
 
 	local status = cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(
-		frames.display.frame:IsVisible() and ns.strings.chat.status.visible or ns.strings.chat.status.hidden, ns.colors.blue[1]
+		display.frame:IsVisible() and ns.strings.chat.status.visible or ns.strings.chat.status.hidden, ns.colors.blue[1]
 	):gsub(
 		"#FADE", cr(ns.strings.chat.status.fade:gsub(
-			"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+			"#STATE", cr(profiles.data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 		), ns.colors.blue[2])
 	)
 
-	if atMax then if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.maxReminder then
+	if atMax then if profiles.data.notifications.statusNotice.maxReminder then
 		status = cr(ns.strings.chat.status.disabled:gsub(
 			"#ADDON", cr(ns.title, ns.colors.purple[1])
 		) .." " ..  cr(ns.strings.chat.status.max:gsub(
@@ -179,7 +181,7 @@ local function SetRestedAccumulation(enabled)
 	--| Chat notifications
 
 	if not enabled then return end
-	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update then return end
+	if not profiles.data.notifications.restedStatus.update then return end
 
 	local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
 	local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
@@ -190,7 +192,7 @@ local function SetRestedAccumulation(enabled)
 	))
 
 	--Max Rested XP reminder
-	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.maxReminder then
+	if profiles.data.notifications.restedStatus.maxReminder then
 		if isMaxed then
 			print(cr(ns.strings.chat.restedStatus.atMax:gsub("#PERCENT", cr("150%%", ns.colors.purple[2])), ns.colors.blue[2]))
 		elseif isMaxedLastLevel then
@@ -237,13 +239,13 @@ end
 --Update the position, width and visibility of the main XP display bar segments with the current XP values
 local function UpdateXPDisplaySegments()
 	--Current XP segment
-	frames.display.xp:SetWidth(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.needed * frames.display.frame:GetWidth())
+	display.xp:SetWidth(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.needed * display.frame:GetWidth())
 
 	--Rested XP segment
-	if RemainingXPCSC.xp.rested == 0 then frames.display.rested:Hide() else
-		frames.display.rested:Show()
-		if frames.display.xp:GetWidth() == 0 then frames.display.rested:SetPoint("LEFT") else frames.display.rested:SetPoint("LEFT", frames.display.xp, "RIGHT") end --CHECK
-		frames.display.rested:SetWidth((RemainingXPCSC.xp.gathered + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.needed and RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.needed * frames.display.frame:GetWidth()) --CHECK if can bee simplified
+	if RemainingXPCSC.xp.rested == 0 then display.rested:Hide() else
+		display.rested:Show()
+		if display.xp:GetWidth() == 0 then display.rested:SetPoint("LEFT") else display.rested:SetPoint("LEFT", display.xp, "RIGHT") end --CHECK
+		display.rested:SetWidth((RemainingXPCSC.xp.gathered + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.needed and RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.needed * display.frame:GetWidth()) --CHECK if can bee simplified
 	end
 end
 
@@ -251,7 +253,7 @@ end
 local function UpdateXPDisplayText()
 	local text = "" --REPLACE with pre-colored xpText
 
-	if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.details then
+	if profiles.data.display.text.details then
 		text = us.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. us.Thousands(RemainingXPCSC.xp.needed) .. " (" .. us.Thousands(RemainingXPCSC.xp.remaining) .. ")"
 		if RemainingXPCSC.xp.rested > 0 then
 			text = text .. " + " .. us.Thousands(RemainingXPCSC.xp.rested) .. " (" .. us.Thousands(
@@ -263,19 +265,19 @@ local function UpdateXPDisplayText()
 		end
 	else text = us.Thousands(RemainingXPCSC.xp.remaining) end
 
-	frames.display.text:SetText(text)
+	display.text:SetText(text)
 end
 
 ---Update the default XP bar integration display with the current XP values
 ---@param remaining boolean Whether or not only the remaining XP should be visible when the text is always shown
 local function UpdateIntegrationText(keep, remaining)
-	if not frames.integration.frame:IsVisible() then return end
+	if not integration.frame:IsVisible() then return end
 
-	wt.SetVisibility(frames.integration.text, keep)
+	wt.SetVisibility(integration.text, keep)
 
-	if remaining and not frames.integration.frame:IsMouseOver() then frames.integration.text:SetText(us.Thousands(RemainingXPCSC.xp.remaining)) return end
+	if remaining and not integration.frame:IsMouseOver() then integration.text:SetText(us.Thousands(RemainingXPCSC.xp.remaining)) return end
 
-	frames.integration.text:SetText(
+	integration.text:SetText(
 		ns.strings.xpBar.text:gsub( --REPLACE with pre-colored xpText
 			"#GATHERED", us.Thousands(RemainingXPCSC.xp.gathered)
 		):gsub(
@@ -445,7 +447,7 @@ local function GetXPTooltipTextlines()
 		color = ns.colors.grey[1],
 	})
 
-	if frames.display.border:IsMouseOver() then table.insert(textLines, {
+	if display.border:IsMouseOver() then table.insert(textLines, {
 		text = ns.strings.xpTooltip.hintMove:gsub("#SHIFT", ns.strings.keys.shift),
 		font = GameFontNormalSmall,
 		color = ns.colors.grey[1],
@@ -458,41 +460,41 @@ end
 local function UpdateXPTooltip()
 	if not ns.tooltip:IsVisible() then return end
 
-	local owner = frames.integration.frame:IsMouseOver() and frames.integration.frame or frames.display.border:IsMouseOver() and frames.display.border or nil --CHECK if needed
+	local owner = integration.frame:IsMouseOver() and integration.frame or display.border:IsMouseOver() and display.border or nil --CHECK if needed
 	if owner then wt.UpdateTooltip(owner, { lines = GetXPTooltipTextlines(), }) end
 end
 
 --[ Main XP Display ]
 
 ---Fade the main display in or out
----@param state? boolean ***Default:*** **RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled**
+---@param state? boolean ***Default:*** **profiles.data.display.fade.enabled**
 local function Fade(state)
-	if state == nil then state = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled end
+	if state == nil then state = profiles.data.display.fade.enabled end
 
 	--| Text
 
-	local r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.colors.base)
-	frames.display.text:SetTextColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.text or 1))
+	local r, g, b, a = wt.UnpackColor(profiles.data.display.font.colors.base)
+	display.text:SetTextColor(r, g, b, (a or 1) * (state and 1 - profiles.data.display.fade.text or 1))
 
 	--| Background
 
-	if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible then return end
+	if not profiles.data.display.background.visible then return end
 
 	--Backdrop
-	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.bg)
-	frames.display.frame:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
+	r, g, b, a = wt.UnpackColor(profiles.data.display.background.colors.bg)
+	display.frame:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - profiles.data.display.fade.background or 1))
 
 	--Current XP segment
-	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.gathered)
-	frames.display.xp:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
+	r, g, b, a = wt.UnpackColor(profiles.data.display.background.colors.gathered)
+	display.xp:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - profiles.data.display.fade.background or 1))
 
 	--Rested XP segment
-	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.rested)
-	frames.display.rested:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
+	r, g, b, a = wt.UnpackColor(profiles.data.display.background.colors.rested)
+	display.rested:SetBackdropColor(r, g, b, (a or 1) * (state and 1 - profiles.data.display.fade.background or 1))
 
 	--Border & text overlay
-	r, g, b, a = wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.border)
-	frames.display.border:SetBackdropBorderColor(r, g, b, (a or 1) * (state and 1 - RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background or 1))
+	r, g, b, a = wt.UnpackColor(profiles.data.display.background.colors.border)
+	display.border:SetBackdropBorderColor(r, g, b, (a or 1) * (state and 1 - profiles.data.display.fade.background or 1))
 end
 
 ---Set the size of the main display elements
@@ -500,15 +502,15 @@ end
 ---@param height number
 local function SetDisplaySize(width, height)
 	--Background
-	frames.display.frame:SetSize(width, height)
+	display.frame:SetSize(width, height)
 
 	--XP bar segments
-	frames.display.xp:SetHeight(height)
-	frames.display.rested:SetHeight(height)
+	display.xp:SetHeight(height)
+	display.rested:SetHeight(height)
 	UpdateXPDisplaySegments()
 
 	--Border & text overlay
-	frames.display.border:SetSize(width, height)
+	display.border:SetSize(width, height)
 end
 
 ---Set the backdrop of the main display elements
@@ -516,39 +518,39 @@ end
 ---@param backdropColors displayBackgroundColorData
 local function SetDisplayBackdrop(enabled, backdropColors)
 	if not enabled then
-		frames.display.frame:SetBackdrop(nil)
-		frames.display.xp:SetBackdrop(nil)
-		frames.display.rested:SetBackdrop(nil)
-		frames.display.border:SetBackdrop(nil)
+		display.frame:SetBackdrop(nil)
+		display.xp:SetBackdrop(nil)
+		display.rested:SetBackdrop(nil)
+		display.border:SetBackdrop(nil)
 	else
 		--Background
-		frames.display.frame:SetBackdrop({
+		display.frame:SetBackdrop({
 			bgFile = "Interface/ChatFrame/ChatFrameBackground",
 			tile = true, tileSize = 5,
 		})
-		frames.display.frame:SetBackdropColor(wt.UnpackColor(backdropColors.bg))
+		display.frame:SetBackdropColor(wt.UnpackColor(backdropColors.bg))
 
 		--Current XP segment
-		frames.display.xp:SetBackdrop({
+		display.xp:SetBackdrop({
 			bgFile = "Interface/ChatFrame/ChatFrameBackground",
 			tile = true, tileSize = 5,
 		})
-		frames.display.xp:SetBackdropColor(wt.UnpackColor(backdropColors.gathered))
+		display.xp:SetBackdropColor(wt.UnpackColor(backdropColors.gathered))
 
 		--Rested XP segment
-		frames.display.rested:SetBackdrop({
+		display.rested:SetBackdrop({
 			bgFile = "Interface/ChatFrame/ChatFrameBackground",
 			tile = true, tileSize = 5,
 		})
-		frames.display.rested:SetBackdropColor(wt.UnpackColor(backdropColors.rested))
+		display.rested:SetBackdropColor(wt.UnpackColor(backdropColors.rested))
 
 		--Border & text overlay
-		frames.display.border:SetBackdrop({
+		display.border:SetBackdrop({
 			edgeFile = "Interface/ChatFrame/ChatFrameBackground",
 			edgeSize = 1,
 			insets = { left = 0, right = 0, top = 0, bottom = 0 }
 		})
-		frames.display.border:SetBackdropBorderColor(wt.UnpackColor(backdropColors.border))
+		display.border:SetBackdropBorderColor(wt.UnpackColor(backdropColors.border))
 	end
 end
 
@@ -556,20 +558,20 @@ end
 ---@param data table Profile data table to set the main display values from
 local function SetDisplayValues(data)
 	--Position
-	frames.display.frame:SetClampedToScreen(data.display.keepInBounds)
+	display.frame:SetClampedToScreen(data.display.keepInBounds)
 
 	--Visibility
-	frames.display.frame:SetFrameStrata(data.display.layer.strata)
-	wt.SetVisibility(frames.display.frame, not data.display.hidden)
+	display.frame:SetFrameStrata(data.display.layer.strata)
+	wt.SetVisibility(display.frame, not data.display.hidden)
 
 	--Backdrop elements
 	SetDisplayBackdrop(data.display.background.visible, data.display.background.colors)
 
 	--Font & text
-	frames.display.text:SetFont(data.display.font.path, data.display.font.size, "OUTLINE")
-	frames.display.text:SetTextColor(wt.UnpackColor(data.display.font.colors.base))
-	frames.display.text:SetJustifyH(data.display.font.alignment)
-	wt.SetPosition(frames.display.text, {
+	display.text:SetFont(data.display.font.path, data.display.font.size, "OUTLINE")
+	display.text:SetTextColor(wt.UnpackColor(data.display.font.colors.base))
+	display.text:SetJustifyH(data.display.font.alignment)
+	wt.SetPosition(display.text, {
 		anchor = data.display.font.alignment,
 		offset = { x = 2 * (data.display.font.alignment == "CENTER" and 0 or data.display.font.alignment == "RIGHT" and -1 or 1), },
 	})
@@ -582,7 +584,7 @@ end
 
 --Turn off the integrated display and hide the frame
 local function TurnOffIntegration()
-	frames.integration.frame:Hide()
+	integration.frame:Hide()
 	C_CVar.SetCVar("xpBarText", alwaysShow)
 end
 
@@ -590,7 +592,7 @@ end
 ---@param enabled boolean Whether or not the default XP bar integration is enabled
 local function SetIntegrationVisibility(enabled)
 	if enabled and not atMax then
-		frames.integration.frame:Show()
+		integration.frame:Show()
 		C_CVar.SetCVar("xpBarText", 0)
 	else TurnOffIntegration() end
 end
@@ -598,10 +600,8 @@ end
 
 --[[ INITIALIZATION ]]
 
-local firstLoad, newCharacter
-
 --Create main addon frame & display frames
-frames.main = wt.CreateFrame({
+wt.CreateFrame({
 	name = ns.name,
 	keepOnTop = true,
 	onEvent = {
@@ -628,19 +628,8 @@ frames.main = wt.CreateFrame({
 			---@type RemainingXPCSC
 			RemainingXPCSC = RemainingXPCSC or {}
 
-
-			--[[ SETTINGS ]]
-
-			--[ Settings Pages ]
-
-			--| Data management
-
-			options.dataManagement, firstLoad, newCharacter = wt.CreateDataManagementPage(ns.name, {
-				onDefault = function(_, category) if not category then options.dataManagement.resetProfile() end end,
-				accountData = RemainingXPDB,
-				characterData = RemainingXPDBC,
-				settingsData = RemainingXPCS,
-				defaultsTable = ns.profileDefault,
+			---@type profilemanager
+			profiles = wt.CreateProfilemanager(RemainingXPDB, RemainingXPDBC, ns.profileDefault, {
 				valueChecker = function(key, value) if type(value) == "number" then
 					if key == "size" then return value > 0 end
 					if key == "r" or key == "g" or key == "b" or key == "a" then return value >= 0 and value <= 1 end
@@ -682,24 +671,10 @@ frames.main = wt.CreateFrame({
 					data.display.text.visible = true
 					data.display.background.visible = true
 				end end,
-				onProfileActivated = function(title)
-					options.display.page.load(true)
-					options.integration.page.load(true)
-					options.events.page.load(true)
-					options.dataManagement.page.load(true)
-
-					chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
-				end,
-				onProfileDeleted = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
-				onProfileReset = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
-				onImport = function(success) if success then
-					options.display.page.load(true)
-					options.integration.page.load(true)
-					options.events.page.load(true)
-					options.dataManagement.page.load(true)
-				else chatCommands.print(wt.strings.backup.error) end end,
-				onImportAllProfiles = function(success) if not success then chatCommands.print(wt.strings.backup.error) end end,
 			})
+
+
+			--[[ SETTINGS ]]
 
 			--| Addon info
 
@@ -729,7 +704,7 @@ frames.main = wt.CreateFrame({
 				},
 				onLoad = EnsureVisibility,
 				onSave = function() if atMax then
-					frames.display.frame:Hide()
+					display.frame:Hide()
 					PrintStatus()
 				end end,
 				onDefault = function(user)
@@ -767,15 +742,15 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.display.visibility.hidden.label,
 								tooltip = { lines = { { text = ns.strings.options.display.visibility.hidden.tooltip:gsub("#ADDON", ns.title), }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden = value end,
+								getData = function() return profiles.data.display.hidden end,
+								saveData = function(value) profiles.data.display.hidden = value end,
 								default = ns.profileDefault.display.hidden,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
 										DisplayToggle = function()
-											wt.SetVisibility(frames.display.frame, not (RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden or atMax))
+											wt.SetVisibility(display.frame, not (profiles.data.display.hidden or atMax))
 										end,
 										EnsureVisibility = EnsureVisibility,
 									},
@@ -790,8 +765,8 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.display.visibility.statusNotice.label,
 								tooltip = { lines = { { text = ns.strings.options.display.visibility.statusNotice.tooltip:gsub("#ADDON", ns.title), }, } },
 								arrange = { wrap = false, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.enabled end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.enabled = value end,
+								getData = function() return profiles.data.notifications.statusNotice.enabled end,
+								saveData = function(value) profiles.data.notifications.statusNotice.enabled = value end,
 								default = ns.profileDefault.notifications.statusNotice.enabled,
 								dataManagement = {
 									category = category,
@@ -808,8 +783,8 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.display.visibility.maxReminder.tooltip:gsub("#ADDON", ns.title), }, } },
 								arrange = { wrap = false, },
 								dependencies = { { frame = options.display.visibility.status, }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.maxReminder end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.statusNotice.maxReminder = value end,
+								getData = function() return profiles.data.notifications.statusNotice.maxReminder end,
+								saveData = function(value) profiles.data.notifications.statusNotice.maxReminder = value end,
 								default = ns.profileDefault.notifications.statusNotice.maxReminder,
 								dataManagement = {
 									category = category,
@@ -827,7 +802,7 @@ frames.main = wt.CreateFrame({
 						onSelect = function() options.display.position.presets[1].data.position.relativePoint = options.display.position.presets[1].data.position.anchor end,
 					})
 
-					options.display.position = wt.CreatePositionOptions(ns.name, frames.display.frame, {
+					options.display.position = wt.CreatePositionOptions(ns.name, display.frame, function() return profiles.data.display end, ns.profileDefault.display, RemainingXPCS, {
 						canvas = canvas,
 						frameName = ns.strings.options.display.referenceName,
 						presets = {
@@ -847,7 +822,7 @@ frames.main = wt.CreateFrame({
 								))
 							end,
 							custom = {
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.customPreset end,
+								getData = function() return profiles.data.customPreset end,
 								defaultsTable = ns.profileDefault.customPreset,
 								onSave = function()
 									chatCommands.print(ns.strings.chat.save.response:gsub(
@@ -862,7 +837,7 @@ frames.main = wt.CreateFrame({
 							}
 						},
 						setMovable = {
-							triggers = { frames.display.border },
+							triggers = { display.border },
 							events = {
 								onStop = function() chatCommands.print(ns.strings.chat.position.save) end,
 								onCancel = function()
@@ -872,9 +847,6 @@ frames.main = wt.CreateFrame({
 							},
 						},
 						dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
-						getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display end,
-						defaultsTable = ns.profileDefault.display,
-						settingsData = RemainingXPCS,
 						dataManagement = { category = category, },
 					})
 
@@ -898,14 +870,14 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.display.text.visible.tooltip, }, } },
 								arrange = {},
 								dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.visible end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.visible = value end,
+								getData = function() return profiles.data.display.text.visible end,
+								saveData = function(value) profiles.data.display.text.visible = value end,
 								default = ns.profileDefault.display.text.visible,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
-										ToggleDisplayText = function() wt.SetVisibility(frames.display.text, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.visible) end,
+										ToggleDisplayText = function() wt.SetVisibility(display.text, profiles.data.display.text.visible) end,
 										"EnsureVisibility",
 									},
 								},
@@ -923,8 +895,8 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.text.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.details end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.text.details = value end,
+								getData = function() return profiles.data.display.text.details end,
+								saveData = function(value) profiles.data.display.text.details = value end,
 								default = ns.profileDefault.display.text.details,
 								dataManagement = {
 									category = category,
@@ -937,7 +909,7 @@ frames.main = wt.CreateFrame({
 
 					--[ Font ]
 
-					options.display.font = wt.CreateFontOptions(ns.name, frames.display.text, {
+					options.display.font = wt.CreateFontOptions(ns.name, display.text, function() return profiles.data.display.font end, ns.profileDefault.display.font, {
 						canvas = canvas,
 						colors = {
 							-- percent = { --ADD colors
@@ -957,13 +929,11 @@ frames.main = wt.CreateFrame({
 							{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 							{ frame = options.display.text.visible, },
 						},
-						getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font end,
-						defaultsTable = ns.profileDefault.display.font,
 						dataManagement = { category = category, },
-						onChangeFont = function() SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end,
-						onChangeSize = function() SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end,
+						onChangeFont = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
+						onChangeSize = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
 						onChangeAlignment = function()
-							wt.SetPosition(frames.display.text, { anchor = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.font.alignment, })
+							wt.SetPosition(display.text, { anchor = profiles.data.display.font.alignment, })
 						end,
 						onChangeColor = Fade,
 					})
@@ -988,14 +958,14 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.display.background.visible.tooltip, }, } },
 								arrange = {},
 								dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible = value end,
+								getData = function() return profiles.data.display.background.visible end,
+								saveData = function(value) profiles.data.display.background.visible = value end,
 								default = ns.profileDefault.display.background.visible,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
-										ToggleDisplayBackdrop = function() SetDisplayBackdrop(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.visible, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors) end,
+										ToggleDisplayBackdrop = function() SetDisplayBackdrop(profiles.data.display.background.visible, profiles.data.display.background.colors) end,
 										"EnsureVisibility",
 										"UpdateFade",
 									},
@@ -1018,13 +988,13 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w = value end,
+								getData = function() return profiles.data.display.background.size.w end,
+								saveData = function(value) profiles.data.display.background.size.w = value end,
 								default = ns.profileDefault.display.background.size.w,
 								dataManagement = {
 									category = category,
 									key = key,
-									onChange = { UpdateDisplaySize = function() SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h) end, },
+									onChange = { UpdateDisplaySize = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end, },
 								},
 							})
 
@@ -1044,8 +1014,8 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h = value end,
+								getData = function() return profiles.data.display.background.size.h end,
+								saveData = function(value) profiles.data.display.background.size.h = value end,
 								default = ns.profileDefault.display.background.size.h,
 								dataManagement = {
 									category = category,
@@ -1065,15 +1035,15 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.bg end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.bg = value end,
+								getData = function() return profiles.data.display.background.colors.bg end,
+								saveData = function(value) profiles.data.display.background.colors.bg = value end,
 								default = ns.profileDefault.display.background.colors.bg,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
-										UpdateDisplayBackgroundColor = function() if frames.display.frame:GetBackdrop() ~= nil then
-											frames.display.frame:SetBackdropColor(wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.bg))
+										UpdateDisplayBackgroundColor = function() if display.frame:GetBackdrop() ~= nil then
+											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.bg))
 										end end,
 										"UpdateFade",
 									},
@@ -1091,15 +1061,15 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.border end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.border = value end,
+								getData = function() return profiles.data.display.background.colors.border end,
+								saveData = function(value) profiles.data.display.background.colors.border = value end,
 								default = ns.profileDefault.display.background.colors.border,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
-										UpdateDisplayBorderColor = function() if frames.display.frame:GetBackdrop() ~= nil then
-											frames.display.frame:SetBackdropColor(wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.border))
+										UpdateDisplayBorderColor = function() if display.frame:GetBackdrop() ~= nil then
+											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.border))
 										end end,
 										"UpdateFade",
 									},
@@ -1117,15 +1087,15 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.gathered end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.gathered = value end,
+								getData = function() return profiles.data.display.background.colors.gathered end,
+								saveData = function(value) profiles.data.display.background.colors.gathered = value end,
 								default = ns.profileDefault.display.background.colors.gathered,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
-										UpdateDisplayXPColor = function() if frames.display.frame:GetBackdrop() ~= nil then
-											frames.display.frame:SetBackdropColor(wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.gathered))
+										UpdateDisplayXPColor = function() if display.frame:GetBackdrop() ~= nil then
+											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.gathered))
 										end end,
 										"UpdateFade",
 									},
@@ -1143,15 +1113,15 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.rested end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.rested = value end,
+								getData = function() return profiles.data.display.background.colors.rested end,
+								saveData = function(value) profiles.data.display.background.colors.rested = value end,
 								default = ns.profileDefault.display.background.colors.rested,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = {
-										UpdateDisplayBorderColor = function() if frames.display.frame:GetBackdrop() ~= nil then
-											frames.display.frame:SetBackdropColor(wt.UnpackColor(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.colors.rested))
+										UpdateDisplayBorderColor = function() if display.frame:GetBackdrop() ~= nil then
+											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.rested))
 										end end,
 										"UpdateFade",
 									},
@@ -1180,8 +1150,8 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.display.fade.toggle.tooltip, }, } },
 								arrange = { wrap = false, },
 								dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled = value end,
+								getData = function() return profiles.data.display.fade.enabled end,
+								saveData = function(value) profiles.data.display.fade.enabled = value end,
 								default = ns.profileDefault.display.fade.enabled,
 								dataManagement = {
 									category = category,
@@ -1207,8 +1177,8 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.fade.toggle, },
 									{ frame = options.display.text.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.text end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.text = value end,
+								getData = function() return profiles.data.display.fade.text end,
+								saveData = function(value) profiles.data.display.fade.text = value end,
 								default = ns.profileDefault.display.fade.text,
 								dataManagement = {
 									category = category,
@@ -1234,8 +1204,8 @@ frames.main = wt.CreateFrame({
 									{ frame = options.display.fade.toggle, },
 									{ frame = options.display.background.visible, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.background = value end,
+								getData = function() return profiles.data.display.fade.background end,
+								saveData = function(value) profiles.data.display.fade.background = value end,
 								default = ns.profileDefault.display.fade.background,
 								dataManagement = {
 									category = category,
@@ -1293,13 +1263,13 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.integration.hideXPBar.label,
 								tooltip = { lines = { { text = ns.strings.options.integration.hideXPBar.tooltip:gsub("#ADDON", ns.title), }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.hideXPBar end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.hideXPBar = value end,
+								getData = function() return profiles.data.integration.hideXPBar end,
+								saveData = function(value) profiles.data.integration.hideXPBar = value end,
 								default = ns.profileDefault.integration.hideXPBar,
 								dataManagement = {
 									category = category,
 									key = key,
-									onChange = { ToggleXPBar = function() wt.SetVisibility(MainStatusTrackingBarContainer, not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.hideXPBar) end, },
+									onChange = { ToggleXPBar = function() wt.SetVisibility(MainStatusTrackingBarContainer, not profiles.data.integration.hideXPBar) end, },
 								},
 							})
 						end,
@@ -1325,15 +1295,15 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.integration.toggle.label,
 								tooltip = { lines = { { text = ns.strings.options.integration.toggle.tooltip, }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled = value end,
+								getData = function() return profiles.data.integration.enabled end,
+								saveData = function(value) profiles.data.integration.enabled = value end,
 								default = ns.profileDefault.integration.enabled,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = { ToggleIntegration = function()
-										SetIntegrationVisibility(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled)
-										UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
+										SetIntegrationVisibility(profiles.data.integration.enabled)
+										UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 									end, },
 								},
 							})
@@ -1347,14 +1317,14 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.integration.keep.tooltip, }, } },
 								arrange = { wrap = false, },
 								dependencies = { { frame = options.integration.toggle, }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep = value end,
+								getData = function() return profiles.data.integration.keep end,
+								saveData = function(value) profiles.data.integration.keep = value end,
 								default = ns.profileDefault.integration.keep,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = { UpdateIntegrationText = function()
-										UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
+										UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 									end, },
 								},
 							})
@@ -1371,8 +1341,8 @@ frames.main = wt.CreateFrame({
 									{ frame = options.integration.toggle, },
 									{ frame = options.integration.keep, },
 								},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining = value end,
+								getData = function() return profiles.data.integration.remaining end,
+								saveData = function(value) profiles.data.integration.remaining = value end,
 								default = ns.profileDefault.integration.remaining,
 								dataManagement = {
 									category = category,
@@ -1388,6 +1358,7 @@ frames.main = wt.CreateFrame({
 			--| Events
 
 			options.events.page = wt.CreateSettingsPage(ns.name, {
+				register = options.main.page,
 				name = "Events",
 				title = ns.strings.options.events.title,
 				description = ns.strings.options.events.description:gsub("#ADDON", ns.title),
@@ -1428,8 +1399,8 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.events.notifications.xpGained.label,
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.xpGained.tooltip, }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.xpGained end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.xpGained = value end,
+								getData = function() return profiles.data.notifications.xpGained end,
+								saveData = function(value) profiles.data.notifications.xpGained = value end,
 								default = ns.profileDefault.notifications.xpGained,
 								dataManagement = {
 									category = category,
@@ -1445,8 +1416,8 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.events.notifications.restedXP.gained.label,
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedXP.gained.tooltip, }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained = value end,
+								getData = function() return profiles.data.notifications.restedXP.gained end,
+								saveData = function(value) profiles.data.notifications.restedXP.gained = value end,
 								default = ns.profileDefault.notifications.restedXP.gained,
 								dataManagement = {
 									category = category,
@@ -1463,8 +1434,8 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedXP.significantOnly.tooltip, }, } },
 								arrange = { wrap = false, },
 								dependencies = { { frame = options.events.restedXPGained, }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.significantOnly end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.significantOnly = value end,
+								getData = function() return profiles.data.notifications.restedXP.significantOnly end,
+								saveData = function(value) profiles.data.notifications.restedXP.significantOnly = value end,
 								default = ns.profileDefault.notifications.restedXP.significantOnly,
 								dataManagement = {
 									category = category,
@@ -1487,14 +1458,14 @@ frames.main = wt.CreateFrame({
 								} },
 								arrange = { wrap = false, },
 								dependencies = { { frame = options.events.restedXPGained, }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated = value end,
+								getData = function() return profiles.data.notifications.restedXP.accumulated end,
+								saveData = function(value) profiles.data.notifications.restedXP.accumulated = value end,
 								default = ns.profileDefault.notifications.restedXP.accumulated,
 								dataManagement = {
 									category = category,
 									key = key,
 									onChange = { UpdateRestedAccumulation = function()
-										SetRestedAccumulation(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and atMax)
+										SetRestedAccumulation(profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated and atMax)
 									end, },
 								},
 							})
@@ -1507,8 +1478,8 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.events.notifications.restedStatus.update.label,
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedStatus.update.tooltip, }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update = value end,
+								getData = function() return profiles.data.notifications.restedStatus.update end,
+								saveData = function(value) profiles.data.notifications.restedStatus.update = value end,
 								default = ns.profileDefault.notifications.restedStatus.update,
 								dataManagement = {
 									category = category,
@@ -1525,8 +1496,8 @@ frames.main = wt.CreateFrame({
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedStatus.maxReminder.tooltip, }, } },
 								arrange = { wrap = false, },
 								dependencies = { { frame = options.events.restedStatusUpdate, }, },
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.maxReminder end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.maxReminder = value end,
+								getData = function() return profiles.data.notifications.restedStatus.maxReminder end,
+								saveData = function(value) profiles.data.notifications.restedStatus.maxReminder = value end,
 								default = ns.profileDefault.notifications.restedStatus.maxReminder,
 								dataManagement = {
 									category = category,
@@ -1542,8 +1513,8 @@ frames.main = wt.CreateFrame({
 								title = ns.strings.options.events.notifications.lvlUp.congrats.label,
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.lvlUp.congrats.tooltip, }, } },
 								arrange = {},
-								getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.congrats end,
-								saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.congrats = value end,
+								getData = function() return profiles.data.notifications.lvlUp.congrats end,
+								saveData = function(value) profiles.data.notifications.lvlUp.congrats = value end,
 								default = ns.profileDefault.notifications.lvlUp.congrats,
 								dataManagement = {
 									category = category,
@@ -1561,8 +1532,8 @@ frames.main = wt.CreateFrame({
 								arrange = { wrap = false, },
 								disabled = true --ADD time played notifications
 								-- dependencies = { { frame = options.notifications.lvlUp, }, },
-								-- getData = function() return RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.timePlayed end,
-								-- saveData = function(value) RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.timePlayed = value end,
+								-- getData = function() return profiles.data.notifications.lvlUp.timePlayed end,
+								-- saveData = function(value) profiles.data.notifications.lvlUp.timePlayed = value end,
 								-- default = ns.profileDefault.notifications.lvlUp.timePlayed,
 								-- dataManagement = {
 								-- 	category = category,
@@ -1586,14 +1557,27 @@ frames.main = wt.CreateFrame({
 				end,
 			})
 
-			--[ Addon Category ]
+			--[ Profiles ]
 
-			options.pageManager = wt.CreateSettingsCategory(ns.name, options.main.page, {
-				options.display.page,
-				options.integration.page,
-				options.events.page,
-				options.dataManagement.page
-			})
+			options.profiles = wt.CreateProfilesPage(ns.name, RemainingXPDB, RemainingXPDBC, ns.profileDefault, RemainingXPCS, {
+				Activated = function(title)
+					options.display.page.load(true)
+					options.integration.page.load(true)
+					options.events.page.load(true)
+					options.dataManagement.page.load(true)
+
+					chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
+				end,
+				onProfileDeleted = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
+				onProfileReset = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
+				onImport = function(success) if success then
+					options.display.page.load(true)
+					options.integration.page.load(true)
+					options.events.page.load(true)
+					options.dataManagement.page.load(true)
+				else chatCommands.print(wt.strings.backup.error) end end,
+				onImportAllProfiles = function(success) if not success then chatCommands.print(wt.strings.backup.error) end end,
+			}, profiles)
 
 
 			--[[ CHAT CONTROL ]]
@@ -1651,16 +1635,16 @@ frames.main = wt.CreateFrame({
 					{
 						command = ns.chat.commands.toggle,
 						description = function() return (ns.strings.chat.toggle.description:gsub(
-							"#HIDDEN", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.notHidden, ns.colors.purple[3])
+							"#HIDDEN", cr(profiles.data.display.hidden and ns.strings.chat.toggle.hidden or ns.strings.chat.toggle.notHidden, ns.colors.purple[3])
 						)) end,
 						handler = function()
-							options.display.visibility.hidden.setData(not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden)
+							options.display.visibility.hidden.setData(not profiles.data.display.hidden)
 
 							return true
 						end,
 						onSuccess = function()
 							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(
-								RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden and ns.strings.chat.toggle.hiding or ns.strings.chat.toggle.unhiding, ns.colors.blue[2])
+								profiles.data.display.hidden and ns.strings.chat.toggle.hiding or ns.strings.chat.toggle.unhiding, ns.colors.blue[2])
 							)
 							if atMax then PrintStatus() end
 						end,
@@ -1668,16 +1652,16 @@ frames.main = wt.CreateFrame({
 					{
 						command = ns.chat.commands.fade,
 						description = function() return (ns.strings.chat.fade.description:gsub(
-							"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[3])
+							"#STATE", cr(profiles.data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[3])
 						)) end,
 						handler = function()
-							options.display.fade.toggle.setData(not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled)
+							options.display.fade.toggle.setData(not profiles.data.display.fade.enabled)
 
 							return true
 						end,
 						onSuccess = function()
 							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.fade.response:gsub(
-								"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+								"#STATE", cr(profiles.data.display.fade.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 							), ns.colors.blue[2]))
 							if atMax then PrintStatus() end
 						end,
@@ -1713,13 +1697,13 @@ frames.main = wt.CreateFrame({
 						command = ns.chat.commands.integration,
 						description = ns.strings.chat.integration.description,
 						handler = function()
-							options.integration.toggle.setData(not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled)
+							options.integration.toggle.setData(not profiles.data.integration.enabled)
 
 							return true
 						end,
 						onSuccess = function()
 							print(cr(ns.title .. ":", ns.colors.purple[1]) .. " " .. cr(ns.strings.chat.integration.response:gsub(
-								"#STATE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
+								"#STATE", cr(profiles.data.integration.enabled and ns.strings.misc.enabled or ns.strings.misc.disabled, ns.colors.purple[2])
 							), ns.colors.blue[2]))
 							if atMax then PrintStatus() end
 						end,
@@ -1729,7 +1713,7 @@ frames.main = wt.CreateFrame({
 						description = ns.strings.chat.profile.description:gsub(
 							"#INDEX", cr(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
 						),
-						handler = function(_, p) return options.dataManagement.activateProfile(tonumber(p)) end,
+						handler = function(_, p) return options.dataManagement.activate(tonumber(p)) ~= nil end,
 						error = ns.strings.chat.profile.unchanged .. "\n" .. cr(ns.strings.chat.profile.error:gsub(
 							"#INDEX", cr(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
 						), ns.colors.blue[3]),
@@ -1751,7 +1735,7 @@ frames.main = wt.CreateFrame({
 						description = function() return (ns.strings.chat.default.description:gsub(
 							"#PROFILE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].title, ns.colors.blue[1])
 						)) end,
-						handler = function() return options.dataManagement.resetProfile() end,
+						handler = function() return options.dataManagement.reset() end,
 					},
 					{
 						command = "hi",
@@ -1787,14 +1771,14 @@ frames.main = wt.CreateFrame({
 			})
 
 			--Welcome message
-			if firstLoad then chatCommands.welcome() end
+			if profiles.firstLoad then chatCommands.welcome() end
 
 
-			--[[ DISPLAYS ]]
+			--[[ XP DISPLAYS ]]
 
 			if atMax then
 				--Hide displays
-				frames.display.frame:Hide()
+				display.frame:Hide()
 				TurnOffIntegration()
 
 				--Disable events
@@ -1804,12 +1788,12 @@ frames.main = wt.CreateFrame({
 				RemainingXPCSC.xp = RemainingXPCSC.xp or {}
 
 				--Main display
-				SetDisplayValues(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data)
-				wt.SetPosition(frames.display.frame, us.Fill({ relativePoint = RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position.anchor, }, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position))
-				-- wt.SetPosition(self, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.position)
+				SetDisplayValues(profiles.data)
+				wt.SetPosition(display.frame, us.Fill({ relativePoint = profiles.data.display.position.anchor, }, profiles.data.display.position))
+				-- wt.SetPosition(self, profiles.data.display.position)
 
 				--Integrated display
-				SetIntegrationVisibility(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled)
+				SetIntegrationVisibility(profiles.data.integration.enabled)
 			end
 
 			--Visibility notice
@@ -1822,20 +1806,20 @@ frames.main = wt.CreateFrame({
 			UpdateXPValues()
 
 			--Set up displays
-			SetDisplaySize(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.w, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.background.size.h)
+			SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h)
 			UpdateXPDisplayText()
-			UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
+			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
 			--Initialize display tooltips
-			wt.AddTooltip(frames.display.border, {
+			wt.AddTooltip(display.border, {
 				tooltip = ns.tooltip,
 				title = ns.strings.xpTooltip.title,
 				anchor = "ANCHOR_BOTTOMRIGHT",
-				offset = { y = frames.display.border:GetHeight() },
+				offset = { y = display.border:GetHeight() },
 				flipColors = true,
 			})
-			frames.display.border:HookScript("OnEnter", UpdateXPTooltip)
-			wt.AddTooltip(frames.integration.frame, {
+			display.border:HookScript("OnEnter", UpdateXPTooltip)
+			wt.AddTooltip(integration.frame, {
 				tooltip = ns.tooltip,
 				title = ns.strings.xpTooltip.title,
 				anchor = "ANCHOR_NONE",
@@ -1843,15 +1827,15 @@ frames.main = wt.CreateFrame({
 				position = { anchor = "BOTTOMRIGHT" },
 				flipColors = true,
 			})
-			frames.integration.frame:HookScript("OnEnter", UpdateXPTooltip)
+			integration.frame:HookScript("OnEnter", UpdateXPTooltip)
 
 			--Removals
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.hideXPBar then MainStatusTrackingBarContainer:Hide() end
+			if profiles.data.integration.hideXPBar then MainStatusTrackingBarContainer:Hide() end
 
 			--Set up Edit Mode exit updates
 			EditModeManagerFrame:HookScript("OnHide", function()
 				--Removals
-				if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.hideXPBar then MainStatusTrackingBarContainer:Hide() end
+				if profiles.data.integration.hideXPBar then MainStatusTrackingBarContainer:Hide() end
 			end)
 		end,
 		PLAYER_XP_UPDATE = atMax and nil or function(_, unit)
@@ -1864,10 +1848,10 @@ frames.main = wt.CreateFrame({
 			--Update UI elements
 			UpdateXPDisplayText()
 			UpdateXPDisplaySegments()
-			UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
+			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
 			--Notification
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.xpGained then
+			if profiles.data.notifications.xpGained then
 				print(cr(ns.strings.chat.xpGained.text:gsub(
 					"#AMOUNT", cr(us.Thousands(gainedXP), ns.colors.purple[1])
 				):gsub(
@@ -1888,7 +1872,7 @@ frames.main = wt.CreateFrame({
 			atMax = newLevel >= maxLevel
 
 			if atMax then
-				frames.display.frame:Hide()
+				display.frame:Hide()
 				TurnOffIntegration()
 
 				--Notification
@@ -1901,11 +1885,11 @@ frames.main = wt.CreateFrame({
 				) .. " " .. ns.strings.chat.lvlUp.congrats, ns.colors.blue[1]))
 			else
 				--Notification
-				if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.congrats then
+				if profiles.data.notifications.lvlUp.congrats then
 					print(cr(ns.strings.chat.lvlUp.text:gsub(
 						"#LEVEL", cr(newLevel, ns.colors.purple[1])
 					) .. " " .. cr(ns.strings.chat.lvlUp.congrats, ns.colors.purple[3]), ns.colors.blue[1]))
-					if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
+					if profiles.data.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
 				end
 
 				--Tooltip update
@@ -1920,10 +1904,10 @@ frames.main = wt.CreateFrame({
 			--Update UI elements
 			UpdateXPDisplayText()
 			UpdateXPDisplaySegments()
-			UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
+			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
 			--Notification
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and not (RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
+			if profiles.data.notifications.restedXP.gained and not (profiles.data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
 				print(cr(ns.strings.chat.restedXPGained.text:gsub(
 						"#AMOUNT", cr(gainedRestedXP, ns.colors.purple[1])
 					):gsub(
@@ -1941,8 +1925,8 @@ frames.main = wt.CreateFrame({
 		end,
 		PLAYER_UPDATE_RESTING = atMax and nil or function()
 			--Notification
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated and not IsResting() then
-				print((RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedStatus.update and (cr(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
+			if profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated and not IsResting() then
+				print((profiles.data.notifications.restedStatus.update and (cr(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
 					(RemainingXPCSC.xp.accumulatedRested or 0) > 0 and cr(ns.strings.chat.restedXPAccumulated.text:gsub(
 						"#AMOUNT", cr(us.Thousands(RemainingXPCSC.xp.accumulatedRested), ns.colors.purple[1])
 					):gsub(
@@ -1958,68 +1942,68 @@ frames.main = wt.CreateFrame({
 			end
 
 			--Initiate or remove the cross-session Rested XP accumulation tracking variable
-			SetRestedAccumulation(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.gained and RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.notifications.restedXP.accumulated)
+			SetRestedAccumulation(profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated)
 
 			--Tooltip update
 			UpdateXPTooltip()
 		end,
 		UNIT_ENTERING_VEHICLE = atMax and nil or function(_, unit, swapUI) if unit == "player" and swapUI then
-			frames.display.frame:Hide()
-			frames.integration.frame:Hide()
+			display.frame:Hide()
+			integration.frame:Hide()
 		end end,
 		UNIT_EXITING_VEHICLE = atMax and nil or function(_, unit) if unit == "player" then
-			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled then frames.integration.frame:Show() end
+			if not profiles.data.display.hidden then display.frame:Show() end
+			if profiles.data.integration.enabled then integration.frame:Show() end
 		end end,
 		PET_BATTLE_OPENING_START = atMax and nil or function()
-			frames.display.frame:Hide()
-			frames.integration.frame:Hide()
+			display.frame:Hide()
+			integration.frame:Hide()
 		end,
 		PET_BATTLE_CLOSE = atMax and nil or function()
-			if not RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.hidden then frames.display.frame:Show() end
-			if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.enabled then frames.integration.frame:Show() end
+			if not profiles.data.display.hidden then display.frame:Show() end
+			if profiles.data.integration.enabled then integration.frame:Show() end
 		end,
 	},
 	initialize = atMax and nil or function(_, _, _, name)
 
 		--[ Main Display ]
 
-		frames.display.frame = wt.CreateCustomFrame({
+		display.frame = wt.CreateCustomFrame({
 			parent = UIParent,
 			name = name .. "MainDisplay",
-			initialize = function(display)
+			initialize = function(displayFrame)
 				--Background: Current XP segment
-				frames.display.xp = wt.CreateCustomFrame({
-					parent = display,
+				display.xp = wt.CreateCustomFrame({
+					parent = displayFrame,
 					name = "CurrentXPSegment",
 					position = { anchor = "LEFT", },
 				})
 
 				--Background: Rested XP segment
-				frames.display.rested = wt.CreateCustomFrame({
-					parent = display,
+				display.rested = wt.CreateCustomFrame({
+					parent = displayFrame,
 					name = "RestedXPSegment",
 					position = {
 						anchor = "LEFT",
-						relativeTo = frames.display.xp,
+						relativeTo = display.xp,
 						relativePoint = "RIGHT",
 					},
 				})
 
 				--Background: Border overplay
-				frames.display.border = wt.CreateCustomFrame({
-					parent = display,
+				display.border = wt.CreateCustomFrame({
+					parent = displayFrame,
 					name = "BorderOverlay",
 					position = { anchor = "CENTER", },
 					events = {
-						OnEnter = function() if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled then Fade(false) end end,
-						onLeave = function() if RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.display.fade.enabled then Fade(true) end end,
+						OnEnter = function() if profiles.data.display.fade.enabled then Fade(false) end end,
+						onLeave = function() if profiles.data.display.fade.enabled then Fade(true) end end,
 					},
 				})
 
 				--Text
-				frames.display.text = wt.CreateText({
-					parent = frames.display.border,
+				display.text = wt.CreateText({
+					parent = display.border,
 					name = "Text",
 					position = { anchor = "CENTER", },
 					layer = "OVERLAY",
@@ -2027,13 +2011,13 @@ frames.main = wt.CreateFrame({
 				})
 
 				--Context menu
-				CreateContextMenu(frames.display.border)
+				CreateContextMenu(display.border)
 			end,
 		})
 
 		--[ Integrated Display ]
 
-		frames.integration.frame = wt.CreateCustomFrame({
+		integration.frame = wt.CreateCustomFrame({
 			parent = UIParent,
 			name = name .. "IntegratedDisplay",
 			position = {
@@ -2072,7 +2056,7 @@ frames.main = wt.CreateFrame({
 				end,
 				onLeave = function()
 					--Hide the enhanced XP text on the default XP bar
-					UpdateIntegrationText(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.keep, RemainingXPDB.profiles[RemainingXPDBC.activeProfile].data.integration.remaining)
+					UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
 					--Default trial tooltip
 					if GameLimitedMode_IsActive() and IsTrialAccount() then
@@ -2084,10 +2068,10 @@ frames.main = wt.CreateFrame({
 					end
 				end,
 			},
-			initialize = function(display)
+			initialize = function(displayFrame)
 				--Text
-				frames.integration.text = wt.CreateText({
-					parent = display,
+				integration.text = wt.CreateText({
+					parent = displayFrame,
 					name = "Text",
 					position = {
 						anchor = "CENTER",
@@ -2099,7 +2083,7 @@ frames.main = wt.CreateFrame({
 				})
 
 				--Context menu
-				CreateContextMenu(display)
+				CreateContextMenu(displayFrame)
 			end,
 		})
 	end

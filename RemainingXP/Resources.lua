@@ -36,7 +36,7 @@ ns.chat = {
 --Changelog
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(4/4/2026)_#",
+		"#V_Version 3.0_# #H_(8/4/2026)_#",
 		"#C_Changes:_#",
 		"Under the hood improvements.",
 	},
@@ -365,7 +365,7 @@ ns.profileDefault = {
 			details = false,
 		},
 		font = {
-			family = ns.fonts[1].path,
+			path = ns.fonts[1].path,
 			size = 11,
 			alignment = "CENTER",
 			colors = {
