@@ -1,3 +1,15 @@
+--NOTE: Annotations are for development purposes only, providing documentation for use with LUA Language Server. This file does not need to be loaded by the game client.
+
+
+--[[ REFERENCES ]]
+
+--[ Namespace ]
+
+---Addon namespace table
+---@class addonNamespace
+---@field name string Addon namespace name
+
+
 ---[[ SAVED VARIABLES ]]
 
 ---@class RemainingXPDB : profileStorage
@@ -5,7 +17,7 @@
 
 ---@class RemainingXPDBC : characterProfileData
 
----@class RemainingXPCS : dataManagementSettingsData, positionOptionsSettingsData
+---@class RemainingXPCS : backupboxSettingsData, positionOptionsSettingsData
 
 ---@class RemainingXPCSC
 ---@field xp xpValues

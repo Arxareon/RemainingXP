@@ -164,8 +164,8 @@ ns.localizations.enUS = {
 			-- },
 		},
 		events = {
-			title = "Event Updates",
-			description = "Set up and customize chat notifications and event logs about XP and level updates.",
+			title = "Notifications",
+			description = "Set up and customize chat notifications and logs for XP and level updates.",
 			notifications = {
 				title = "Chat Notifications",
 				description = "Enable or disable detailed chat notifications for specific XP update events.",
@@ -212,7 +212,7 @@ ns.localizations.enUS = {
 				},
 			},
 			logs = {
-				title = "Event Logs",
+				title = "Update Logs",
 				description = "Keep, review and export XP and level update event logs. (Soon™)",
 			},
 		},

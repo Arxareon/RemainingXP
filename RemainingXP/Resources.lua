@@ -1,8 +1,6 @@
 --[[ NAMESPACE ]]
 
----Addon namespace table
 ---@class addonNamespace
----@field name string Addon namespace name
 local ns = select(2, ...)
 
 ns.name = ...
@@ -36,7 +34,7 @@ ns.chat = {
 --Changelog
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(8/4/2026)_#",
+		"#V_Version 3.0_# #H_(14/4/2026)_#",
 		"#C_Changes:_#",
 		"Under the hood improvements.",
 	},

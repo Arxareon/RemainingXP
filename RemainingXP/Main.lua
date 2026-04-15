@@ -5,9 +5,6 @@
 ---@class addonNamespace
 local ns = select(2, ...)
 
-
---[[ REFERENCES ]]
-
 --[ Shortcuts ]
 
 ---@type widgetToolbox
@@ -19,16 +16,21 @@ local rs = WidgetTools.resources
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities
 
----@type widgetToolsDebugging
-local ds = WidgetTools.debugging
-
 local cr = WrapTextInColor
 
 --[ Locals ]
 
+---@class main
+local main = {}
+
+---@class display
 local display = { frame = {} }
 
+---@class integration
 local integration = {}
+
+---@class events
+local events = {}
 
 local options = {
 	main = {},
@@ -49,21 +51,18 @@ local options = {
 	events = {
 		notifications = {},
 	},
-	dataManagement = {
-		backup = {},
-	},
 }
 
---Custom Tooltip
-ns.tooltip = wt.CreateGameTooltip(ns.name)
-
----@type profilemanager
+---@type profilemanager|profilesPage
 local profiles
 
 ---@type chatCommandManager
 local chatCommands
 
---Check max level
+local tooltip = wt.CreateGameTooltip(ns.name)
+
+--[ Properties ]
+
 local maxLevel = GetMaxLevelForPlayerExpansion()
 local atMax = UnitLevel("player") >= maxLevel
 
@@ -82,27 +81,27 @@ local function CreateContextMenu(parent)
 			wt.CreateMenuButton(optionsMenu, {
 				title = wt.strings.about.title,
 				tooltip = { lines = { { text = ns.strings.options.main.description:gsub("#ADDON", ns.title), }, } },
-				action = options.main.page.open,
+				action = main.settings.open,
 			})
 			wt.CreateMenuButton(optionsMenu, {
 				title = ns.strings.options.display.title:gsub("#TYPE", ns.strings.options.display.title),
 				tooltip = { lines = { { text = ns.strings.options.display.description, }, } },
-				action = options.display.page.open,
+				action = display.settings.open,
 			})
 			wt.CreateMenuButton(optionsMenu, {
 				title = ns.strings.options.integration.title:gsub("#TYPE", ns.strings.options.integration.title),
 				tooltip = { lines = { { text = ns.strings.options.integration.description, }, } },
-				action = options.integration.page.open,
+				action = integration.settings.open,
 			})
 			wt.CreateMenuButton(optionsMenu, {
 				title = ns.strings.options.events.title:gsub("#TYPE", ns.strings.options.events.title),
 				tooltip = { lines = { { text = ns.strings.options.events.description, }, } },
-				action = options.events.page.open,
+				action = events.settings.open,
 			})
 			wt.CreateMenuButton(optionsMenu, {
 				title = wt.strings.dataManagement.title,
 				tooltip = { lines = { { text = wt.strings.dataManagement.description:gsub("#ADDON", ns.title), }, } },
-				action = options.dataManagement.page.open,
+				action = profiles.settings.open,
 			})
 		end })
 		wt.CreateSubmenu(menu, { title = wt.strings.presets.apply.label, initialize = function(presetsMenu)
@@ -458,7 +457,7 @@ end
 
 --Update the text of the xp tooltip
 local function UpdateXPTooltip()
-	if not ns.tooltip:IsVisible() then return end
+	if not tooltip:IsVisible() then return end
 
 	local owner = integration.frame:IsMouseOver() and integration.frame or display.border:IsMouseOver() and display.border or nil --CHECK if needed
 	if owner then wt.UpdateTooltip(owner, { lines = GetXPTooltipTextlines(), }) end
@@ -601,7 +600,7 @@ end
 --[[ INITIALIZATION ]]
 
 --Create main addon frame & display frames
-wt.CreateFrame({
+main.frame = wt.CreateFrame({
 	name = ns.name,
 	keepOnTop = true,
 	onEvent = {
@@ -611,7 +610,7 @@ wt.CreateFrame({
 			self:UnregisterEvent("ADDON_LOADED")
 
 
-			--[[ DATABASES ]]
+			--[[ DATA ]]
 
 			---@type RemainingXPDB
 			RemainingXPDB = RemainingXPDB or {}
@@ -628,7 +627,7 @@ wt.CreateFrame({
 			---@type RemainingXPCSC
 			RemainingXPCSC = RemainingXPCSC or {}
 
-			---@type profilemanager
+			---@type profilemanager|profilesPage
 			profiles = wt.CreateProfilemanager(RemainingXPDB, RemainingXPDBC, ns.profileDefault, {
 				valueChecker = function(key, value) if type(value) == "number" then
 					if key == "size" then return value > 0 end
@@ -666,6 +665,22 @@ wt.CreateFrame({
 					["removals.xpBar"] = { saveTo = data.integration, saveKey = "hideXPBar" },
 					["notifications.maxReminder"] = { saveTo = data.notifications.statusNotice, saveKey = "maxReminder" },
 				} end,
+				listeners = {
+					activated = { { handler = function(_, _, title, success, user) if success and user then
+						display.settings.load(true)
+						integration.settings.load(true)
+						events.settings.load(true)
+						profiles.settings.load(true)
+
+						chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
+					end end, }, },
+					deleted = { { handler = function(_, success, _, title) if success then
+						chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
+					end end, }, },
+					reset = { { handler = function (_, success, _, title) if success then
+						chatCommands.print(ns.strings.chat.reset.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
+					end end, }, },
+				},
 				onRecovery = function(data) if not data.display.text.visible and not data.display.background.visible then
 					data.display.hidden = true
 					data.display.text.visible = true
@@ -676,17 +691,17 @@ wt.CreateFrame({
 
 			--[[ SETTINGS ]]
 
-			--| Addon info
-
-			options.main.page = wt.CreateAboutPage(ns.name, {
+			main.settings = wt.CreateAboutPage(ns.name, {
+				register = true,
 				name = "Main",
 				description = ns.strings.options.main.description:gsub("#ADDON", ns.title),
 				changelog = ns.changelog
 			})
 
-			--| Display
+			--[ XP Display ]
 
-			options.display.page = wt.CreateSettingsPage(ns.name, {
+			display.settings = wt.CreateSettingsPage(ns.name, {
+				register = main.settings,
 				name = "Display",
 				title = ns.strings.options.display.title,
 				description = ns.strings.options.display.description:gsub("#ADDON", ns.title),
@@ -749,9 +764,7 @@ wt.CreateFrame({
 									category = category,
 									key = key,
 									onChange = {
-										DisplayToggle = function()
-											wt.SetVisibility(display.frame, not (profiles.data.display.hidden or atMax))
-										end,
+										DisplayToggle = function() wt.SetVisibility(display.frame, not (profiles.data.display.hidden or atMax)) end,
 										EnsureVisibility = EnsureVisibility,
 									},
 								},
@@ -901,7 +914,7 @@ wt.CreateFrame({
 								dataManagement = {
 									category = category,
 									key = key,
-									onChange = { UpdateDisplayText = function() UpdateXPDisplayText() end, },
+									onChange = { UpdateDisplayText = UpdateXPDisplayText, },
 								},
 							})
 						end,
@@ -932,9 +945,7 @@ wt.CreateFrame({
 						dataManagement = { category = category, },
 						onChangeFont = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
 						onChangeSize = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
-						onChangeAlignment = function()
-							wt.SetPosition(display.text, { anchor = profiles.data.display.font.alignment, })
-						end,
+						onChangeAlignment = function() wt.SetPosition(display.text, { anchor = profiles.data.display.font.alignment, }) end,
 						onChangeColor = Fade,
 					})
 
@@ -965,7 +976,9 @@ wt.CreateFrame({
 									category = category,
 									key = key,
 									onChange = {
-										ToggleDisplayBackdrop = function() SetDisplayBackdrop(profiles.data.display.background.visible, profiles.data.display.background.colors) end,
+										ToggleDisplayBackdrop = function()
+											SetDisplayBackdrop(profiles.data.display.background.visible, profiles.data.display.background.colors)
+										end,
 										"EnsureVisibility",
 										"UpdateFade",
 									},
@@ -994,7 +1007,9 @@ wt.CreateFrame({
 								dataManagement = {
 									category = category,
 									key = key,
-									onChange = { UpdateDisplaySize = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end, },
+									onChange = { UpdateDisplaySize = function()
+										SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h)
+									end, },
 								},
 							})
 
@@ -1218,9 +1233,10 @@ wt.CreateFrame({
 				end,
 			})
 
-			--| Integration
+			--[ XP Bar Integration ]
 
-			options.integration.page = wt.CreateSettingsPage(ns.name, {
+			integration.settings = wt.CreateSettingsPage(ns.name, {
+				register = main.settings,
 				name = "Integration",
 				title = ns.strings.options.integration.title,
 				description = ns.strings.options.integration.description:gsub("#ADDON", ns.title),
@@ -1355,10 +1371,10 @@ wt.CreateFrame({
 				end,
 			})
 
-			--| Events
+			--[ Notifications ]
 
-			options.events.page = wt.CreateSettingsPage(ns.name, {
-				register = options.main.page,
+			events.settings = wt.CreateSettingsPage(ns.name, {
+				register = main.settings,
 				name = "Events",
 				title = ns.strings.options.events.title,
 				description = ns.strings.options.events.description:gsub("#ADDON", ns.title),
@@ -1559,22 +1575,14 @@ wt.CreateFrame({
 
 			--[ Profiles ]
 
-			options.profiles = wt.CreateProfilesPage(ns.name, RemainingXPDB, RemainingXPDBC, ns.profileDefault, RemainingXPCS, {
-				Activated = function(title)
-					options.display.page.load(true)
-					options.integration.page.load(true)
-					options.events.page.load(true)
-					options.dataManagement.page.load(true)
-
-					chatCommands.print(ns.strings.chat.profile.response:gsub("#PROFILE", cr(title, ns.colors.blue[3])))
-				end,
-				onProfileDeleted = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
-				onProfileReset = function(title) chatCommands.print(ns.strings.chat.default.response:gsub("#PROFILE", cr(title, ns.colors.blue[3]))) end,
+			---@type profilemanager|profilesPage
+			profiles = wt.CreateProfilesPage(ns.name, RemainingXPDB, RemainingXPDBC, ns.profileDefault, RemainingXPCS, {
+				register = main.settings,
 				onImport = function(success) if success then
-					options.display.page.load(true)
-					options.integration.page.load(true)
-					options.events.page.load(true)
-					options.dataManagement.page.load(true)
+					display.settings.load(true)
+					integration.settings.load(true)
+					events.settings.load(true)
+					profiles.settings.load(true)
 				else chatCommands.print(wt.strings.backup.error) end end,
 				onImportAllProfiles = function(success) if not success then chatCommands.print(wt.strings.backup.error) end end,
 			}, profiles)
@@ -1588,7 +1596,7 @@ wt.CreateFrame({
 					{
 						command = ns.chat.commands.options,
 						description = ns.strings.chat.options.description:gsub("#ADDON", ns.title),
-						handler = function() options.main.page.open() end,
+						handler = function() main.settings.open() end,
 					},
 					{
 						command = ns.chat.commands.preset,
@@ -1713,7 +1721,7 @@ wt.CreateFrame({
 						description = ns.strings.chat.profile.description:gsub(
 							"#INDEX", cr(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
 						),
-						handler = function(_, p) return options.dataManagement.activate(tonumber(p)) ~= nil end,
+						handler = function(_, p) return profiles.activate(tonumber(p)) ~= nil end,
 						error = ns.strings.chat.profile.unchanged .. "\n" .. cr(ns.strings.chat.profile.error:gsub(
 							"#INDEX", cr(ns.chat.commands.profile .. " " .. 1, ns.colors.purple[3])
 						), ns.colors.blue[3]),
@@ -1735,25 +1743,12 @@ wt.CreateFrame({
 						description = function() return (ns.strings.chat.default.description:gsub(
 							"#PROFILE", cr(RemainingXPDB.profiles[RemainingXPDBC.activeProfile].title, ns.colors.blue[1])
 						)) end,
-						handler = function() return options.dataManagement.reset() end,
+						handler = function() return profiles.reset() end,
 					},
 					{
 						command = "hi",
 						hidden = true,
 						handler = function(manager) manager.welcome() end,
-					},
-					{
-						command = "dump", --REMOVE
-						hidden = true,
-						handler = function() ds.Dump(RemainingXPDB) end,
-					},
-					{
-						command = "delete", --REMOVE
-						hidden = true,
-						handler = function()
-							RemainingXPDB = nil
-							ReloadUI()
-						end,
 					},
 				},
 				colors = {
@@ -1812,7 +1807,7 @@ wt.CreateFrame({
 
 			--Initialize display tooltips
 			wt.AddTooltip(display.border, {
-				tooltip = ns.tooltip,
+				tooltip = tooltip,
 				title = ns.strings.xpTooltip.title,
 				anchor = "ANCHOR_BOTTOMRIGHT",
 				offset = { y = display.border:GetHeight() },
@@ -1820,7 +1815,7 @@ wt.CreateFrame({
 			})
 			display.border:HookScript("OnEnter", UpdateXPTooltip)
 			wt.AddTooltip(integration.frame, {
-				tooltip = ns.tooltip,
+				tooltip = tooltip,
 				title = ns.strings.xpTooltip.title,
 				anchor = "ANCHOR_NONE",
 				offset = { x = -11, y = 115 },

@@ -605,14 +605,9 @@ local function setUpFrame(frame, t)
 		else frame:HookScript(key, value) end
 	end end
 
-	--Pass global events to handlers
-	frame:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
+	--| Global events
 
-	--Register global event handlers
-	if t.onEvent then for key, value in pairs(t.onEvent) do
-		frame:RegisterEvent(key)
-		frame[key] = function(...) value(...) end
-	end end
+	if type(t.onEvent) == "table" then for event, handler in pairs(t.onEvent) do if type(handler) == "function" then us.SetListener(frame, event, handler) end end end
 
 	--[ Initialization ]
 
@@ -1486,10 +1481,11 @@ wt.clipboard = {}
 ---@param listener function
 ---@param callIndex integer
 local function addListener(listeners, event, listener, callIndex)
-	listeners[event] = type(listeners[event]) == "table" and listeners[event] or {}
+	if not listeners[event] then listeners[event] = {} end
 
-	if type(callIndex) ~= "number" then table.insert(listeners[event], listener)
-	else table.insert(listeners[event], Clamp(us.Round(callIndex), 1, #listeners[event] + 1), listener) end
+	local l = listeners[event]
+
+	if type(callIndex) ~= "number" then table.insert(l, listener) else table.insert(l, Clamp(math.floor(callIndex), 1, #l + 1), listener) end
 end
 
 ---Call registered listeners for **event**
@@ -1498,9 +1494,11 @@ end
 ---@param event string
 ---@param ... any
 local function callListeners(widget, listeners, event, ...)
-	if type(listeners[event]) ~= "table" then return end
+	local l = listeners[event]
 
-	for i = 1, #listeners[event] do listeners[event][i](widget, ...) end
+	if not l then return end
+
+	for i = 1, #l do l[i](widget, ...) end
 end
 
 --[ Button ]
@@ -4331,25 +4329,20 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		else dropdown.holderFrame:HookScript(key, value) end
 	end end
 
-	--Pass global events to handlers
-	dropdown.menu:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
-
 	--| UX
 
-	---@diagnostic disable-next-line: inject-field
-	function dropdown.menu:GLOBAL_MOUSE_DOWN()
+	us.SetListener(dropdown.menu, "GLOBAL_MOUSE_DOWN", function(f)
 		if dropdown.toggle.widget:IsMouseOver() then return end
 
-		dropdown.menu:UnregisterEvent("GLOBAL_MOUSE_DOWN")
-		dropdown.menu:RegisterEvent("GLOBAL_MOUSE_UP")
-	end
+		f:UnregisterEvent("GLOBAL_MOUSE_DOWN")
+		f:RegisterEvent("GLOBAL_MOUSE_UP")
+	end)
 
-	---@diagnostic disable-next-line: inject-field
-	function dropdown.menu:GLOBAL_MOUSE_UP(button)
-		if (button ~= "LeftButton" and button ~= "RightButton") or dropdown.menu:IsMouseOver() then return end
+	us.SetListener(dropdown.menu, "GLOBAL_MOUSE_UP", function(f, button)
+		if (button ~= "LeftButton" and button ~= "RightButton") or f:IsMouseOver() then return end
 
 		dropdown.toggleMenu(false)
-	end
+	end, false)
 
 	--Handle widget updates
 	dropdown.toggle.setListener.trigger(function() dropdown.toggleMenu() end)
@@ -7188,10 +7181,10 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	--| Utilities
 
 	--Profile delete confirmation
-	local deleteProfilePopup = wt.RegisterPopupDialog(t.category .. "_DELETE_PROFILE", { accept = DELETE, })
+	local deleteProfilePopup = wt.RegisterPopupDialog(category .. "_DELETE_PROFILE", { accept = DELETE, })
 
 	--Profile reset confirmation
-	local resetProfilePopup = wt.RegisterPopupDialog(t.category .. "RESET_PROFILE")
+	local resetProfilePopup = wt.RegisterPopupDialog(category .. "RESET_PROFILE")
 
 	--| Events
 
@@ -7333,14 +7326,14 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	---***
 	---@param name? string ***Default:*** "Profile"
 	---@param number? integer ***Default:*** 2
-	---@param stopAtFirst? boolean ***Default:*** `true`
+	---@param skipFirst? boolean ***Default:*** `false`
 	---@return string title
-	local function checkName(name, number, stopAtFirst)
+	local function checkName(name, number, skipFirst)
 		name = name or wt.strings.profiles.select.profile
 		local title = name .. (number and (" " .. number) or "")
 
 		--Find an unused name for the new profile
-		if profilemanager.findIndex(title, stopAtFirst) then
+		if profilemanager.findIndex(title, skipFirst) then
 			number = (number and number or 2)
 			title = name .. " " .. number
 
@@ -7518,7 +7511,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		if not list[1] then list[1] = { title = wt.strings.profiles.select.main, data = us.Clone(defaultData) } end
 
 		--Check profile names
-		for i = 1, #list do list[i].title = checkName(list[i].title, nil, false) end
+		for i = 1, #list do list[i].title = checkName(list[i].title, nil, true) end
 	end
 
 	---Load profiles data
@@ -7567,9 +7560,9 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 			--Validate active profile data
 			profilemanager.validate(profilemanager.data)
-		end
 
-		ds.Log("Recovered misplaced data:" .. us.TableToString(recovered), "Profilemanager (" .. category .. ") loadProfiles")
+			ds.Log("Recovered misplaced data:" .. us.TableToString(recovered), "Profilemanager (" .. category .. ") loadProfiles")
+		end
 
 		--| Call listeners
 
@@ -8581,12 +8574,10 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 		--[ Update Size ]
 
-		positioningVisualAids.frame:HookScript("OnEvent", function(_, event) if event == "UI_SCALE_CHANGED" then
-			positioningVisualAids.frame:SetSize(GetScreenWidth() - 14, GetScreenHeight() - 14)
-			positioningVisualAids.frame:SetScale(UIParent:GetScale())
-		end end)
-
-		positioningVisualAids.frame:RegisterEvent("UI_SCALE_CHANGED")
+		us.SetListener(positioningVisualAids.frame, "UI_SCALE_CHANGED", function(f)
+			f:SetSize(GetScreenWidth() - 14, GetScreenHeight() - 14)
+			f:SetScale(UIParent:GetScale())
+		end)
 	end
 
 	--[ Options Panel ]
