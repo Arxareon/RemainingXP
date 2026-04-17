@@ -14,27 +14,9 @@ ns.root = "Interface/AddOns/" .. ns.name .. "/"
 
 --[[ STRINGS ]]
 
---Chat commands
-ns.chat = {
-	keyword = "remxp",
-	commands = {
-		options = "options",
-		preset = "preset",
-		save = "save",
-		reset = "reset",
-		toggle = "toggle",
-		fade = "fade",
-		size = "size",
-		integration = "integrate",
-		profile = "profile",
-		default = "default",
-	},
-}
-
---Changelog
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(14/4/2026)_#",
+		"#V_Version 3.0_# #H_(17/4/2026)_#",
 		"#C_Changes:_#",
 		"Under the hood improvements.",
 	},
@@ -260,9 +242,24 @@ ns.changelog = {
 	},
 }
 
+ns.chat = {
+	keyword = "remxp",
+	commands = {
+		options = "options",
+		preset = "preset",
+		save = "save",
+		reset = "reset",
+		toggle = "toggle",
+		fade = "fade",
+		size = "size",
+		integration = "integrate",
+		profile = "profile",
+		default = "default",
+	},
+}
+
 --[ Localization ]
 
----Localized strings
 ---@class strings
 ns.strings = ns.localizations[GetLocale()]
 
@@ -278,7 +275,6 @@ ns.localizations = nil
 
 --[[ ASSETS ]]
 
---Colors
 ns.colors = {
 	grey = {
 		{ r = 0.54, g = 0.54, b = 0.54 },
@@ -307,7 +303,6 @@ ns.colors = {
 	}
 }
 
---Fonts
 ns.fonts = {
 	{ name = ns.strings.misc.default, path = STANDARD_TEXT_FONT:gsub("\\", "/") },
 	{ name = "Arbutus Slab", path = ns.root .. "Fonts/ArbutusSlab.ttf" },
@@ -321,7 +316,6 @@ ns.fonts = {
 	{ name = ns.strings.misc.custom, path = ns.root .. "Fonts/CUSTOM.ttf" },
 }
 
---Textures
 ns.textures = {
 	logo = ns.root .. "Textures/Logo.tga",
 }
@@ -329,7 +323,6 @@ ns.textures = {
 
 --[[ DATA ]]
 
---Defaults
 ---@type RemainingXPProfileData
 ns.profileDefault = {
 	customPreset = {
@@ -419,7 +412,6 @@ ns.profileDefault = {
 	},
 }
 
---Presets
 ns.presets = {
 	{
 		title = ns.strings.presets[1], --XP Bar Replacement

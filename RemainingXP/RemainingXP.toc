@@ -1,19 +1,19 @@
 ## Interface: 120001, 50503, 20505, 11508
 ## Title: Remaining XP
 ## Version: 3.0
-## X-Day: 14
+## X-Day: 17
 ## X-Month: 4
 ## X-Year: 2026
 ## Category: Quests & Leveling
 ## Notes: Tracks your XP gain, and provides detailed XP information in customizable XP bar displays, tooltips & chat notifications.
 ## Author: Barnabas Nagy (Arxareon)
+## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
 ## X-Sponsors: Celierra
 ## X-License: All Rights Reserved
 ## X-CurseForge: curseforge.com/wow/addons/remaining-xp
 ## X-Wago: addons.wago.io/addons/remaining-xp
 ## X-Repository: github.com/Arxareon/RemainingXP
 ## X-Issues: github.com/Arxareon/RemainingXP/issues
-## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
 ## SavedVariables: RemainingXPDB, RemainingXPCS
 ## SavedVariablesPerCharacter: RemainingXPDBC, RemainingXPCSC
 ## LoadSavedVariablesFirst: 1
@@ -23,9 +23,6 @@
 
 Localizations.lua
 Resources.lua
-Toolbox\Load.lua
-Toolbox\Resources.lua
-Toolbox\Utilities.lua
-Toolbox\Constructors.lua
+Toolbox.lua
 Main.lua [AllowLoadGameType mainline]
 Main_Classic.lua [AllowLoadGameType classic]
