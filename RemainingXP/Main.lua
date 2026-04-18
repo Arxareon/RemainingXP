@@ -1,11 +1,9 @@
---[[ REFERENCES ]]
-
---[ Namespace ]
+--| Namespace
 
 ---@class addonNamespace
 local ns = select(2, ...)
 
---[ Shortcuts ]
+--| Shortcuts
 
 ---@type widgetToolbox
 local wt = ns[C_AddOns.GetAddOnMetadata(ns.name, "X-WidgetTools-AddToNamespace")]
@@ -18,7 +16,7 @@ local us = WidgetTools.utilities
 
 local cr = WrapTextInColor
 
---[ Locals ]
+--| Locals
 
 ---@class main
 local main = {}
@@ -61,7 +59,7 @@ local chatCommands
 
 local tooltip = wt.CreateGameTooltip(ns.name)
 
---[ Properties ]
+--| Properties
 
 local maxLevel = GetMaxLevelForPlayerExpansion()
 local atMax = UnitLevel("player") >= maxLevel
