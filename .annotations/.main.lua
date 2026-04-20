@@ -470,12 +470,12 @@ local enUS = {
 --| Font
 
 ---@class xpColorList
----@field base colorData Base text color
----@field gathered colorData Gathered XP text color
----@field needed colorData Needed XP text color
----@field remaining colorData Remaining XP text color
----@field rested colorData Rested XP text color
----@field banked colorData Banked text color
+---@field base color Base text color
+---@field gathered color Gathered XP text color
+---@field needed color Needed XP text color
+---@field remaining color Remaining XP text color
+---@field rested color Rested XP text color
+---@field banked color Banked text color
 
 ---@class displayFontData : fontOptionsData
 ---@field colors xpColorList
@@ -487,10 +487,10 @@ local enUS = {
 ---@field size sizeData
 
 ---@class displayBackgroundColorData
----@field bg colorData Background texture color
----@field gathered colorData Gathered XP segment texture color
----@field rested colorData Rested XP segment texture color
----@field border colorData Border texture color
+---@field bg color Background texture color
+---@field gathered color Gathered XP segment texture color
+---@field rested color Rested XP segment texture color
+---@field border color Border texture color
 
 ---@class displayBackgroundData : displayBackgroundBaseData
 ---@field colors displayBackgroundColorData

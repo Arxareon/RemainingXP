@@ -5,6 +5,8 @@ local ns = select(2, ...)
 
 --| Shortcuts
 
+local cr = WrapTextInColor
+
 ---@type toolbox
 local wt = ns[C_AddOns.GetAddOnMetadata(ns.name, "X-WidgetTools-AddToNamespace")]
 
@@ -13,8 +15,6 @@ local rs = WidgetTools.resources
 
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities
-
-local cr = WrapTextInColor
 
 --| Locals
 
@@ -61,7 +61,7 @@ local tooltip = wt.CreateGameTooltip(ns.name)
 
 --| Properties
 
-local maxLevel = GetMaxLevelForPlayerExpansion()
+local maxLevel = GetMaxPlayerLevel()
 local atMax = UnitLevel("player") >= maxLevel
 
 local alwaysShow = C_CVar.GetCVar("xpBarText")
@@ -117,7 +117,7 @@ local function PrintStatus(load)
 		status = cr(ns.strings.chat.status.disabled:gsub(
 			"#ADDON", cr(ns.title, ns.colors.purple[1])
 		) .." " ..  cr(ns.strings.chat.status.max:gsub(
-			"#MAX", cr(maxLevel, ns.colors.purple[2])
+			"#MAX", cr(tostring(maxLevel), ns.colors.purple[2])
 		), ns.colors.blue[2]), ns.colors.blue[1])
 	else return end end
 
@@ -288,7 +288,7 @@ local function GetXPTooltipTextlines()
 		},
 		{
 			text = ns.strings.xpTooltip.requiredLevelUp:gsub(
-				"#LEVEL", cr(UnitLevel("player") + 1, ns.colors.peach[2])
+				"#LEVEL", cr(tostring(UnitLevel("player") + 1), ns.colors.peach[2])
 			),
 			color = ns.colors.peach[3],
 		},
@@ -329,7 +329,7 @@ local function GetXPTooltipTextlines()
 			):gsub(
 				"#PERCENT_REMAINING", cr("100%%", ns.colors.blue[2])
 			):gsub(
-				"#LEVEL", cr(maxLevel - 1, ns.colors.blue[2])
+				"#LEVEL", cr(tostring(maxLevel - 1), ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
@@ -649,6 +649,8 @@ main.frame = wt.CreateFrame({
 				},
 				onLoad = EnsureVisibility,
 				onSave = function()
+					if not atMax then return end
+
 					display.frame:Hide()
 
 					if profiles.data.notifications.statusNotice.maxReminder and atMax then PrintStatus() end
@@ -1709,10 +1711,10 @@ main.frame = wt.CreateFrame({
 						onError = function()
 							print(cr(ns.strings.chat.preset.list, ns.colors.blue[1]))
 							for i = 1, #options.display.position.presets, 2 do
-								local list = "    " .. cr(i, ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i].title, ns.colors.blue[3])
+								local list = "    " .. cr(tostring(i), ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i].title, ns.colors.blue[3])
 
 								if i + 1 <= #options.display.position.presets then
-									list = list .. "    " .. cr(i + 1, ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i + 1].title, ns.colors.blue[3])
+									list = list .. "    " .. cr(tostring(i + 1), ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i + 1].title, ns.colors.blue[3])
 								end
 
 								print(list)
@@ -1820,10 +1822,10 @@ main.frame = wt.CreateFrame({
 						onError = function()
 							print(cr(ns.strings.chat.profile.list, ns.colors.blue[1]))
 							for i = 1, #RemainingXPDB.profiles, 4 do
-								local list = "    " .. cr(i, ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[i].title, ns.colors.blue[3])
+								local list = "    " .. cr(tostring(i), ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[i].title, ns.colors.blue[3])
 
 								for j = i + 1, min(i + 3, #RemainingXPDB.profiles) do
-									list = list .. "    " .. cr(j, ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[j].title, ns.colors.blue[3])
+									list = list .. "    " .. cr(tostring(j), ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[j].title, ns.colors.blue[3])
 								end
 
 								print(list)
@@ -2034,7 +2036,7 @@ main.frame = wt.CreateFrame({
 			--Notification
 			if profiles.data.notifications.restedXP.gained and not (profiles.data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
 				print(cr(ns.strings.chat.restedXPGained.text:gsub(
-						"#AMOUNT", cr(gainedRestedXP, ns.colors.purple[1])
+						"#AMOUNT", cr(tostring(gainedRestedXP), ns.colors.purple[1])
 					):gsub(
 						"#TOTAL", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
 					):gsub(
@@ -2060,7 +2062,7 @@ main.frame = wt.CreateFrame({
 						"#PERCENT", cr(ns.strings.chat.restedXPAccumulated.percent:gsub(
 							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
 						):gsub(
-							"#NEXT", cr(UnitLevel("player") + 1, ns.colors.purple[3])
+							"#NEXT", cr(tostring(UnitLevel("player") + 1), ns.colors.purple[3])
 						), ns.colors.blue[3])
 					), ns.colors.blue[1]) or cr(ns.strings.chat.restedXPAccumulated.zero, ns.colors.blue[1])
 				))

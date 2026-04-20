@@ -5,6 +5,8 @@ local ns = select(2, ...)
 
 --| Shortcuts
 
+local cr = WrapTextInColor
+
 ---@type toolbox
 local wt = ns[C_AddOns.GetAddOnMetadata(ns.name, "X-WidgetTools-AddToNamespace")]
 
@@ -13,8 +15,6 @@ local rs = WidgetTools.resources
 
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities
-
-local cr = WrapTextInColor
 
 --| Locals
 
@@ -61,7 +61,7 @@ local tooltip = wt.CreateGameTooltip(ns.name)
 
 --| Properties
 
-local maxLevel = GetMaxLevelForPlayerExpansion()
+local maxLevel = GetMaxPlayerLevel()
 local atMax = UnitLevel("player") >= maxLevel
 
 local alwaysShow = C_CVar.GetCVar("xpBarText")
@@ -117,7 +117,7 @@ local function PrintStatus(load)
 		status = cr(ns.strings.chat.status.disabled:gsub(
 			"#ADDON", cr(ns.title, ns.colors.purple[1])
 		) .." " ..  cr(ns.strings.chat.status.max:gsub(
-			"#MAX", cr(maxLevel, ns.colors.purple[2])
+			"#MAX", cr(tostring(maxLevel), ns.colors.purple[2])
 		), ns.colors.blue[2]), ns.colors.blue[1])
 	else return end end
 
@@ -300,7 +300,7 @@ local function GetXPTooltipTextlines()
 		},
 		{
 			text = ns.strings.xpTooltip.requiredLevelUp:gsub(
-				"#LEVEL", cr(UnitLevel("player") + 1, ns.colors.peach[2])
+				"#LEVEL", cr(tostring(UnitLevel("player") + 1), ns.colors.peach[2])
 			),
 			color = ns.colors.peach[3],
 		},
@@ -341,7 +341,7 @@ local function GetXPTooltipTextlines()
 			):gsub(
 				"#PERCENT_REMAINING", cr("100%%", ns.colors.blue[2])
 			):gsub(
-				"#LEVEL", cr(maxLevel - 1, ns.colors.blue[2])
+				"#LEVEL", cr(tostring(maxLevel - 1), ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
@@ -387,7 +387,7 @@ local function GetXPTooltipTextlines()
 			"#VALUE", cr(ns.strings.xpTooltip.bankedValue:gsub(
 				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.banked), ns.colors.grey[2])
 			):gsub(
-				"#LEVELS", cr(RemainingXPCSC.xp.bankedLevels, ns.colors.grey[2])
+				"#LEVELS", cr(tostring(RemainingXPCSC.xp.bankedLevels), ns.colors.grey[2])
 			), ns.colors.grey[3])
 		),
 		font = GameTooltipText,
@@ -675,6 +675,8 @@ main.frame = wt.CreateFrame({
 				},
 				onLoad = EnsureVisibility,
 				onSave = function()
+					if not atMax then return end
+
 					display.frame:Hide()
 
 					if profiles.data.notifications.statusNotice.maxReminder and atMax then PrintStatus() end
@@ -771,202 +773,202 @@ main.frame = wt.CreateFrame({
 					end, ns.profileDefault.display, RemainingXPCS, {
 						canvas = canvas,
 						frameName = ns.strings.options.display.referenceName,
-						presets = {
-							items = {
-								{
-									title = ns.strings.presets[1], --XP Bar Replacement
-									data = {
-										position = {
-											anchor = "BOTTOM",
-											relativePoint = "BOTTOM",
-											offset = { x = 0, y = 0 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "LOW",
-											keepOnTop = false,
-										},
-										background = {
-											visible = true,
-											size = { width = 562, height = 16 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[2], --XP Bar Left Text
-									data = {
-										position = {
-											anchor = "BOTTOM",
-											relativePoint = "BOTTOM",
-											offset = { x = -256, y = 0 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "HIGH",
-											keepOnTop = false,
-										},
-										background = {
-											visible = false,
-											size = { width = 68, height = 16 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[3], --XP Bar Right Text
-									data = {
-										position = {
-											anchor = "BOTTOM",
-											relativePoint = "BOTTOM",
-											offset = { x = 252, y = 0 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "HIGH",
-											keepOnTop = false,
-										},
-										background = {
-											visible = false,
-											size = { width = 68, height = 16 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[4], --Player Frame Bar Above
-									data = {
-										position = {
-											anchor = "TOPRIGHT",
-											relativeTo = PlayerFrame,
-											relativePoint = "TOPRIGHT",
-											offset = { x = -27, y = -11 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "MEDIUM",
-											keepOnTop = false,
-										},
-										background = {
-											visible = true,
-											size = { width = 126, height = 16 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[5], --Player Frame Text Under
-									data = {
-										position = {
-											anchor = "BOTTOMLEFT",
-											relativeTo = PlayerFrame,
-											relativePoint = "BOTTOMLEFT",
-											offset = { y = 2 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "MEDIUM",
-											keepOnTop = false,
-										},
-										background = {
-											visible = false,
-											size = { width = 104, height = 16 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[6], --Objective Tracker Bar
-									data = {
-										position = {
-											anchor = "TOPLEFT",
-											relativeTo = ObjectiveTrackerFrame,
-											relativePoint = "TOPLEFT",
-											offset = { x = 34, y = -5 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "MEDIUM",
-											keepOnTop = false,
-										},
-										background = {
-											visible = true,
-											size = { width = 232, height = 22 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[7], --Bottom-Left Chunky Bar
-									data = {
-										position = {
-											anchor = "BOTTOMLEFT",
-											relativePoint = "BOTTOMLEFT",
-											offset = { x = 188, y = 12 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "MEDIUM",
-											keepOnTop = false,
-										},
-										background = {
-											visible = true,
-											size = { width = 490, height = 38 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[8], --Bottom-Right Chunky Bar
-									data = {
-										position = {
-											anchor = "BOTTOMRIGHT",
-											relativePoint = "BOTTOMRIGHT",
-											offset = { x = -188, y = 12 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "MEDIUM",
-											keepOnTop = false,
-										},
-										background = {
-											visible = true,
-											size = { width = 490, height = 38 },
-										},
-									},
-								},
-								{
-									title = ns.strings.presets[9], --Top-Center Long Bar
-									data = {
-										position = {
-											anchor = "TOP",
-											relativePoint = "TOP",
-											offset = { x = 0, y = 3 }
-										},
-										keepInBounds = true,
-										layer = {
-											strata = "MEDIUM",
-											keepOnTop = false,
-										},
-										background = {
-											visible = true,
-											size = { width = 1248, height = 8 },
-										},
-									},
-								},
-							},
-							onPreset = function(preset)
-								--Set background
-								options.display.background.visible.setData(preset.data.background.visible)
-								options.display.background.size.h.setData(preset.data.background.size.h)
-								options.display.background.size.h.setData(preset.data.background.size.w)
+						-- presets = { --TODO update presets for modern
+						-- 	items = {
+						-- 		{
+						-- 			title = ns.strings.presets[1], --XP Bar Replacement
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "BOTTOM",
+						-- 					relativePoint = "BOTTOM",
+						-- 					offset = { x = 0, y = 0 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "LOW",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = true,
+						-- 					size = { width = 562, height = 16 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[2], --XP Bar Left Text
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "BOTTOM",
+						-- 					relativePoint = "BOTTOM",
+						-- 					offset = { x = -256, y = 0 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "HIGH",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = false,
+						-- 					size = { width = 68, height = 16 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[3], --XP Bar Right Text
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "BOTTOM",
+						-- 					relativePoint = "BOTTOM",
+						-- 					offset = { x = 252, y = 0 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "HIGH",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = false,
+						-- 					size = { width = 68, height = 16 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[4], --Player Frame Bar Above
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "TOPRIGHT",
+						-- 					relativeTo = PlayerFrame,
+						-- 					relativePoint = "TOPRIGHT",
+						-- 					offset = { x = -27, y = -11 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "MEDIUM",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = true,
+						-- 					size = { width = 126, height = 16 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[5], --Player Frame Text Under
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "BOTTOMLEFT",
+						-- 					relativeTo = PlayerFrame,
+						-- 					relativePoint = "BOTTOMLEFT",
+						-- 					offset = { y = 2 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "MEDIUM",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = false,
+						-- 					size = { width = 104, height = 16 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[6], --Objective Tracker Bar
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "TOPLEFT",
+						-- 					relativeTo = ObjectiveTrackerFrame,
+						-- 					relativePoint = "TOPLEFT",
+						-- 					offset = { x = 34, y = -5 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "MEDIUM",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = true,
+						-- 					size = { width = 232, height = 22 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[7], --Bottom-Left Chunky Bar
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "BOTTOMLEFT",
+						-- 					relativePoint = "BOTTOMLEFT",
+						-- 					offset = { x = 188, y = 12 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "MEDIUM",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = true,
+						-- 					size = { width = 490, height = 38 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[8], --Bottom-Right Chunky Bar
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "BOTTOMRIGHT",
+						-- 					relativePoint = "BOTTOMRIGHT",
+						-- 					offset = { x = -188, y = 12 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "MEDIUM",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = true,
+						-- 					size = { width = 490, height = 38 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 		{
+						-- 			title = ns.strings.presets[9], --Top-Center Long Bar
+						-- 			data = {
+						-- 				position = {
+						-- 					anchor = "TOP",
+						-- 					relativePoint = "TOP",
+						-- 					offset = { x = 0, y = 3 }
+						-- 				},
+						-- 				keepInBounds = true,
+						-- 				layer = {
+						-- 					strata = "MEDIUM",
+						-- 					keepOnTop = false,
+						-- 				},
+						-- 				background = {
+						-- 					visible = true,
+						-- 					size = { width = 1248, height = 8 },
+						-- 				},
+						-- 			},
+						-- 		},
+						-- 	},
+						-- 	onPreset = function(preset)
+						-- 		--Set background
+						-- 		options.display.background.visible.setData(preset.data.background.visible)
+						-- 		options.display.background.size.h.setData(preset.data.background.size.h)
+						-- 		options.display.background.size.h.setData(preset.data.background.size.w)
 
-								--Make sure the speed display is visible
-								options.display.visibility.hidden.setData(false)
-								if not preset.data.background.visible then options.display.text.visible.setData(true) end
+						-- 		--Make sure the speed display is visible
+						-- 		options.display.visibility.hidden.setData(false)
+						-- 		if not preset.data.background.visible then options.display.text.visible.setData(true) end
 
-								chatCommands.print(ns.strings.chat.preset.response:gsub("#PRESET", cr(preset.title, ns.colors.blue[3])))
-							end,
-							custom = {
-								getData = function() return profiles.data.customPreset end,
-								defaultsTable = ns.profileDefault.customPreset,
-								onSave = function() chatCommands.print(ns.strings.chat.save.response:gsub("#CUSTOM", cr(CUSTOM, ns.colors.blue[3]))) end,
-								onReset = function() chatCommands.print(ns.strings.chat.reset.response:gsub("#CUSTOM", cr(CUSTOM, ns.colors.blue[3]))) end,
-							}
-						},
+						-- 		chatCommands.print(ns.strings.chat.preset.response:gsub("#PRESET", cr(preset.title, ns.colors.blue[3])))
+						-- 	end,
+						-- 	custom = {
+						-- 		getData = function() return profiles.data.customPreset end,
+						-- 		defaultsTable = ns.profileDefault.customPreset,
+						-- 		onSave = function() chatCommands.print(ns.strings.chat.save.response:gsub("#CUSTOM", cr(CUSTOM, ns.colors.blue[3]))) end,
+						-- 		onReset = function() chatCommands.print(ns.strings.chat.reset.response:gsub("#CUSTOM", cr(CUSTOM, ns.colors.blue[3]))) end,
+						-- 	}
+						-- },
 						setMovable = {
 							triggers = { display.border },
 							events = {
@@ -1716,48 +1718,48 @@ main.frame = wt.CreateFrame({
 						description = ns.strings.chat.options.description:gsub("#ADDON", ns.title),
 						handler = function() main.settings.open() end,
 					},
-					{
-						command = ns.chat.commands.preset,
-						description = ns.strings.chat.preset.description:gsub(
-							"#INDEX", cr(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[3])
-						),
-						handler = function(_, parameter)
-							if atMax then
-								PrintStatus()
-								return nil
-							end
+					-- {
+					-- 	command = ns.chat.commands.preset, --TODO readd when presets are updated for modern
+					-- 	description = ns.strings.chat.preset.description:gsub(
+					-- 		"#INDEX", cr(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[3])
+					-- 	),
+					-- 	handler = function(_, parameter)
+					-- 		if atMax then
+					-- 			PrintStatus()
+					-- 			return nil
+					-- 		end
 
-							return options.display.position.applyPreset(tonumber(parameter))
-						end,
-						error = ns.strings.chat.preset.unchanged .. "\n" .. cr(ns.strings.chat.preset.error:gsub(
-							"#INDEX", cr(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[2])
-						), ns.colors.blue[2]),
-						onError = function()
-							print(cr(ns.strings.chat.preset.list, ns.colors.blue[1]))
-							for i = 1, #options.display.position.presets, 2 do
-								local list = "    " .. cr(i, ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i].title, ns.colors.blue[3])
+					-- 		return options.display.position.applyPreset(tonumber(parameter))
+					-- 	end,
+					-- 	error = ns.strings.chat.preset.unchanged .. "\n" .. cr(ns.strings.chat.preset.error:gsub(
+					-- 		"#INDEX", cr(ns.chat.commands.preset .. " " .. 1, ns.colors.purple[2])
+					-- 	), ns.colors.blue[2]),
+					-- 	onError = function()
+					-- 		print(cr(ns.strings.chat.preset.list, ns.colors.blue[1]))
+					-- 		for i = 1, #options.display.position.presets, 2 do
+					-- 			local list = "    " .. cr(tostring(i), ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i].title, ns.colors.blue[3])
 
-								if i + 1 <= #options.display.position.presets then
-									list = list .. "    " .. cr(i + 1, ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i + 1].title, ns.colors.blue[3])
-								end
+					-- 			if i + 1 <= #options.display.position.presets then
+					-- 				list = list .. "    " .. cr(tostring(i + 1), ns.colors.purple[3]) .. cr(" • " .. options.display.position.presets[i + 1].title, ns.colors.blue[3])
+					-- 			end
 
-								print(list)
-							end
-						end,
-					},
-					{
-						command = ns.chat.commands.save,
-						description = function() return (ns.strings.chat.save.description:gsub("#CUSTOM", cr(options.display.position.presets[1].title, ns.colors.purple[3])))
-						end,
-						handler = function() options.display.position.saveCustomPreset() end,
-					},
-					{
-						command = ns.chat.commands.reset,
-						description = ns.strings.chat.reset.description:gsub(
-							"#CUSTOM", cr(options.display.position.presets[1].title, ns.colors.purple[3])
-						),
-						handler = function() options.display.position.resetCustomPreset() end,
-					},
+					-- 			print(list)
+					-- 		end
+					-- 	end,
+					-- },
+					-- {
+					-- 	command = ns.chat.commands.save,
+					-- 	description = function() return (ns.strings.chat.save.description:gsub("#CUSTOM", cr(options.display.position.presets[1].title, ns.colors.purple[3])))
+					-- 	end,
+					-- 	handler = function() options.display.position.saveCustomPreset() end,
+					-- },
+					-- {
+					-- 	command = ns.chat.commands.reset,
+					-- 	description = ns.strings.chat.reset.description:gsub(
+					-- 		"#CUSTOM", cr(options.display.position.presets[1].title, ns.colors.purple[3])
+					-- 	),
+					-- 	handler = function() options.display.position.resetCustomPreset() end,
+					-- },
 					{
 						command = ns.chat.commands.toggle,
 						description = function() return (ns.strings.chat.toggle.description:gsub(
@@ -1846,10 +1848,10 @@ main.frame = wt.CreateFrame({
 						onError = function()
 							print(cr(ns.strings.chat.profile.list, ns.colors.blue[1]))
 							for i = 1, #RemainingXPDB.profiles, 4 do
-								local list = "    " .. cr(i, ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[i].title, ns.colors.blue[3])
+								local list = "    " .. cr(tostring(i), ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[i].title, ns.colors.blue[3])
 
 								for j = i + 1, min(i + 3, #RemainingXPDB.profiles) do
-									list = list .. "    " .. cr(j, ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[j].title, ns.colors.blue[3])
+									list = list .. "    " .. cr(tostring(j), ns.colors.purple[3]) .. cr(" • " .. RemainingXPDB.profiles[j].title, ns.colors.blue[3])
 								end
 
 								print(list)
@@ -1938,12 +1940,12 @@ main.frame = wt.CreateFrame({
 							action = profiles.settings.open,
 						})
 					end })
-					wt.CreateSubmenu(menu, { title = wt.strings.presets.apply.label, initialize = function(presetsMenu)
-						for i = 1, #options.display.position.presets do wt.CreateMenuButton(presetsMenu, {
-							title = options.display.position.presets[i].title,
-							action = function() options.display.position.applyPreset(i) end,
-						}) end
-					end })
+					-- wt.CreateSubmenu(menu, { title = wt.strings.presets.apply.label, initialize = function(presetsMenu) --TODO readd when presets are updated for modern
+					-- 	for i = 1, #options.display.position.presets do wt.CreateMenuButton(presetsMenu, {
+					-- 		title = options.display.position.presets[i].title,
+					-- 		action = function() options.display.position.applyPreset(i) end,
+					-- 	}) end
+					-- end })
 				end })
 			end
 
@@ -2060,7 +2062,7 @@ main.frame = wt.CreateFrame({
 			--Notification
 			if profiles.data.notifications.restedXP.gained and not (profiles.data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
 				print(cr(ns.strings.chat.restedXPGained.text:gsub(
-						"#AMOUNT", cr(gainedRestedXP, ns.colors.purple[1])
+						"#AMOUNT", cr(tostring(gainedRestedXP), ns.colors.purple[1])
 					):gsub(
 						"#TOTAL", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
 					):gsub(
@@ -2086,7 +2088,7 @@ main.frame = wt.CreateFrame({
 						"#PERCENT", cr(ns.strings.chat.restedXPAccumulated.percent:gsub(
 							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
 						):gsub(
-							"#NEXT", cr(UnitLevel("player") + 1, ns.colors.purple[3])
+							"#NEXT", cr(tostring(UnitLevel("player") + 1), ns.colors.purple[3])
 						), ns.colors.blue[3])
 					), ns.colors.blue[1]) or cr(ns.strings.chat.restedXPAccumulated.zero, ns.colors.blue[1])
 				))

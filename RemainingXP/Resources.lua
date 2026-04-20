@@ -146,7 +146,9 @@ ns.changelog = {
 	{
 		"#V_Version 3.0_# #H_(20/4/2026)_#",
 		"#C_Changes:_#",
-		"Under the hood improvements.",
+		"Added Midnight 12.0.5, Mists of Pandaria 5.5.3, The Burning Crusade 2.5.5 & Classic 1.15.8 support.",
+		"Significant number of under the hood changes & improvements.",
+		"#O_Note:_# See Widget Tools changelog for further under the hood changes."
 	},
 	{
 		"#V_Version 2.3_# #H_(23/7/2023)_#",
