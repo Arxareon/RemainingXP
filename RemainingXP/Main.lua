@@ -5,7 +5,7 @@ local ns = select(2, ...)
 
 --| Shortcuts
 
----@type widgetToolbox
+---@type toolbox
 local wt = ns[C_AddOns.GetAddOnMetadata(ns.name, "X-WidgetTools-AddToNamespace")]
 
 ---@type widgetToolsResources
@@ -68,48 +68,6 @@ local alwaysShow = C_CVar.GetCVar("xpBarText")
 
 
 --[[ UTILITIES ]]
-
---[ Initialization ]
-
---Set up a display context menu
-local function CreateContextMenu(parent)
-	wt.CreateContextMenu({ parent = parent, initialize = function(menu)
-		wt.CreateMenuTextline(menu, { text = ns.title, })
-		wt.CreateSubmenu(menu, { title = ns.strings.misc.options, initialize = function(optionsMenu)
-			wt.CreateMenuButton(optionsMenu, {
-				title = wt.strings.about.title,
-				tooltip = { lines = { { text = ns.strings.options.main.description:gsub("#ADDON", ns.title), }, } },
-				action = main.settings.open,
-			})
-			wt.CreateMenuButton(optionsMenu, {
-				title = ns.strings.options.display.title:gsub("#TYPE", ns.strings.options.display.title),
-				tooltip = { lines = { { text = ns.strings.options.display.description, }, } },
-				action = display.settings.open,
-			})
-			wt.CreateMenuButton(optionsMenu, {
-				title = ns.strings.options.integration.title:gsub("#TYPE", ns.strings.options.integration.title),
-				tooltip = { lines = { { text = ns.strings.options.integration.description, }, } },
-				action = integration.settings.open,
-			})
-			wt.CreateMenuButton(optionsMenu, {
-				title = ns.strings.options.events.title:gsub("#TYPE", ns.strings.options.events.title),
-				tooltip = { lines = { { text = ns.strings.options.events.description, }, } },
-				action = events.settings.open,
-			})
-			wt.CreateMenuButton(optionsMenu, {
-				title = wt.strings.dataManagement.title,
-				tooltip = { lines = { { text = wt.strings.dataManagement.description:gsub("#ADDON", ns.title), }, } },
-				action = profiles.settings.open,
-			})
-		end })
-		wt.CreateSubmenu(menu, { title = wt.strings.presets.apply.label, initialize = function(presetsMenu)
-			for i = 1, #options.display.position.presets do wt.CreateMenuButton(presetsMenu, {
-				title = options.display.position.presets[i].title,
-				action = function() options.display.position.applyPreset(i) end,
-			}) end
-		end })
-	end, })
-end
 
 --[ Settings ]
 
@@ -1929,7 +1887,7 @@ main.frame = wt.CreateFrame({
 			if profiles.firstLoad then chatCommands.welcome() end
 
 
-			--[[ XP DISPLAYS ]]
+			--[[ XP DISPLAY SETUP ]]
 
 			if atMax then
 				--Hide displays
@@ -1949,6 +1907,44 @@ main.frame = wt.CreateFrame({
 
 				--Integrated display
 				SetIntegrationVisibility(profiles.data.integration.enabled)
+
+				--Shared context menu
+				wt.CreateContextMenu({ triggers = { { frame = display.border, }, { frame = integration.frame, }, }, initialize = function(menu)
+					wt.CreateMenuTextline(menu, { text = ns.title, })
+					wt.CreateSubmenu(menu, { title = ns.strings.misc.options, initialize = function(optionsMenu)
+						wt.CreateMenuButton(optionsMenu, {
+							title = wt.strings.about.title,
+							tooltip = { lines = { { text = ns.strings.options.main.description:gsub("#ADDON", ns.title), }, } },
+							action = main.settings.open,
+						})
+						wt.CreateMenuButton(optionsMenu, {
+							title = ns.strings.options.display.title:gsub("#TYPE", ns.strings.options.display.title),
+							tooltip = { lines = { { text = ns.strings.options.display.description, }, } },
+							action = display.settings.open,
+						})
+						wt.CreateMenuButton(optionsMenu, {
+							title = ns.strings.options.integration.title:gsub("#TYPE", ns.strings.options.integration.title),
+							tooltip = { lines = { { text = ns.strings.options.integration.description, }, } },
+							action = integration.settings.open,
+						})
+						wt.CreateMenuButton(optionsMenu, {
+							title = ns.strings.options.events.title:gsub("#TYPE", ns.strings.options.events.title),
+							tooltip = { lines = { { text = ns.strings.options.events.description, }, } },
+							action = events.settings.open,
+						})
+						wt.CreateMenuButton(optionsMenu, {
+							title = wt.strings.dataManagement.title,
+							tooltip = { lines = { { text = wt.strings.dataManagement.description:gsub("#ADDON", ns.title), }, } },
+							action = profiles.settings.open,
+						})
+					end })
+					wt.CreateSubmenu(menu, { title = wt.strings.presets.apply.label, initialize = function(presetsMenu)
+						for i = 1, #options.display.position.presets do wt.CreateMenuButton(presetsMenu, {
+							title = options.display.position.presets[i].title,
+							action = function() options.display.position.applyPreset(i) end,
+						}) end
+					end })
+				end })
 			end
 
 			--Visibility notice
@@ -2164,9 +2160,6 @@ main.frame = wt.CreateFrame({
 					layer = "OVERLAY",
 					wrap = false,
 				})
-
-				--Context menu
-				CreateContextMenu(display.border)
 			end,
 		})
 
@@ -2236,9 +2229,6 @@ main.frame = wt.CreateFrame({
 					font = "TextStatusBarText",
 					wrap = false,
 				})
-
-				--Context menu
-				CreateContextMenu(displayFrame)
 			end,
 		})
 	end
