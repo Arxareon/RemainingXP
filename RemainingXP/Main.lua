@@ -117,23 +117,23 @@ end
 local function EnsureVisibility()
 	if not profiles.data.display.background.visible then
 		options.display.text.visible.setEnabled(false, true)
-		options.display.text.visible.button:EnableMouse(false)
+		options.display.text.visible.widget:EnableMouse(false)
 		options.display.text.visible.frame:SetAlpha(0.4)
 	else
 		if not profiles.data.display.hidden then
 			options.display.text.visible.setEnabled(true, true)
-			options.display.text.visible.button:EnableMouse(true)
+			options.display.text.visible.widget:EnableMouse(true)
 		end
 		options.display.text.visible.frame:SetAlpha(1)
 	end
 	if not profiles.data.display.text.visible then
 		options.display.background.visible.setEnabled(false, true)
-		options.display.background.visible.button:EnableMouse(false)
+		options.display.background.visible.widget:EnableMouse(false)
 		options.display.background.visible.frame:SetAlpha(0.4)
 	else
 		if not profiles.data.display.hidden then
 			options.display.background.visible.setEnabled(true, true)
-			options.display.background.visible.button:EnableMouse(true)
+			options.display.background.visible.widget:EnableMouse(true)
 		end
 		options.display.background.visible.frame:SetAlpha(1)
 	end
@@ -716,10 +716,11 @@ main.frame = wt.CreateFrame({
 					},
 				},
 				onLoad = EnsureVisibility,
-				onSave = function() if atMax then
+				onSave = function()
 					display.frame:Hide()
-					PrintStatus()
-				end end,
+
+					if profiles.data.notifications.statusNotice.maxReminder and atMax then PrintStatus() end
+				end,
 				onDefault = function(user)
 					-- ResetCustomPreset() --REPLACE
 
@@ -807,44 +808,205 @@ main.frame = wt.CreateFrame({
 
 					--[ Position ]
 
-					--Add Custom preset
-					table.insert(ns.presets, 1, {
-						title = CUSTOM,
-						onSelect = function() options.display.position.presets[1].data.position.relativePoint = options.display.position.presets[1].data.position.anchor end,
-					})
-
-					options.display.position = wt.CreatePositionOptions(ns.name, display.frame, function() return profiles.data.display end, ns.profileDefault.display, RemainingXPCS, {
+					options.display.position = wt.CreatePositionOptions(ns.name, display.frame, function()
+						return profiles.data.display
+					end, ns.profileDefault.display, RemainingXPCS, {
 						canvas = canvas,
 						frameName = ns.strings.options.display.referenceName,
 						presets = {
-							items = ns.presets,
-							onPreset = function(i)
+							items = {
+								{
+									title = ns.strings.presets[1], --XP Bar Replacement
+									data = {
+										position = {
+											anchor = "BOTTOM",
+											relativePoint = "BOTTOM",
+											offset = { x = 0, y = 0 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "LOW",
+											keepOnTop = false,
+										},
+										background = {
+											visible = true,
+											size = { width = 562, height = 16 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[2], --XP Bar Left Text
+									data = {
+										position = {
+											anchor = "BOTTOM",
+											relativePoint = "BOTTOM",
+											offset = { x = -256, y = 0 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "HIGH",
+											keepOnTop = false,
+										},
+										background = {
+											visible = false,
+											size = { width = 68, height = 16 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[3], --XP Bar Right Text
+									data = {
+										position = {
+											anchor = "BOTTOM",
+											relativePoint = "BOTTOM",
+											offset = { x = 252, y = 0 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "HIGH",
+											keepOnTop = false,
+										},
+										background = {
+											visible = false,
+											size = { width = 68, height = 16 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[4], --Player Frame Bar Above
+									data = {
+										position = {
+											anchor = "TOPRIGHT",
+											relativeTo = PlayerFrame,
+											relativePoint = "TOPRIGHT",
+											offset = { x = -27, y = -11 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "MEDIUM",
+											keepOnTop = false,
+										},
+										background = {
+											visible = true,
+											size = { width = 126, height = 16 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[5], --Player Frame Text Under
+									data = {
+										position = {
+											anchor = "BOTTOMLEFT",
+											relativeTo = PlayerFrame,
+											relativePoint = "BOTTOMLEFT",
+											offset = { y = 2 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "MEDIUM",
+											keepOnTop = false,
+										},
+										background = {
+											visible = false,
+											size = { width = 104, height = 16 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[6], --Objective Tracker Bar
+									data = {
+										position = {
+											anchor = "TOPLEFT",
+											relativeTo = ObjectiveTrackerFrame,
+											relativePoint = "TOPLEFT",
+											offset = { x = 34, y = -5 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "MEDIUM",
+											keepOnTop = false,
+										},
+										background = {
+											visible = true,
+											size = { width = 232, height = 22 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[7], --Bottom-Left Chunky Bar
+									data = {
+										position = {
+											anchor = "BOTTOMLEFT",
+											relativePoint = "BOTTOMLEFT",
+											offset = { x = 188, y = 12 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "MEDIUM",
+											keepOnTop = false,
+										},
+										background = {
+											visible = true,
+											size = { width = 490, height = 38 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[8], --Bottom-Right Chunky Bar
+									data = {
+										position = {
+											anchor = "BOTTOMRIGHT",
+											relativePoint = "BOTTOMRIGHT",
+											offset = { x = -188, y = 12 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "MEDIUM",
+											keepOnTop = false,
+										},
+										background = {
+											visible = true,
+											size = { width = 490, height = 38 },
+										},
+									},
+								},
+								{
+									title = ns.strings.presets[9], --Top-Center Long Bar
+									data = {
+										position = {
+											anchor = "TOP",
+											relativePoint = "TOP",
+											offset = { x = 0, y = 3 }
+										},
+										keepInBounds = true,
+										layer = {
+											strata = "MEDIUM",
+											keepOnTop = false,
+										},
+										background = {
+											visible = true,
+											size = { width = 1248, height = 8 },
+										},
+									},
+								},
+							},
+							onPreset = function(preset)
 								--Set background
-								options.display.background.visible.setData(ns.presets[i].data.background.visible)
-								options.display.background.size.h.setData(ns.presets[i].data.background.size.h)
-								options.display.background.size.h.setData(ns.presets[i].data.background.size.w)
+								options.display.background.visible.setData(preset.data.background.visible)
+								options.display.background.size.h.setData(preset.data.background.size.h)
+								options.display.background.size.h.setData(preset.data.background.size.w)
 
 								--Make sure the speed display is visible
 								options.display.visibility.hidden.setData(false)
-								if not ns.presets[i].data.background.visible then options.display.text.visible.setData(true) end
+								if not preset.data.background.visible then options.display.text.visible.setData(true) end
 
-								chatCommands.print(ns.strings.chat.preset.response:gsub(
-									"#PRESET", cr(options.display.position.presets[i].title, ns.colors.blue[3])
-								))
+								chatCommands.print(ns.strings.chat.preset.response:gsub("#PRESET", cr(preset.title, ns.colors.blue[3])))
 							end,
 							custom = {
 								getData = function() return profiles.data.customPreset end,
 								defaultsTable = ns.profileDefault.customPreset,
-								onSave = function()
-									chatCommands.print(ns.strings.chat.save.response:gsub(
-										"#CUSTOM", cr(CUSTOM, ns.colors.blue[3])
-									))
-								end,
-								onReset = function()
-									chatCommands.print(ns.strings.chat.reset.response:gsub(
-										"#CUSTOM", cr(CUSTOM, ns.colors.blue[3])
-									))
-								end
+								onSave = function() chatCommands.print(ns.strings.chat.save.response:gsub("#CUSTOM", cr(CUSTOM, ns.colors.blue[3]))) end,
+								onReset = function() chatCommands.print(ns.strings.chat.reset.response:gsub("#CUSTOM", cr(CUSTOM, ns.colors.blue[3]))) end,
 							}
 						},
 						setMovable = {
@@ -978,7 +1140,7 @@ main.frame = wt.CreateFrame({
 											SetDisplayBackdrop(profiles.data.display.background.visible, profiles.data.display.background.colors)
 										end,
 										"EnsureVisibility",
-										"UpdateFade",
+										UpdateFade = Fade,
 									},
 								},
 							})
