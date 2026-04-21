@@ -206,18 +206,25 @@ end
 --Update the main XP display bar segments and text with the current XP values
 local function UpdateXPDisplayText()
 	local text = "" --REPLACE with pre-colored xpText
+	local rc = us.Clone(profiles.data.display.font.colors.rested)
 
 	if profiles.data.display.text.details then
-		text = us.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. us.Thousands(RemainingXPCSC.xp.required) .. " (" .. us.Thousands(RemainingXPCSC.xp.remaining) .. ")"
+		text = cr(us.Thousands(RemainingXPCSC.xp.gathered), profiles.data.display.font.colors.gathered)
+		text = text .. " / " .. cr(us.Thousands(RemainingXPCSC.xp.required), profiles.data.display.font.colors.required)
+		text = text .. " (" .. cr(us.Thousands(RemainingXPCSC.xp.remaining), profiles.data.display.font.colors.remaining) .. ")"
 		if RemainingXPCSC.xp.rested > 0 then
-			text = text .. " + " .. us.Thousands(RemainingXPCSC.xp.rested) .. " (" .. us.Thousands(
+			text = text .. " + " .. cr(us.Thousands(RemainingXPCSC.xp.rested), rc) .. " (" .. cr(us.Thousands(
 				math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100
-			) .. "%)"
+			) .. "%", wt.AdjustGamma(rc)) ..  ")"
 		end
 		if GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0 then
-			text = text.. " + " .. ns.strings.xpBar.banked:gsub("#VALUE", us.Thousands(RemainingXPCSC.xp.banked)):gsub("#LEVELS", RemainingXPCSC.xp.bankedLevels)
+			text = text.. " + " .. cr(ns.strings.xpBar.banked:gsub(
+				"#VALUE", us.Thousands(RemainingXPCSC.xp.banked)
+			):gsub(
+				"#LEVELS", RemainingXPCSC.xp.bankedLevels
+			), profiles.data.display.font.colors.banked)
 		end
-	else text = us.Thousands(RemainingXPCSC.xp.remaining) end
+	else text = cr(us.Thousands(RemainingXPCSC.xp.remaining), profiles.data.display.font.colors.remaining) end
 
 	display.text:SetText(text)
 end
@@ -226,6 +233,8 @@ end
 ---@param remaining boolean Whether or not only the remaining XP should be visible when the text is always shown
 local function UpdateIntegrationText(keep, remaining)
 	if not integration.frame:IsVisible() then return end
+
+	local rc = us.Clone(profiles.data.display.font.colors.rested)
 
 	wt.SetVisibility(integration.text, keep)
 
@@ -239,11 +248,13 @@ local function UpdateIntegrationText(keep, remaining)
 		):gsub(
 			"#REMAINING", cr(us.Thousands(RemainingXPCSC.xp.remaining), profiles.data.display.font.colors.remaining)
 		) .. (
-			RemainingXPCSC.xp.rested > 0 and " + " .. cr(ns.strings.xpBar.rested:gsub(
+			RemainingXPCSC.xp.rested > 0 and (" + " .. cr(ns.strings.xpBar.rested:gsub(
 				"#VALUE", us.Thousands(RemainingXPCSC.xp.rested)
 			):gsub(
-				"#PERCENT", us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
-			), profiles.data.display.font.colors.rested) or ""
+				"#PERCENT", cr(us.Thousands(
+					math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100
+				) .. "%%", wt.AdjustGamma(rc))
+			), rc)) or ""
 		) .. (cr((GameLimitedMode_IsActive() and RemainingXPCSC.xp.banked > 0) and " + " .. ns.strings.xpBar.banked:gsub(
 			"#VALUE", us.Thousands(RemainingXPCSC.xp.banked)
 		):gsub(
@@ -1052,19 +1063,6 @@ main.frame = wt.CreateFrame({
 					options.display.font = wt.CreateFontOptions(ns.name, display.text, function() return profiles.data.display.font end, ns.profileDefault.display.font, {
 						canvas = canvas,
 						colors = {
-							base = {
-								name = ns.strings.options.display.text.base,
-								index = 5,
-							},
-							remaining = {
-								name = ns.strings.xpValues.remaining,
-								index = 3,
-								wrap = true,
-							},
-							rested = {
-								name = ns.strings.xpValues.rested,
-								index = 4,
-							},
 							gathered = {
 								name = ns.strings.xpValues.gathered,
 								index = 1,
@@ -1073,8 +1071,21 @@ main.frame = wt.CreateFrame({
 								name = ns.strings.xpValues.required,
 								index = 2,
 							},
+							remaining = {
+								name = ns.strings.xpValues.remaining,
+								index = 3,
+							},
+							rested = {
+								name = ns.strings.xpValues.rested,
+								index = 4,
+							},
 							banked = {
 								name = ns.strings.xpValues.banked,
+								index = 5,
+								wrap = true,
+							},
+							base = {
+								name = ns.strings.options.display.text.base,
 								index = 6,
 							},
 						},
@@ -1086,7 +1097,7 @@ main.frame = wt.CreateFrame({
 						onChangeFont = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
 						onChangeSize = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
 						onChangeAlignment = function() wt.SetPosition(display.text, { anchor = profiles.data.display.font.alignment, }) end,
-						onChangeColor = Fade,
+						onChangeColor = UpdateXPDisplayText,
 					})
 
 					--[ Background ]
