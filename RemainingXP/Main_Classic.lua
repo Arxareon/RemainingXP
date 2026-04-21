@@ -138,7 +138,7 @@ local function SetRestedAccumulation(enabled)
 	if not enabled then return end
 	if not profiles.data.notifications.restedStatus.update then return end
 
-	local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+	local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.required, 3) >= 1.5
 	local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
 
 	--Stared resting status update
@@ -164,15 +164,15 @@ end
 ---@return integer oldNeededXP
 local function UpdateXPValues()
 	local oldXP = RemainingXPCSC.xp.gathered or UnitXP("player")
-	local oldNeededXP = RemainingXPCSC.xp.needed or UnitXPMax("player")
+	local oldNeededXP = RemainingXPCSC.xp.required or UnitXPMax("player")
 	local oldRestedXP = RemainingXPCSC.xp.rested or GetXPExhaustion() or 0
 
 	--| Update the XP values
 
 	RemainingXPCSC.xp.gathered = UnitXP("player")
-	RemainingXPCSC.xp.needed = UnitXPMax("player")
+	RemainingXPCSC.xp.required = UnitXPMax("player")
 	RemainingXPCSC.xp.rested = GetXPExhaustion() or 0
-	RemainingXPCSC.xp.remaining = RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered
+	RemainingXPCSC.xp.remaining = RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered
 
 
 	local gainedXP = oldXP < RemainingXPCSC.xp.gathered and RemainingXPCSC.xp.gathered - oldXP or oldNeededXP - oldXP + RemainingXPCSC.xp.gathered
@@ -189,13 +189,13 @@ end
 --Update the position, width and visibility of the main XP display bar segments with the current XP values
 local function UpdateXPDisplaySegments()
 	--Current XP segment
-	display.xp:SetWidth(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.needed * display.frame:GetWidth())
+	display.xp:SetWidth(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.required * display.frame:GetWidth())
 
 	--Rested XP segment
 	if RemainingXPCSC.xp.rested == 0 then display.rested:Hide() else
 		display.rested:Show()
 		if display.xp:GetWidth() == 0 then display.rested:SetPoint("LEFT") else display.rested:SetPoint("LEFT", display.xp, "RIGHT") end --CHECK
-		display.rested:SetWidth((RemainingXPCSC.xp.gathered + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.needed and RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.needed * display.frame:GetWidth()) --CHECK if can bee simplified
+		display.rested:SetWidth((RemainingXPCSC.xp.gathered + RemainingXPCSC.xp.rested > RemainingXPCSC.xp.required and RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered or RemainingXPCSC.xp.rested) / RemainingXPCSC.xp.required * display.frame:GetWidth()) --CHECK if can bee simplified
 	end
 end
 
@@ -204,10 +204,10 @@ local function UpdateXPDisplayText()
 	local text = "" --REPLACE with pre-colored xpText
 
 	if profiles.data.display.text.details then
-		text = us.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. us.Thousands(RemainingXPCSC.xp.needed) .. " (" .. us.Thousands(RemainingXPCSC.xp.remaining) .. ")"
+		text = us.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. us.Thousands(RemainingXPCSC.xp.required) .. " (" .. us.Thousands(RemainingXPCSC.xp.remaining) .. ")"
 		if RemainingXPCSC.xp.rested > 0 then
 			text = text .. " + " .. us.Thousands(RemainingXPCSC.xp.rested) .. " (" .. us.Thousands(
-				math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100
+				math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100
 			) .. "%)"
 		end
 	else text = us.Thousands(RemainingXPCSC.xp.remaining) end
@@ -228,14 +228,14 @@ local function UpdateIntegrationText(keep, remaining)
 		ns.strings.xpBar.text:gsub( --REPLACE with pre-colored xpText
 			"#GATHERED", us.Thousands(RemainingXPCSC.xp.gathered)
 		):gsub(
-			"#NEEDED", us.Thousands(RemainingXPCSC.xp.needed)
+			"#NEEDED", us.Thousands(RemainingXPCSC.xp.required)
 		):gsub(
 			"#REMAINING", us.Thousands(RemainingXPCSC.xp.remaining)
 		) .. (
 			RemainingXPCSC.xp.rested > 0 and " + " .. ns.strings.xpBar.rested:gsub(
 				"#RESTED", us.Thousands(RemainingXPCSC.xp.rested)
 			):gsub(
-				"#PERCENT", us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
+				"#PERCENT", us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
 			) or ""
 		)
 	)
@@ -258,7 +258,7 @@ local function GetXPTooltipTextlines()
 		},
 		{
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
+				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.required * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
 			),
 			color = ns.colors.purple[3],
 		},
@@ -273,7 +273,7 @@ local function GetXPTooltipTextlines()
 		},
 		{
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", cr(us.Thousands(math.floor((RemainingXPCSC.xp.remaining / RemainingXPCSC.xp.needed) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
+				"#PERCENT", cr(us.Thousands(math.floor((RemainingXPCSC.xp.remaining / RemainingXPCSC.xp.required) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
 			),
 			color = ns.colors.rose[3],
 		},
@@ -281,7 +281,7 @@ local function GetXPTooltipTextlines()
 		--Required XP
 		{
 			text = "\n" .. ns.strings.xpTooltip.required:gsub(
-				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.needed), ns.colors.peach[2])
+				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.required), ns.colors.peach[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.peach[1],
@@ -311,13 +311,13 @@ local function GetXPTooltipTextlines()
 		})
 		table.insert(textLines, {
 			text = ns.strings.xpTooltip.percentRemaining:gsub(
-				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
+				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
 		table.insert(textLines, {
 			text = ns.strings.xpTooltip.percentRequired:gsub(
-				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
+				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.required * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
@@ -350,7 +350,7 @@ local function GetXPTooltipTextlines()
 			color = ns.colors.blue[1],
 		})
 
-		local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.needed, 3) >= 1.5
+		local isMaxed = us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.required, 3) >= 1.5
 		local isMaxedLastLevel = UnitLevel("player") == maxLevel - 1 and us.Round(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.remaining, 3) >= 1
 
 		table.insert(textLines, {
@@ -389,7 +389,7 @@ end
 local function UpdateXPTooltip()
 	if not tooltip:IsVisible() then return end
 
-	local owner = integration.frame:IsMouseOver() and integration.frame or display.border:IsMouseOver() and display.border or nil --CHECK if needed
+	local owner = integration.frame:IsMouseOver() and integration.frame or display.border:IsMouseOver() and display.border or nil --CHECK if required
 	if owner then wt.UpdateTooltip(owner, { lines = GetXPTooltipTextlines(), }) end
 end
 
@@ -2034,14 +2034,14 @@ main.frame = wt.CreateFrame({
 			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
 			--Notification
-			if profiles.data.notifications.restedXP.gained and not (profiles.data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.needed / 1000)) then
+			if profiles.data.notifications.restedXP.gained and not (profiles.data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.required / 1000)) then
 				print(cr(ns.strings.chat.restedXPGained.text:gsub(
 						"#AMOUNT", cr(tostring(gainedRestedXP), ns.colors.purple[1])
 					):gsub(
 						"#TOTAL", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
 					):gsub(
 						"#PERCENT", cr(ns.strings.chat.restedXPGained.percent:gsub(
-							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[3])
+							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 100000) / 1000, 3) .. "%%%%", ns.colors.purple[3])
 						), ns.colors.blue[3])
 					), ns.colors.blue[1])
 				)
@@ -2060,7 +2060,7 @@ main.frame = wt.CreateFrame({
 						"#TOTAL", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.purple[1])
 					):gsub(
 						"#PERCENT", cr(ns.strings.chat.restedXPAccumulated.percent:gsub(
-							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.needed - RemainingXPCSC.xp.gathered) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
+							"#VALUE", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 1000000) / 10000, 4) .. "%%%%", ns.colors.purple[3])
 						):gsub(
 							"#NEXT", cr(tostring(UnitLevel("player") + 1), ns.colors.purple[3])
 						), ns.colors.blue[3])

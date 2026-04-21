@@ -84,8 +84,9 @@ local enUS = {
 				},
 				details = {
 					label = "Detailed XP Info",
-					tooltip = "Show more information in the main display (not just the xp needed to reach the next level).",
+					tooltip = "Show more information in the main display (not just the xp required to reach the next level).",
 				},
+				base = "Base",
 			},
 			background = {
 				title = "Background: XP Bar",
@@ -243,14 +244,6 @@ local enUS = {
 			},
 		},
 	},
-	types = {
-		base = { label = "Base", },
-		gathered = { label = "Gathered XP", },
-		needed = { label = "Needed XP", },
-		remaining = { label = "Remaining XP", },
-		rested = { label = "Rested", },
-		banked = { label = "Banked", },
-	},
 	chat = {
 		xpGained = {
 			text = "You gained #AMOUNT XP #REMAINING.",
@@ -354,26 +347,28 @@ local enUS = {
 	xpTooltip = {
 		title = "XP details:",
 		text = "An updating XP status summary.",
-		gathered = "Gathered XP: #VALUE",
-		remaining = "Remaining XP: #VALUE",
-		required = "Required XP: #VALUE",
-		requiredLevelUp = "(Total XP needed for level #LEVEL.)",
+		value = "#VALUE_TYPE: #VALUE",
+		percent = "(#PERCENT of #VALUE_TYPE.)",
+		requiredLevelUp = "(Total XP required for level #LEVEL.)",
 		timeSpent = "Spent #TIME of game time on this level since resting in this area.",
-		rested = "Rested XP: #VALUE",
 		restedMax = "The maximal amount is #PERCENT_MAX of the Required XP amount (or #PERCENT_REMAINING of the Remaining XP amount at level #LEVEL).",
 		restedDescription = "You earn #PERCENT XP (and lose that much Rested XP) for killing monsters and gathering materials until the Rested XP amount is depleted.",
 		restedAtMax = "You are no longer accumulating Rested XP. The maximal amount has been reached.",
 		accumulated = "You have accumulated #VALUE Rested XP while resting in this area.",
-		banked = "Banked XP: #VALUE",
 		bankedValue = "#VALUE (#LEVELS banked levels).",
-		percentRemaining = "(#PERCENT of Remaining XP.)",
-		percentRequired = "(#PERCENT of Required XP.)",
 		hintOptions = "Right-click to open specific options.",
 		hintMove = "Hold SHIFT & drag to reposition.",
 	},
+	xpValues = {
+		gathered = "Gathered XP",
+		required = "Required XP",
+		remaining = "Remaining XP",
+		rested = "Rested XP",
+		banked = "Banked XP",
+	},
 	xpBar = {
 		text = "XP: #GATHERED / #NEEDED (#REMAINING Remaining)",
-		rested = "#RESTED Rested (#PERCENT)",
+		rested = "#VALUE Rested (#PERCENT)",
 		banked = "#VALUE Banked (#LEVELS levels)",
 	},
 	keys = {
@@ -409,9 +404,7 @@ local enUS = {
 }
 
 
---[[ REFERENCES ]]
-
---[ Namespace ]
+--[[ NAMESPACE ]]
 
 ---Addon namespace table
 ---@class addonNamespace
@@ -430,6 +423,88 @@ local enUS = {
 ---@class database_warband : profileStorage
 ---@field profiles addonProfile[]
 
+	---@class addonProfile : profile
+	---@field data profileData
+
+		---@class profileData
+		---@field customPreset presetData
+		---@field display displayData
+		---@field integration integrationData
+		---@field notifications notificationsData
+
+			---@class presetData : positionPresetData
+			---@field background displayBackgroundBaseData Background properties tied to the position preset
+
+			---@class displayData : positionPresetData
+			---@field hidden boolean The display is disabled
+			---@field text displayTextData
+			---@field font displayFontData
+			---@field background displayBackgroundData
+			---@field fade displayFadeData
+
+				---@class displayTextData
+				---@field visible boolean The text is shown
+				---@field details boolean A more detailed XP text is shown (not just the remaining amount)
+
+				---@class displayFontData : fontOptionsData
+				---@field colors xpColorList
+
+					---@class xpColorList
+					---@field base color Base text color
+					---@field gathered color Gathered XP text color
+					---@field required color Required XP text color
+					---@field remaining color Remaining XP text color
+					---@field rested color Rested XP text color
+					---@field banked color Banked text color
+
+				---@class displayBackgroundData : displayBackgroundBaseData
+				---@field colors displayBackgroundColorData
+
+					---@class displayBackgroundBaseData
+					---@field visible boolean The background is shown
+					---@field size sizeData
+
+					---@class displayBackgroundColorData
+					---@field bg color Background texture color
+					---@field gathered color Gathered XP segment texture color
+					---@field rested color Rested XP segment texture color
+					---@field border color Border texture color
+
+				---@class displayFadeData
+				---@field enabled boolean The display is faded when not hovered
+				---@field text number Text fade factor
+				---@field background number Background fade factor
+
+			---@class integrationData
+			---@field hideXPBar boolean Hide the default XP bar
+			---@field enabled boolean Use the integrated display
+			---@field keep boolean Always show the integrated display (not just on mouseover)
+			---@field remaining boolean Only show the remaining XP amount
+
+			---@class notificationsData
+			---@field statusNotice displayStatusNoticeData
+			---@field xpGained boolean Chat message on XP gain
+			---@field restedXP restedXPNotificationsData
+			---@field restedStatus restedStatusNotificationsData
+			---@field lvlUp lvlUpNotificationsData
+
+				---@class displayStatusNoticeData
+				---@field enabled boolean Chat message on display visibility status
+				---@field maxReminder boolean Chat notice for display status at max level
+
+				---@class restedXPNotificationsData
+				---@field gained boolean Chat message on rested XP gain
+				---@field significantOnly boolean Notify on significant rested XP gain only
+				---@field accumulated boolean Chat message of accumulated rested XP on leaving rested area
+
+				---@class restedStatusNotificationsData
+				---@field update boolean Chat message on rested status update
+				---@field maxReminder boolean Chat notice for rested XP status at max level
+
+				---@class lvlUpNotificationsData
+				---@field congrats boolean Congratulatory chat message on level up
+				---@field timePlayed boolean Chat message of time played on level up
+
 ---@class database_character : characterProfileData
 
 ---@class variables_warband : backupboxSettingsData, positionOptionsSettingsData
@@ -437,123 +512,11 @@ local enUS = {
 ---@class variables_character
 ---@field xp xpValues
 
-
---[[ PROFILE DATA ]]
-
----@class profileData
----@field customPreset presetData
----@field display displayData
----@field integration integrationData
----@field notifications notificationsData
-
----@class addonProfile : profile
----@field data profileData
-
---[ Preset ]
-
----@class presetData : positionPresetData
----@field background displayBackgroundBaseData Background properties tied to the position preset
-
---[ Display ]
-
----@class displayData : positionPresetData
----@field hidden boolean The display is disabled
----@field text displayTextData
----@field font displayFontData
----@field background displayBackgroundData
----@field fade displayFadeData
-
---| Text
-
----@class displayTextData
----@field visible boolean The text is shown
----@field details boolean A more detailed XP text is shown (not just the remaining amount)
-
---| Font
-
----@class xpColorList
----@field base color Base text color
----@field gathered color Gathered XP text color
----@field needed color Needed XP text color
----@field remaining color Remaining XP text color
----@field rested color Rested XP text color
----@field banked color Banked text color
-
----@class displayFontData : fontOptionsData
----@field colors xpColorList
-
---| Background
-
----@class displayBackgroundBaseData
----@field visible boolean The background is shown
----@field size sizeData
-
----@class displayBackgroundColorData
----@field bg color Background texture color
----@field gathered color Gathered XP segment texture color
----@field rested color Rested XP segment texture color
----@field border color Border texture color
-
----@class displayBackgroundData : displayBackgroundBaseData
----@field colors displayBackgroundColorData
-
---| Fade
-
----@class displayFadeData
----@field enabled boolean The display is faded when not hovered
----@field text number Text fade factor
----@field background number Background fade factor
-
---[ Integration ]
-
----@class integrationData
----@field hideXPBar boolean Hide the default XP bar
----@field enabled boolean Use the integrated display
----@field keep boolean Always show the integrated display (not just on mouseover)
----@field remaining boolean Only show the remaining XP amount
-
---[ Notifications ]
-
----@class notificationsData
----@field statusNotice displayStatusNoticeData
----@field xpGained boolean Chat message on XP gain
----@field restedXP restedXPNotificationsData
----@field restedStatus restedStatusNotificationsData
----@field lvlUp lvlUpNotificationsData
-
---| Display status
-
----@class displayStatusNoticeData
----@field enabled boolean Chat message on display visibility status
----@field maxReminder boolean Chat notice for display status at max level
-
---| Rested XP
-
----@class restedXPNotificationsData
----@field gained boolean Chat message on rested XP gain
----@field significantOnly boolean Notify on significant rested XP gain only
----@field accumulated boolean Chat message of accumulated rested XP on leaving rested area
-
---| Rested status
-
----@class restedStatusNotificationsData
----@field update boolean Chat message on rested status update
----@field maxReminder boolean Chat notice for rested XP status at max level
-
---| Level up
-
----@class lvlUpNotificationsData
----@field congrats boolean Congratulatory chat message on level up
----@field timePlayed boolean Chat message of time played on level up
-
-
---[[ MISC ]]
-
----@class xpValues
----@field gathered number Gathered XP amount
----@field needed number Needed XP amount
----@field remaining number Remaining XP amount
----@field rested number Rested XP amount
----@field accumulatedRested? number Accumulated rested XP amount
----@field banked? number Banked XP amount
----@field bankedLevels? number Banked levels
+	---@class xpValues
+	---@field gathered number Gathered XP amount
+	---@field required number Needed XP amount
+	---@field remaining number Remaining XP amount
+	---@field rested number Rested XP amount
+	---@field accumulatedRested? number Accumulated rested XP amount
+	---@field banked? number Banked XP amount
+	---@field bankedLevels? number Banked levels

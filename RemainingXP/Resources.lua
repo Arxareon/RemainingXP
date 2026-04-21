@@ -49,7 +49,7 @@ ns.profileDefault = {
 			colors = {
 				base = { r = 1, g = 1, b = 1, a = 1 },
 				gathered = { r = 1, g = 1, b = 1, a = 1 },
-				needed = { r = 1, g = 1, b = 1, a = 1 },
+				required = { r = 1, g = 1, b = 1, a = 1 },
 				remaining = { r = 1, g = 1, b = 1, a = 1 },
 				rested = { r = 1, g = 1, b = 1, a = 1 },
 				banked = { r = 1, g = 1, b = 1, a = 1 },
@@ -473,8 +473,9 @@ function localizations.enUS() return {
 				},
 				details = {
 					label = "Detailed XP Info",
-					tooltip = "Show more information in the main display (not just the xp needed to reach the next level).",
+					tooltip = "Show more information in the main display (not just the xp required to reach the next level).",
 				},
+				base = "Base",
 			},
 			background = {
 				title = "Background: XP Bar",
@@ -632,14 +633,6 @@ function localizations.enUS() return {
 			},
 		},
 	},
-	types = {
-		base = { label = "Base", },
-		gathered = { label = "Gathered XP", },
-		needed = { label = "Needed XP", },
-		remaining = { label = "Remaining XP", },
-		rested = { label = "Rested", },
-		banked = { label = "Banked", },
-	},
 	chat = {
 		xpGained = {
 			text = "You gained #AMOUNT XP #REMAINING.",
@@ -743,26 +736,28 @@ function localizations.enUS() return {
 	xpTooltip = {
 		title = "XP details:",
 		text = "An updating XP status summary.",
-		gathered = "Gathered XP: #VALUE",
-		remaining = "Remaining XP: #VALUE",
-		required = "Required XP: #VALUE",
-		requiredLevelUp = "(Total XP needed for level #LEVEL.)",
+		value = "#VALUE_TYPE: #VALUE",
+		percent = "(#PERCENT of #VALUE_TYPE.)",
+		requiredLevelUp = "(Total XP required for level #LEVEL.)",
 		timeSpent = "Spent #TIME of game time on this level since resting in this area.",
-		rested = "Rested XP: #VALUE",
 		restedMax = "The maximal amount is #PERCENT_MAX of the Required XP amount (or #PERCENT_REMAINING of the Remaining XP amount at level #LEVEL).",
 		restedDescription = "You earn #PERCENT XP (and lose that much Rested XP) for killing monsters and gathering materials until the Rested XP amount is depleted.",
 		restedAtMax = "You are no longer accumulating Rested XP. The maximal amount has been reached.",
 		accumulated = "You have accumulated #VALUE Rested XP while resting in this area.",
-		banked = "Banked XP: #VALUE",
 		bankedValue = "#VALUE (#LEVELS banked levels).",
-		percentRemaining = "(#PERCENT of Remaining XP.)",
-		percentRequired = "(#PERCENT of Required XP.)",
 		hintOptions = "Right-click to open specific options.",
 		hintMove = "Hold SHIFT & drag to reposition.",
 	},
+	xpValues = {
+		gathered = "Gathered XP",
+		required = "Required XP",
+		remaining = "Remaining XP",
+		rested = "Rested XP",
+		banked = "Banked XP",
+	},
 	xpBar = {
 		text = "XP: #GATHERED / #NEEDED (#REMAINING Remaining)",
-		rested = "#RESTED Rested (#PERCENT)",
+		rested = "#VALUE Rested (#PERCENT)",
 		banked = "#VALUE Banked (#LEVELS levels)",
 	},
 	keys = {
