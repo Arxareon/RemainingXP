@@ -5,7 +5,7 @@ local ns = select(2, ...)
 
 --| Shortcuts
 
-local cr = WrapTextInColor
+local cr = C_ColorUtil.WrapTextInColor
 
 ---@type toolbox
 local wt = ns[C_AddOns.GetAddOnMetadata(ns.name, "X-WidgetTools-AddToNamespace")]
@@ -542,19 +542,19 @@ main.frame = wt.CreateFrame({
 
 			--[[ DATA ]]
 
-			---@type RemainingXPDB
+			---@type database_warband
 			RemainingXPDB = RemainingXPDB or {}
 
-			---@type RemainingXPDBC
+			---@type database_character
 			RemainingXPDBC = RemainingXPDBC or {}
 
-			---@type RemainingXPCS
+			---@type variables_warband
 			RemainingXPCS = us.Fill(RemainingXPCS, {
 				compactBackup = true,
 				keepInPlace = true,
 			})
 
-			---@type RemainingXPCSC
+			---@type variables_character
 			RemainingXPCSC = RemainingXPCSC or {}
 
 			---@type profilemanager|profilesPage

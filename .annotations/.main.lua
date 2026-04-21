@@ -416,6 +416,8 @@ local enUS = {
 ---Addon namespace table
 ---@class addonNamespace
 ---@field name string Addon namespace name
+---@field title string Addon displayed name
+---@field root string Addon root folder
 ---@field strings strings
 
 	---Localized strings
@@ -425,31 +427,31 @@ local enUS = {
 
 ---[[ SAVED VARIABLES ]]
 
----@class RemainingXPDB : profileStorage
----@field profiles RemainingXPProfile[]
+---@class database_warband : profileStorage
+---@field profiles addonProfile[]
 
----@class RemainingXPDBC : characterProfileData
+---@class database_character : characterProfileData
 
----@class RemainingXPCS : backupboxSettingsData, positionOptionsSettingsData
+---@class variables_warband : backupboxSettingsData, positionOptionsSettingsData
 
----@class RemainingXPCSC
+---@class variables_character
 ---@field xp xpValues
 
 
 --[[ PROFILE DATA ]]
 
----@class RemainingXPProfileData
----@field customPreset RemainingXPPresetData
+---@class profileData
+---@field customPreset presetData
 ---@field display displayData
 ---@field integration integrationData
 ---@field notifications notificationsData
 
----@class RemainingXPProfile : profile
----@field data RemainingXPProfileData
+---@class addonProfile : profile
+---@field data profileData
 
 --[ Preset ]
 
----@class RemainingXPPresetData : positionPresetData
+---@class presetData : positionPresetData
 ---@field background displayBackgroundBaseData Background properties tied to the position preset
 
 --[ Display ]

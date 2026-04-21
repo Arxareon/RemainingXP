@@ -4,17 +4,13 @@
 local ns = select(2, ...)
 
 ns.name = ...
-
---Addon display title
 ns.title = select(2, C_AddOns.GetAddOnInfo(ns.name)):gsub("^%s*(.-)%s*$", "%1")
-
---Addon root folder
 ns.root = "Interface/AddOns/" .. ns.name .. "/"
 
 
 --[[ DATA ]]
 
----@type RemainingXPProfileData
+---@type profileData
 ns.profileDefault = {
 	customPreset = {
 		position = {
@@ -104,7 +100,6 @@ ns.profileDefault = {
 }
 
 
-
 --[[ ASSETS ]]
 
 ns.colors = {
@@ -144,7 +139,7 @@ ns.textures = {
 
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(20/4/2026)_#",
+		"#V_Version 3.0_# #H_(21/4/2026)_#",
 		"#C_Changes:_#",
 		"Added Midnight 12.0.5, Mists of Pandaria 5.5.3, The Burning Crusade 2.5.5 & Classic 1.15.8 support.",
 		"Significant number of under the hood changes & improvements.",
