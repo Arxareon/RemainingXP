@@ -30,28 +30,10 @@ local integration = {}
 ---@class events
 local events = {}
 
-local options = {
-	main = {},
-	display = {
-		position = {},
-		visibility = {},
-		text = {},
-		font = {
-			colors = {},
-		},
-		background = {
-			colors = {},
-			size = {},
-		},
-		fade = {},
-	},
-	integration = {},
-	events = {
-		notifications = {},
-	},
-}
+---@class options
+local options = {}
 
----@type profilemanager|profilesPage
+---@type profilemanager|profilesPage|{ data: profileData }
 local profiles
 
 ---@type chatCommandManager
@@ -63,8 +45,6 @@ local tooltip = wt.CreateGameTooltip(ns.name)
 
 local maxLevel = GetMaxPlayerLevel()
 local atMax = UnitLevel("player") >= maxLevel
-
-local alwaysShow = C_CVar.GetCVar("xpBarText")
 
 
 --[[ UTILITIES ]]
@@ -98,7 +78,6 @@ local function EnsureVisibility()
 end
 
 --[ Chat Control ]
---CHECK
 
 ---Print visibility info
 ---@param load? boolean ***Default:*** false
@@ -202,15 +181,18 @@ end
 --Update the main XP display bar segments and text with the current XP values
 local function UpdateXPDisplayText()
 	local text = "" --REPLACE with pre-colored xpText
+	local rc = us.Clone(profiles.data.display.font.colors.rested)
 
 	if profiles.data.display.text.details then
-		text = us.Thousands(RemainingXPCSC.xp.gathered) .. " / " .. us.Thousands(RemainingXPCSC.xp.required) .. " (" .. us.Thousands(RemainingXPCSC.xp.remaining) .. ")"
+		text = cr(us.Thousands(RemainingXPCSC.xp.gathered), profiles.data.display.font.colors.gathered)
+		text = text .. " / " .. cr(us.Thousands(RemainingXPCSC.xp.required), profiles.data.display.font.colors.required)
+		text = text .. " (" .. cr(us.Thousands(RemainingXPCSC.xp.remaining), profiles.data.display.font.colors.remaining) .. ")"
 		if RemainingXPCSC.xp.rested > 0 then
-			text = text .. " + " .. us.Thousands(RemainingXPCSC.xp.rested) .. " (" .. us.Thousands(
+			text = text .. " + " .. cr(us.Thousands(RemainingXPCSC.xp.rested), rc) .. " (" .. cr(us.Thousands(
 				math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100
-			) .. "%)"
+			) .. "%", wt.AdjustGamma(rc)) ..  ")"
 		end
-	else text = us.Thousands(RemainingXPCSC.xp.remaining) end
+	else text = cr(us.Thousands(RemainingXPCSC.xp.remaining), profiles.data.display.font.colors.remaining) end
 
 	display.text:SetText(text)
 end
@@ -220,23 +202,27 @@ end
 local function UpdateIntegrationText(keep, remaining)
 	if not integration.frame:IsVisible() then return end
 
+	local rc = us.Clone(profiles.data.display.font.colors.rested)
+
 	wt.SetVisibility(integration.text, keep)
 
 	if remaining and not integration.frame:IsMouseOver() then integration.text:SetText(us.Thousands(RemainingXPCSC.xp.remaining)) return end
 
 	integration.text:SetText(
 		ns.strings.xpBar.text:gsub( --REPLACE with pre-colored xpText
-			"#GATHERED", us.Thousands(RemainingXPCSC.xp.gathered)
+			"#GATHERED", cr(us.Thousands(RemainingXPCSC.xp.gathered), profiles.data.display.font.colors.gathered)
 		):gsub(
-			"#NEEDED", us.Thousands(RemainingXPCSC.xp.required)
+			"#NEEDED", cr(us.Thousands(RemainingXPCSC.xp.required), profiles.data.display.font.colors.required)
 		):gsub(
-			"#REMAINING", us.Thousands(RemainingXPCSC.xp.remaining)
+			"#REMAINING", cr(us.Thousands(RemainingXPCSC.xp.remaining), profiles.data.display.font.colors.remaining)
 		) .. (
-			RemainingXPCSC.xp.rested > 0 and " + " .. ns.strings.xpBar.rested:gsub(
-				"#RESTED", us.Thousands(RemainingXPCSC.xp.rested)
+			RemainingXPCSC.xp.rested > 0 and (" + " .. cr(ns.strings.xpBar.rested:gsub(
+				"#VALUE", us.Thousands(RemainingXPCSC.xp.rested)
 			):gsub(
-				"#PERCENT", us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100) .. "%%"
-			) or ""
+				"#PERCENT", cr(us.Thousands(
+					math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100
+				) .. "%%", wt.AdjustGamma(rc))
+			), rc)) or ""
 		)
 	)
 end
@@ -245,42 +231,44 @@ end
 ---@return tooltipLineData[] textLines
 local function GetXPTooltipTextlines()
 	local textLines = {
-		--Description
 		{ text = ns.strings.xpTooltip.text, },
 
-		--Current XP
+		--| Gathered XP
+
 		{
-			text = "\n" .. ns.strings.xpTooltip.gathered:gsub(
+			text = "\n" .. ns.strings.xpTooltip.value:gsub("#VALUE_TYPE", ns.strings.xpValues.gathered):gsub(
 				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.gathered), ns.colors.purple[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.purple[1],
 		},
 		{
-			text = ns.strings.xpTooltip.percentRequired:gsub(
+			text = ns.strings.xpTooltip.percent:gsub("#VALUE_TYPE", ns.strings.xpValues.required):gsub(
 				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.gathered / RemainingXPCSC.xp.required * 10000) / 100, 3) .. "%%", ns.colors.purple[2])
 			),
 			color = ns.colors.purple[3],
 		},
 
-		--Remaining XP
+		--| Remaining XP
+
 		{
-			text = "\n" .. ns.strings.xpTooltip.remaining:gsub(
+			text = "\n" .. ns.strings.xpTooltip.value:gsub("#VALUE_TYPE", ns.strings.xpValues.remaining):gsub(
 				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.remaining), ns.colors.rose[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.rose[1],
 		},
 		{
-			text = ns.strings.xpTooltip.percentRequired:gsub(
+			text = ns.strings.xpTooltip.percent:gsub("#VALUE_TYPE", ns.strings.xpValues.required):gsub(
 				"#PERCENT", cr(us.Thousands(math.floor((RemainingXPCSC.xp.remaining / RemainingXPCSC.xp.required) * 10000) / 100, 3) .. "%%", ns.colors.rose[2])
 			),
 			color = ns.colors.rose[3],
 		},
 
-		--Required XP
+		--| Required XP
+
 		{
-			text = "\n" .. ns.strings.xpTooltip.required:gsub(
+			text = "\n" .. ns.strings.xpTooltip.value:gsub("#VALUE_TYPE", ns.strings.xpValues.required):gsub(
 				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.required), ns.colors.peach[2])
 			),
 			font = GameTooltipText,
@@ -293,36 +281,41 @@ local function GetXPTooltipTextlines()
 			color = ns.colors.peach[3],
 		},
 
+		--| Playtime
+
 		--Playtime --ADD time played info
 		-- {
 		-- 	text = "\n" .. ns.strings.xpTooltip.timeSpent:gsub("#TIME", "?") .. " (Soon™)",
 		-- },
 	}
 
-	--| Current Rested XP
+	--| Rested XP
 
 	if RemainingXPCSC.xp.rested > 0 then
 		table.insert(textLines, {
-			text = "\n" .. ns.strings.xpTooltip.rested:gsub(
+			text = "\n" .. ns.strings.xpTooltip.value:gsub("#VALUE_TYPE", ns.strings.xpValues.rested):gsub(
 				"#VALUE", cr(us.Thousands(RemainingXPCSC.xp.rested), ns.colors.blue[2])
 			),
 			font = GameTooltipText,
 			color = ns.colors.blue[1],
 		})
+
 		table.insert(textLines, {
-			text = ns.strings.xpTooltip.percentRemaining:gsub(
+			text = ns.strings.xpTooltip.percent:gsub("#VALUE_TYPE", ns.strings.xpValues.remaining):gsub(
 				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / (RemainingXPCSC.xp.required - RemainingXPCSC.xp.gathered) * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
+
 		table.insert(textLines, {
-			text = ns.strings.xpTooltip.percentRequired:gsub(
+			text = ns.strings.xpTooltip.percent:gsub("#VALUE_TYPE", ns.strings.xpValues.required):gsub(
 				"#PERCENT", cr(us.Thousands(math.floor(RemainingXPCSC.xp.rested / RemainingXPCSC.xp.required * 10000) / 100, 3) .. "%%", ns.colors.blue[2])
 			),
 			color = ns.colors.blue[3],
 		})
 
-		--Description
+		--| Description
+
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.restedMax:gsub(
 				"#PERCENT_MAX", cr("150%%", ns.colors.blue[2])
@@ -333,6 +326,7 @@ local function GetXPTooltipTextlines()
 			),
 			color = ns.colors.blue[3],
 		})
+
 		table.insert(textLines, {
 			text = "\n" .. ns.strings.xpTooltip.restedDescription:gsub(
 				"#PERCENT", cr("200%%", ns.colors.blue[2])
@@ -511,6 +505,9 @@ end
 
 --[ Integrated Display ]
 
+--"xpBarText" CVar snapshot
+local alwaysShow = C_CVar.GetCVar("xpBarText")
+
 --Turn off the integrated display and hide the frame
 local function TurnOffIntegration()
 	integration.frame:Hide()
@@ -557,7 +554,7 @@ main.frame = wt.CreateFrame({
 			---@type variables_character
 			RemainingXPCSC = RemainingXPCSC or {}
 
-			---@type profilemanager|profilesPage
+			---@type profilemanager|profilesPage|{ data: profileData }
 			profiles = wt.CreateProfilemanager(RemainingXPDB, RemainingXPDBC, ns.profileDefault, {
 				valueChecker = function(key, value) if type(value) == "number" then
 					if key == "size" then return value > 0 end
@@ -670,8 +667,12 @@ main.frame = wt.CreateFrame({
 				end,
 				arrangement = {},
 				initialize = function(canvas, _, _, category, keys)
+					options.display = {}
 
-					--[ Visibility ]
+
+					--[[ VISIBILITY ]]
+
+					local visibilityHiddenDependency
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -681,10 +682,7 @@ main.frame = wt.CreateFrame({
 						arrange = {},
 						arrangement = {},
 						initialize = function(panel, _, _, key)
-
-							--| Toggle
-
-							options.display.visibility.hidden = wt.CreateCheckbox({
+							local hidden = wt.CreateCheckbox({
 								parent = panel,
 								name = "Hidden",
 								title = ns.strings.options.display.visibility.hidden.label,
@@ -703,9 +701,9 @@ main.frame = wt.CreateFrame({
 								},
 							})
 
-							--| Status notice
+							visibilityHiddenDependency = { frame = hidden, evaluate = function(state) return not state end }
 
-							options.display.visibility.status = wt.CreateCheckbox({
+							local status = wt.CreateCheckbox({
 								parent = panel,
 								name = " StatusNotice",
 								title = ns.strings.options.display.visibility.statusNotice.label,
@@ -720,27 +718,30 @@ main.frame = wt.CreateFrame({
 								},
 							})
 
-							--| Max reminder
-
-							options.display.visibility.maxReminder = wt.CreateCheckbox({
-								parent = panel,
-								name = "MaxReminder",
-								title = ns.strings.options.display.visibility.maxReminder.label,
-								tooltip = { lines = { { text = ns.strings.options.display.visibility.maxReminder.tooltip:gsub("#ADDON", ns.title), }, } },
-								arrange = { wrap = false, },
-								dependencies = { { frame = options.display.visibility.status, }, },
-								getData = function() return profiles.data.notifications.statusNotice.maxReminder end,
-								saveData = function(value) profiles.data.notifications.statusNotice.maxReminder = value end,
-								default = ns.profileDefault.notifications.statusNotice.maxReminder,
-								dataManagement = {
-									category = category,
-									key = key,
-								},
-							})
+							options.display.visibility = {
+								hidden = hidden,
+								status = status,
+								maxReminder = wt.CreateCheckbox({
+									parent = panel,
+									name = "MaxReminder",
+									title = ns.strings.options.display.visibility.maxReminder.label,
+									tooltip = { lines = { { text = ns.strings.options.display.visibility.maxReminder.tooltip:gsub("#ADDON", ns.title), }, } },
+									arrange = { wrap = false, },
+									dependencies = { { frame = status, }, },
+									getData = function() return profiles.data.notifications.statusNotice.maxReminder end,
+									saveData = function(value) profiles.data.notifications.statusNotice.maxReminder = value end,
+									default = ns.profileDefault.notifications.statusNotice.maxReminder,
+									dataManagement = {
+										category = category,
+										key = key,
+									},
+								}),
+							}
 						end,
 					})
 
-					--[ Position ]
+
+					--[[ POSITION ]]
 
 					options.display.position = wt.CreatePositionOptions(ns.name, display.frame, function()
 						return profiles.data.display
@@ -749,6 +750,7 @@ main.frame = wt.CreateFrame({
 						frameName = ns.strings.options.display.referenceName,
 						presets = {
 							items = {
+								{ title = CUSTOM, }, --Custom
 								{
 									title = ns.strings.presets[1], --XP Bar Replacement
 									data = {
@@ -764,7 +766,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { width = 562, height = 16 },
+											size = { w = 562, h = 16 },
 										},
 									},
 								},
@@ -783,7 +785,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = false,
-											size = { width = 68, height = 16 },
+											size = { w = 68, h = 16 },
 										},
 									},
 								},
@@ -802,7 +804,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = false,
-											size = { width = 68, height = 16 },
+											size = { w = 68, h = 16 },
 										},
 									},
 								},
@@ -822,7 +824,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { width = 126, height = 16 },
+											size = { w = 126, h = 16 },
 										},
 									},
 								},
@@ -842,7 +844,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = false,
-											size = { width = 104, height = 16 },
+											size = { w = 104, h = 16 },
 										},
 									},
 								},
@@ -862,7 +864,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { width = 232, height = 22 },
+											size = { w = 232, h = 22 },
 										},
 									},
 								},
@@ -881,7 +883,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { width = 490, height = 38 },
+											size = { w = 490, h = 38 },
 										},
 									},
 								},
@@ -900,7 +902,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { width = 490, height = 38 },
+											size = { w = 490, h = 38 },
 										},
 									},
 								},
@@ -919,16 +921,15 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { width = 1248, height = 8 },
+											size = { w = 1248, h = 8 },
 										},
 									},
 								},
 							},
 							onPreset = function(preset)
-								--Set background
 								options.display.background.visible.setData(preset.data.background.visible)
+								options.display.background.size.w.setData(preset.data.background.size.w)
 								options.display.background.size.h.setData(preset.data.background.size.h)
-								options.display.background.size.h.setData(preset.data.background.size.w)
 
 								--Make sure the speed display is visible
 								options.display.visibility.hidden.setData(false)
@@ -953,11 +954,14 @@ main.frame = wt.CreateFrame({
 								end,
 							},
 						},
-						dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+						dependencies = { visibilityHiddenDependency, },
 						dataManagement = { category = category, },
 					})
 
-					--[ Text ]
+
+					--[[ TEXT ]]
+
+					local textVisibleDependency
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -967,16 +971,13 @@ main.frame = wt.CreateFrame({
 						arrange = {},
 						arrangement = {},
 						initialize = function(panel, _, _, key)
-
-							--| Toggle
-
-							options.display.text.visible = wt.CreateCheckbox({
+							local visible = wt.CreateCheckbox({
 								parent = panel,
 								name = "Visible",
 								title = ns.strings.options.display.text.visible.label,
 								tooltip = { lines = { { text = ns.strings.options.display.text.visible.tooltip, }, } },
 								arrange = {},
-								dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+								dependencies = { visibilityHiddenDependency, },
 								getData = function() return profiles.data.display.text.visible end,
 								saveData = function(value) profiles.data.display.text.visible = value end,
 								default = ns.profileDefault.display.text.visible,
@@ -990,60 +991,73 @@ main.frame = wt.CreateFrame({
 								},
 							})
 
-							--| Details
+							textVisibleDependency = { frame = visible, }
 
-							options.display.text.details = wt.CreateCheckbox({
-								parent = panel,
-								name = "Details",
-								title = ns.strings.options.display.text.details.label,
-								tooltip = { lines = { { text = ns.strings.options.display.text.details.tooltip, }, } },
-								arrange = { wrap = false, },
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return profiles.data.display.text.details end,
-								saveData = function(value) profiles.data.display.text.details = value end,
-								default = ns.profileDefault.display.text.details,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { UpdateDisplayText = UpdateXPDisplayText, },
-								},
-							})
+							options.display.text = {
+								visible = visible,
+								details = wt.CreateCheckbox({
+									parent = panel,
+									name = "Details",
+									title = ns.strings.options.display.text.details.label,
+									tooltip = { lines = { { text = ns.strings.options.display.text.details.tooltip, }, } },
+									arrange = { wrap = false, },
+									dependencies = { visibilityHiddenDependency, textVisibleDependency },
+									getData = function() return profiles.data.display.text.details end,
+									saveData = function(value) profiles.data.display.text.details = value end,
+									default = ns.profileDefault.display.text.details,
+									dataManagement = {
+										category = category,
+										key = key,
+										onChange = { UpdateDisplayText = UpdateXPDisplayText, },
+									},
+								}),
+							}
 						end,
 					})
 
-					--[ Font ]
+
+					--[[ FONT ]]
 
 					options.display.font = wt.CreateFontOptions(ns.name, display.text, function() return profiles.data.display.font end, ns.profileDefault.display.font, {
 						canvas = canvas,
 						colors = {
-							-- percent = { --ADD colors
-							-- 	name = ns.strings.options.speedValue.units.list[1].label,
-							-- 	index = 1,
-							-- },
-							-- yards = {
-							-- 	name = ns.strings.options.speedValue.units.list[2].label,
-							-- 	index = 2,
-							-- },
-							-- coords = {
-							-- 	name = ns.strings.options.speedValue.units.list[3].label,
-							-- 	index = 3,
-							-- },
+							gathered = {
+								name = ns.strings.xpValues.gathered,
+								index = 1,
+							},
+							required = {
+								name = ns.strings.xpValues.required,
+								index = 2,
+							},
+							remaining = {
+								name = ns.strings.xpValues.remaining,
+								index = 3,
+							},
+							rested = {
+								name = ns.strings.xpValues.rested,
+								index = 4,
+							},
+							base = {
+								name = ns.strings.options.display.text.base,
+								index = 5,
+								wrap = true,
+							},
 						},
 						dependencies = {
-							{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
+							visibilityHiddenDependency,
 							{ frame = options.display.text.visible, },
 						},
 						dataManagement = { category = category, },
 						onChangeFont = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
 						onChangeSize = function() SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h) end,
 						onChangeAlignment = function() wt.SetPosition(display.text, { anchor = profiles.data.display.font.alignment, }) end,
-						onChangeColor = Fade,
+						onChangeColor = UpdateXPDisplayText,
 					})
 
-					--[ Background ]
+
+					--[[ BACKGROUND ]]
+
+					local backgroundVisibleDependency
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -1053,16 +1067,13 @@ main.frame = wt.CreateFrame({
 						arrange = {},
 						arrangement = {},
 						initialize = function(panel, _, _, key)
-
-							--| Toggle
-
-							options.display.background.visible = wt.CreateCheckbox({
+							local visible = wt.CreateCheckbox({
 								parent = panel,
 								name = "Visible",
 								title = ns.strings.options.display.background.visible.label,
 								tooltip = { lines = { { text = ns.strings.options.display.background.visible.tooltip, }, } },
 								arrange = {},
-								dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+								dependencies = { visibilityHiddenDependency, },
 								getData = function() return profiles.data.display.background.visible end,
 								saveData = function(value) profiles.data.display.background.visible = value end,
 								default = ns.profileDefault.display.background.visible,
@@ -1079,167 +1090,142 @@ main.frame = wt.CreateFrame({
 								},
 							})
 
-							--| Width
+							backgroundVisibleDependency = { frame = visible, }
 
-							options.display.background.size.w = wt.CreateSlider({
-								parent = panel,
-								name = "Width",
-								title = ns.strings.options.display.background.size.width.label,
-								tooltip = { lines = { { text = ns.strings.options.display.background.size.width.tooltip, }, } },
-								arrange = { wrap = false, },
-								min = 64,
-								max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1),
-								step = 2,
-								altStep = 8,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.background.visible, },
+							options.display.background = {
+								visible = visible,
+								size = {
+									w = wt.CreateSlider({
+										parent = panel,
+										name = "Width",
+										title = ns.strings.options.display.background.size.width.label,
+										tooltip = { lines = { { text = ns.strings.options.display.background.size.width.tooltip, }, } },
+										arrange = { wrap = false, },
+										min = 64,
+										max = UIParent:GetWidth() - math.fmod(UIParent:GetWidth(), 1),
+										step = 2,
+										altStep = 8,
+										dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, },
+										getData = function() return profiles.data.display.background.size.w end,
+										saveData = function(value) profiles.data.display.background.size.w = value end,
+										default = ns.profileDefault.display.background.size.w,
+										dataManagement = {
+											category = category,
+											key = key,
+											onChange = { UpdateDisplaySize = function()
+												SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h)
+											end, },
+										},
+									}),
+									h = wt.CreateSlider({
+										parent = panel,
+										name = "Height",
+										title = ns.strings.options.display.background.size.height.label,
+										tooltip = { lines = { { text = ns.strings.options.display.background.size.height.tooltip, }, } },
+										arrange = { wrap = false, },
+										min = 2,
+										max = 80,
+										step = 2,
+										altStep = 8,
+										dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, },
+										getData = function() return profiles.data.display.background.size.h end,
+										saveData = function(value) profiles.data.display.background.size.h = value end,
+										default = ns.profileDefault.display.background.size.h,
+										dataManagement = {
+											category = category,
+											key = key,
+											onChange = { "UpdateDisplaySize", },
+										},
+									}),
 								},
-								getData = function() return profiles.data.display.background.size.w end,
-								saveData = function(value) profiles.data.display.background.size.w = value end,
-								default = ns.profileDefault.display.background.size.w,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { UpdateDisplaySize = function()
-										SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h)
-									end, },
+								colors = {
+									bg = wt.CreateColorpicker({
+										parent = panel,
+										name = "Color",
+										title = wt.strings.font.color.label:gsub("#COLOR_TYPE", ns.strings.options.display.background.bg),
+										arrange = {},
+										dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, },
+										getData = function() return profiles.data.display.background.colors.bg end,
+										saveData = function(value) profiles.data.display.background.colors.bg = value end,
+										default = ns.profileDefault.display.background.colors.bg,
+										dataManagement = {
+											category = category,
+											key = key,
+											onChange = {
+												UpdateDisplayBackgroundColor = function() if display.frame:GetBackdrop() ~= nil then
+													display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.bg))
+												end end,
+												"UpdateFade",
+											},
+										},
+									}),
+									border = wt.CreateColorpicker({
+										parent = panel,
+										name = "BorderColor",
+										title = wt.strings.font.color.label:gsub("#COLOR_TYPE", ns.strings.options.display.background.border),
+										arrange = { wrap = false, },
+										dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, },
+										getData = function() return profiles.data.display.background.colors.border end,
+										saveData = function(value) profiles.data.display.background.colors.border = value end,
+										default = ns.profileDefault.display.background.colors.border,
+										dataManagement = {
+											category = category,
+											key = key,
+											onChange = {
+												UpdateDisplayBorderColor = function() if display.frame:GetBackdrop() ~= nil then
+													display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.border))
+												end end,
+												"UpdateFade",
+											},
+										},
+									}),
+									gathered = wt.CreateColorpicker({
+										parent = panel,
+										name = "XPColor",
+										title = wt.strings.font.color.label:gsub("#COLOR_TYPE", ns.strings.xpValues.gathered),
+										arrange = { wrap = false, },
+										dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, },
+										getData = function() return profiles.data.display.background.colors.gathered end,
+										saveData = function(value) profiles.data.display.background.colors.gathered = value end,
+										default = ns.profileDefault.display.background.colors.gathered,
+										dataManagement = {
+											category = category,
+											key = key,
+											onChange = {
+												UpdateDisplayXPColor = function() if display.frame:GetBackdrop() ~= nil then
+													display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.gathered))
+												end end,
+												"UpdateFade",
+											},
+										},
+									}),
+									rested = wt.CreateColorpicker({
+										parent = panel,
+										name = "RestedColor",
+										title = wt.strings.font.color.label:gsub("#COLOR_TYPE", ns.strings.xpValues.rested),
+										arrange = { wrap = false, },
+										dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, },
+										getData = function() return profiles.data.display.background.colors.rested end,
+										saveData = function(value) profiles.data.display.background.colors.rested = value end,
+										default = ns.profileDefault.display.background.colors.rested,
+										dataManagement = {
+											category = category,
+											key = key,
+											onChange = {
+												UpdateDisplayBorderColor = function() if display.frame:GetBackdrop() ~= nil then
+													display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.rested))
+												end end,
+												"UpdateFade",
+											},
+										},
+									}),
 								},
-							})
-
-							--| Height
-
-							options.display.background.size.h = wt.CreateSlider({
-								parent = panel,
-								name = "Height",
-								title = ns.strings.options.display.background.size.height.label,
-								tooltip = { lines = { { text = ns.strings.options.display.background.size.height.tooltip, }, } },
-								arrange = { wrap = false, },
-								min = 2,
-								max = 80,
-								step = 2,
-								altStep = 8,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.background.visible, },
-								},
-								getData = function() return profiles.data.display.background.size.h end,
-								saveData = function(value) profiles.data.display.background.size.h = value end,
-								default = ns.profileDefault.display.background.size.h,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { "UpdateDisplaySize", },
-								},
-							})
-
-							--| Background color
-
-							options.display.background.colors.bg = wt.CreateColorpicker({
-								parent = panel,
-								name = "Color",
-								-- title = ns.strings.options.display.background.colors.bg.label, --REPLACE
-								arrange = {},
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.background.visible, },
-								},
-								getData = function() return profiles.data.display.background.colors.bg end,
-								saveData = function(value) profiles.data.display.background.colors.bg = value end,
-								default = ns.profileDefault.display.background.colors.bg,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										UpdateDisplayBackgroundColor = function() if display.frame:GetBackdrop() ~= nil then
-											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.bg))
-										end end,
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Border color
-
-							options.display.background.colors.border = wt.CreateColorpicker({
-								parent = panel,
-								name = "BorderColor",
-								-- title = ns.strings.options.display.background.colors.border.label, --REPLACE
-								arrange = { wrap = false, },
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.background.visible, },
-								},
-								getData = function() return profiles.data.display.background.colors.border end,
-								saveData = function(value) profiles.data.display.background.colors.border = value end,
-								default = ns.profileDefault.display.background.colors.border,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										UpdateDisplayBorderColor = function() if display.frame:GetBackdrop() ~= nil then
-											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.border))
-										end end,
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Current XP color
-
-							options.display.background.colors.gathered = wt.CreateColorpicker({
-								parent = panel,
-								name = "XPColor",
-								-- title = ns.strings.options.display.background.colors.gathered.label, --REPLACE
-								arrange = { wrap = false, },
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.background.visible, },
-								},
-								getData = function() return profiles.data.display.background.colors.gathered end,
-								saveData = function(value) profiles.data.display.background.colors.gathered = value end,
-								default = ns.profileDefault.display.background.colors.gathered,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										UpdateDisplayXPColor = function() if display.frame:GetBackdrop() ~= nil then
-											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.gathered))
-										end end,
-										"UpdateFade",
-									},
-								},
-							})
-
-							--| Rested XP color
-
-							options.display.background.colors.rested = wt.CreateColorpicker({
-								parent = panel,
-								name = "RestedColor",
-								-- title = ns.strings.options.display.background.colors.rested.label, --REPLACE
-								arrange = { wrap = false, },
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.background.visible, },
-								},
-								getData = function() return profiles.data.display.background.colors.rested end,
-								saveData = function(value) profiles.data.display.background.colors.rested = value end,
-								default = ns.profileDefault.display.background.colors.rested,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = {
-										UpdateDisplayBorderColor = function() if display.frame:GetBackdrop() ~= nil then
-											display.frame:SetBackdropColor(wt.UnpackColor(profiles.data.display.background.colors.rested))
-										end end,
-										"UpdateFade",
-									},
-								},
-							})
+							}
 						end,
 					})
 
-					--[ Fade ]
+
+					--[[ FADE ]]
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -1249,16 +1235,13 @@ main.frame = wt.CreateFrame({
 						arrange = {},
 						arrangement = {},
 						initialize = function(panel, _, _, key)
-
-							--| Toggle
-
-							options.display.fade.toggle = wt.CreateCheckbox({
+							local toggle = wt.CreateCheckbox({
 								parent = panel,
 								name = "FadeToggle",
 								title = ns.strings.options.display.fade.toggle.label,
 								tooltip = { lines = { { text = ns.strings.options.display.fade.toggle.tooltip, }, } },
 								arrange = { wrap = false, },
-								dependencies = { { frame = options.display.visibility.hidden, evaluate = function(state) return not state end }, },
+								dependencies = { visibilityHiddenDependency, },
 								getData = function() return profiles.data.display.fade.enabled end,
 								saveData = function(value) profiles.data.display.fade.enabled = value end,
 								default = ns.profileDefault.display.fade.enabled,
@@ -1269,59 +1252,49 @@ main.frame = wt.CreateFrame({
 								},
 							})
 
-							--| Text fade intensity
-
-							options.display.fade.text = wt.CreateSlider({
-								parent = panel,
-								name = " TextFade",
-								title = ns.strings.options.display.fade.text.label,
-								tooltip = { lines = { { text = ns.strings.options.display.fade.text.tooltip, }, } },
-								arrange = { wrap = false, },
-								min = 0,
-								max = 1,
-								step = 0.05,
-								altStep = 0.2,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.fade.toggle, },
-									{ frame = options.display.text.visible, },
-								},
-								getData = function() return profiles.data.display.fade.text end,
-								saveData = function(value) profiles.data.display.fade.text = value end,
-								default = ns.profileDefault.display.fade.text,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { "UpdateFade", },
-								},
-							})
-
-							--| Background fade intensity
-
-							options.display.fade.background = wt.CreateSlider({
-								parent = panel,
-								name = "BackgroundFade",
-								title = ns.strings.options.display.fade.background.label,
-								tooltip = { lines = { { text = ns.strings.options.display.fade.background.tooltip, }, } },
-								arrange = { wrap = false, },
-								min = 0,
-								max = 1,
-								step = 0.05,
-								altStep = 0.2,
-								dependencies = {
-									{ frame = options.display.visibility.hidden, evaluate = function(state) return not state end },
-									{ frame = options.display.fade.toggle, },
-									{ frame = options.display.background.visible, },
-								},
-								getData = function() return profiles.data.display.fade.background end,
-								saveData = function(value) profiles.data.display.fade.background = value end,
-								default = ns.profileDefault.display.fade.background,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { "UpdateFade", },
-								},
-							})
+							options.display.fade = {
+								toggle = toggle,
+								text = wt.CreateSlider({
+									parent = panel,
+									name = " TextFade",
+									title = ns.strings.options.display.fade.text.label,
+									tooltip = { lines = { { text = ns.strings.options.display.fade.text.tooltip, }, } },
+									arrange = { wrap = false, },
+									min = 0,
+									max = 1,
+									step = 0.05,
+									altStep = 0.2,
+									dependencies = { visibilityHiddenDependency, textVisibleDependency, { frame = toggle, }, },
+									getData = function() return profiles.data.display.fade.text end,
+									saveData = function(value) profiles.data.display.fade.text = value end,
+									default = ns.profileDefault.display.fade.text,
+									dataManagement = {
+										category = category,
+										key = key,
+										onChange = { "UpdateFade", },
+									},
+								}),
+								background = wt.CreateSlider({
+									parent = panel,
+									name = "BackgroundFade",
+									title = ns.strings.options.display.fade.background.label,
+									tooltip = { lines = { { text = ns.strings.options.display.fade.background.tooltip, }, } },
+									arrange = { wrap = false, },
+									min = 0,
+									max = 1,
+									step = 0.05,
+									altStep = 0.2,
+									dependencies = { visibilityHiddenDependency, backgroundVisibleDependency, { frame = toggle, }, },
+									getData = function() return profiles.data.display.fade.background end,
+									saveData = function(value) profiles.data.display.fade.background = value end,
+									default = ns.profileDefault.display.fade.background,
+									dataManagement = {
+										category = category,
+										key = key,
+										onChange = { "UpdateFade", },
+									},
+								}),
+							}
 						end,
 					})
 				end,
@@ -1352,8 +1325,10 @@ main.frame = wt.CreateFrame({
 				end,
 				arrangement = {},
 				initialize = function (canvas, _, _, category, keys)
+					options.integration = {}
 
-					--[ Removals ]
+
+					--[[ REMOVALS ]]
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -1363,26 +1338,21 @@ main.frame = wt.CreateFrame({
 						-- description = ns.strings.options.integration.removals.description:gsub("#ADDON", ns.title),
 						arrange = {},
 						arrangement = {},
-						initialize = function(panel, _, _, key)
-
-							--| XP bar
-
-							options.integration.hideXPBar = wt.CreateCheckbox({
-								parent = panel,
-								name = "HideXPBar",
-								title = ns.strings.options.integration.hideXPBar.label,
-								tooltip = { lines = { { text = ns.strings.options.integration.hideXPBar.tooltip:gsub("#ADDON", ns.title), }, } },
-								arrange = {},
-								getData = function() return profiles.data.integration.hideXPBar end,
-								saveData = function(value) profiles.data.integration.hideXPBar = value end,
-								default = ns.profileDefault.integration.hideXPBar,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { ToggleXPBar = function() wt.SetVisibility(MainMenuExpBar, not profiles.data.integration.hideXPBar) end, },
-								},
-							})
-						end,
+						initialize = function(panel, _, _, key) options.integration.hideXPBar = wt.CreateCheckbox({
+							parent = panel,
+							name = "HideXPBar",
+							title = ns.strings.options.integration.hideXPBar.label,
+							tooltip = { lines = { { text = ns.strings.options.integration.hideXPBar.tooltip:gsub("#ADDON", ns.title), }, } },
+							arrange = {},
+							getData = function() return profiles.data.integration.hideXPBar end,
+							saveData = function(value) profiles.data.integration.hideXPBar = value end,
+							default = ns.profileDefault.integration.hideXPBar,
+							dataManagement = {
+								category = category,
+								key = key,
+								onChange = { ToggleXPBar = function() wt.SetVisibility(MainMenuExpBar, not profiles.data.integration.hideXPBar) end, },
+							},
+						}) end,
 					})
 
 					--[ Enhancement ]
@@ -1396,9 +1366,6 @@ main.frame = wt.CreateFrame({
 						arrange = {},
 						arrangement = {},
 						initialize = function(panel, _, _, key)
-
-							--| Toggle
-
 							options.integration.toggle = wt.CreateCheckbox({
 								parent = panel,
 								name = "EnableIntegration",
@@ -1417,9 +1384,6 @@ main.frame = wt.CreateFrame({
 									end, },
 								},
 							})
-
-							--| Always show XP text
-
 							options.integration.keep = wt.CreateCheckbox({
 								parent = panel,
 								name = "KeepText",
@@ -1438,9 +1402,6 @@ main.frame = wt.CreateFrame({
 									end, },
 								},
 							})
-
-							--| Only show Remaining XP
-
 							options.integration.remaining = wt.CreateCheckbox({
 								parent = panel,
 								name = "RemainingOnly",
@@ -1490,7 +1451,8 @@ main.frame = wt.CreateFrame({
 				arrangement = {},
 				initialize = function (canvas, _, _, category, keys)
 
-					--[ Notifications ]
+
+					--[[ NOTIFICATIONS ]]
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -1500,27 +1462,7 @@ main.frame = wt.CreateFrame({
 						arrange = {},
 						arrangement = {},
 						initialize = function(panel, _, _, key)
-
-							--| XP gained
-
-							options.events.xpGained = wt.CreateCheckbox({
-								parent = panel,
-								name = "XPGained",
-								title = ns.strings.options.events.notifications.xpGained.label,
-								tooltip = { lines = { { text = ns.strings.options.events.notifications.xpGained.tooltip, }, } },
-								arrange = {},
-								getData = function() return profiles.data.notifications.xpGained end,
-								saveData = function(value) profiles.data.notifications.xpGained = value end,
-								default = ns.profileDefault.notifications.xpGained,
-								dataManagement = {
-									category = category,
-									key = key,
-								},
-							})
-
-							--| Rested XP gained
-
-							options.events.restedXPGained = wt.CreateCheckbox({
+							local restedXPGained = wt.CreateCheckbox({
 								parent = panel,
 								name = "RestedXPGained",
 								title = ns.strings.options.events.notifications.restedXP.gained.label,
@@ -1535,54 +1477,7 @@ main.frame = wt.CreateFrame({
 								},
 							})
 
-							--| Significant Rested XP values only
-
-							options.events.significantRestedOnly = wt.CreateCheckbox({
-								parent = panel,
-								name = "SignificantRestedOnly",
-								title = ns.strings.options.events.notifications.restedXP.significantOnly.label,
-								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedXP.significantOnly.tooltip, }, } },
-								arrange = { wrap = false, },
-								dependencies = { { frame = options.events.restedXPGained, }, },
-								getData = function() return profiles.data.notifications.restedXP.significantOnly end,
-								saveData = function(value) profiles.data.notifications.restedXP.significantOnly = value end,
-								default = ns.profileDefault.notifications.restedXP.significantOnly,
-								dataManagement = {
-									category = category,
-									key = key,
-								},
-							})
-
-							--| Rested XP accumulated
-
-							options.events.restedXPAccumulated = wt.CreateCheckbox({
-								parent = panel,
-								name = "AccumulatedRestedXP",
-								title = ns.strings.options.events.notifications.restedXP.accumulated.label,
-								tooltip = { lines = {
-									{ text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[1], },
-									{
-										text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[2]:gsub("#ADDON", ns.title),
-										color = { r = 0.89, g = 0.65, b = 0.40 },
-									},
-								} },
-								arrange = { wrap = false, },
-								dependencies = { { frame = options.events.restedXPGained, }, },
-								getData = function() return profiles.data.notifications.restedXP.accumulated end,
-								saveData = function(value) profiles.data.notifications.restedXP.accumulated = value end,
-								default = ns.profileDefault.notifications.restedXP.accumulated,
-								dataManagement = {
-									category = category,
-									key = key,
-									onChange = { UpdateRestedAccumulation = function()
-										SetRestedAccumulation(profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated and atMax)
-									end, },
-								},
-							})
-
-							--| Rested status update
-
-							options.events.restedStatusUpdate = wt.CreateCheckbox({
+							local restedStatusUpdate = wt.CreateCheckbox({
 								parent = panel,
 								name = "RestedStatusUpdate",
 								title = ns.strings.options.events.notifications.restedStatus.update.label,
@@ -1596,16 +1491,70 @@ main.frame = wt.CreateFrame({
 									key = key,
 								},
 							})
-
-							--| Max Rested XP reminder
-
-							options.events.maxRestedXPReminder = wt.CreateCheckbox({
+							
+							options.events = {
+							xpGained = wt.CreateCheckbox({
+								parent = panel,
+								name = "XPGained",
+								title = ns.strings.options.events.notifications.xpGained.label,
+								tooltip = { lines = { { text = ns.strings.options.events.notifications.xpGained.tooltip, }, } },
+								arrange = {},
+								getData = function() return profiles.data.notifications.xpGained end,
+								saveData = function(value) profiles.data.notifications.xpGained = value end,
+								default = ns.profileDefault.notifications.xpGained,
+								dataManagement = {
+									category = category,
+									key = key,
+								},
+							}),
+							restedXPGained = restedXPGained,
+							significantRestedOnly = wt.CreateCheckbox({
+								parent = panel,
+								name = "SignificantRestedOnly",
+								title = ns.strings.options.events.notifications.restedXP.significantOnly.label,
+								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedXP.significantOnly.tooltip, }, } },
+								arrange = { wrap = false, },
+								dependencies = { { frame = restedXPGained, }, },
+								getData = function() return profiles.data.notifications.restedXP.significantOnly end,
+								saveData = function(value) profiles.data.notifications.restedXP.significantOnly = value end,
+								default = ns.profileDefault.notifications.restedXP.significantOnly,
+								dataManagement = {
+									category = category,
+									key = key,
+								},
+							}),
+							restedXPAccumulated = wt.CreateCheckbox({
+								parent = panel,
+								name = "AccumulatedRestedXP",
+								title = ns.strings.options.events.notifications.restedXP.accumulated.label,
+								tooltip = { lines = {
+									{ text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[1], },
+									{
+										text = ns.strings.options.events.notifications.restedXP.accumulated.tooltip[2]:gsub("#ADDON", ns.title),
+										color = { r = 0.89, g = 0.65, b = 0.40 },
+									},
+								} },
+								arrange = { wrap = false, },
+								dependencies = { { frame = restedXPGained, }, },
+								getData = function() return profiles.data.notifications.restedXP.accumulated end,
+								saveData = function(value) profiles.data.notifications.restedXP.accumulated = value end,
+								default = ns.profileDefault.notifications.restedXP.accumulated,
+								dataManagement = {
+									category = category,
+									key = key,
+									onChange = { UpdateRestedAccumulation = function()
+										SetRestedAccumulation(profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated and atMax)
+									end, },
+								},
+							}),
+							restedStatusUpdate = restedStatusUpdate,
+							maxRestedXPReminder = wt.CreateCheckbox({
 								parent = panel,
 								name = "MaxRestedXPReminder",
 								title = ns.strings.options.events.notifications.restedStatus.maxReminder.label,
 								tooltip = { lines = { { text = ns.strings.options.events.notifications.restedStatus.maxReminder.tooltip, }, } },
 								arrange = { wrap = false, },
-								dependencies = { { frame = options.events.restedStatusUpdate, }, },
+								dependencies = { { frame = restedStatusUpdate, }, },
 								getData = function() return profiles.data.notifications.restedStatus.maxReminder end,
 								saveData = function(value) profiles.data.notifications.restedStatus.maxReminder = value end,
 								default = ns.profileDefault.notifications.restedStatus.maxReminder,
@@ -1613,11 +1562,8 @@ main.frame = wt.CreateFrame({
 									category = category,
 									key = key,
 								},
-							})
-
-							--| Level up
-
-							options.events.lvlUp = wt.CreateCheckbox({
+							}),
+							lvlUp = wt.CreateCheckbox({
 								parent = panel,
 								name = "LevelUp",
 								title = ns.strings.options.events.notifications.lvlUp.congrats.label,
@@ -1630,11 +1576,8 @@ main.frame = wt.CreateFrame({
 									category = category,
 									key = key,
 								},
-							})
-
-							--| Time played
-
-							options.events.timePlayed = wt.CreateCheckbox({
+							}),
+							timePlayed = wt.CreateCheckbox({
 								parent = panel,
 								name = "TimePlayed",
 								title = ns.strings.options.events.notifications.lvlUp.timePlayed.label .. " (Soon™)",
@@ -1649,9 +1592,12 @@ main.frame = wt.CreateFrame({
 								-- 	category = category,
 								-- 	key = key,
 								-- },
-							})
-						end,
+							}),
+						} end,
 					})
+
+
+					--[[ LOGS ]]
 
 					wt.CreatePanel({
 						parent = canvas,
@@ -1669,7 +1615,7 @@ main.frame = wt.CreateFrame({
 
 			--[ Profiles ]
 
-			---@type profilemanager|profilesPage
+			---@type profilemanager|profilesPage|{ data: profileData }
 			profiles = wt.CreateProfilesPage(ns.name, RemainingXPDB, RemainingXPDBC, ns.profileDefault, RemainingXPCS, {
 				register = main.settings,
 				onImport = function(success) if success then
@@ -1859,29 +1805,23 @@ main.frame = wt.CreateFrame({
 				end,
 			})
 
-			--Welcome message
 			if profiles.firstLoad then chatCommands.welcome() end
 
 
 			--[[ XP DISPLAY SETUP ]]
 
 			if atMax then
-				--Hide displays
 				display.frame:Hide()
 				TurnOffIntegration()
 
-				--Disable events
 				self:UnregisterAllEvents()
 			else
-				--Load cross-session character data
 				RemainingXPCSC.xp = RemainingXPCSC.xp or {}
 
-				--Main display
-				SetDisplayValues(profiles.data)
 				wt.SetPosition(display.frame, us.Fill({ relativePoint = profiles.data.display.position.anchor, }, profiles.data.display.position))
-				-- wt.SetPosition(self, profiles.data.display.position)
+				wt.ConvertToAbsolutePosition(display.frame)
+				SetDisplayValues(profiles.data)
 
-				--Integrated display
 				SetIntegrationVisibility(profiles.data.integration.enabled)
 
 				--Shared context menu
@@ -1923,21 +1863,19 @@ main.frame = wt.CreateFrame({
 				end })
 			end
 
-			--Visibility notice
 			if not self:IsVisible() then PrintStatus(true) end
 		end,
 		PLAYER_ENTERING_WORLD = atMax and nil or function(self)
 			self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 
-			--XP update
 			UpdateXPValues()
 
-			--Set up displays
 			SetDisplaySize(profiles.data.display.background.size.w, profiles.data.display.background.size.h)
 			UpdateXPDisplayText()
 			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
-			--Initialize display tooltips
+			--| Initialize display tooltips
+
 			wt.AddTooltip(display.border, {
 				tooltip = tooltip,
 				title = ns.strings.xpTooltip.title,
@@ -1946,6 +1884,7 @@ main.frame = wt.CreateFrame({
 				flipColors = true,
 			})
 			display.border:HookScript("OnEnter", UpdateXPTooltip)
+
 			wt.AddTooltip(integration.frame, {
 				tooltip = tooltip,
 				title = ns.strings.xpTooltip.title,
@@ -1956,22 +1895,20 @@ main.frame = wt.CreateFrame({
 			})
 			integration.frame:HookScript("OnEnter", UpdateXPTooltip)
 
-			--Removals
+			--| Removals
+
 			if profiles.data.integration.hideXPBar then MainMenuExpBar:Hide() end
 		end,
 		PLAYER_XP_UPDATE = atMax and nil or function(_, unit)
 			if unit ~= "player" then return end
 
-			--XP update
 			local gainedXP, _, oldXP = UpdateXPValues()
 			if oldXP == RemainingXPCSC.xp.gathered then return end --The event fired without actual XP gain
 
-			--Update UI elements
 			UpdateXPDisplayText()
 			UpdateXPDisplaySegments()
 			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
-			--Notification
 			if profiles.data.notifications.xpGained then
 				print(cr(ns.strings.chat.xpGained.text:gsub(
 					"#AMOUNT", cr(us.Thousands(gainedXP), ns.colors.purple[1])
@@ -1986,7 +1923,6 @@ main.frame = wt.CreateFrame({
 				), ns.colors.blue[1]))
 			end
 
-			--Tooltip update
 			UpdateXPTooltip()
 		end,
 		PLAYER_LEVEL_UP = atMax and nil or function(_, newLevel)
@@ -1996,7 +1932,6 @@ main.frame = wt.CreateFrame({
 				display.frame:Hide()
 				TurnOffIntegration()
 
-				--Notification
 				print(cr(ns.strings.chat.lvlUp.disabled.text:gsub(
 					"#ADDON", cr(ns.title, ns.colors.purple[1])
 				):gsub(
@@ -2005,7 +1940,6 @@ main.frame = wt.CreateFrame({
 					), ns.colors.blue[3])
 				) .. " " .. ns.strings.chat.lvlUp.congrats, ns.colors.blue[1]))
 			else
-				--Notification
 				if profiles.data.notifications.lvlUp.congrats then
 					print(cr(ns.strings.chat.lvlUp.text:gsub(
 						"#LEVEL", cr(newLevel, ns.colors.purple[1])
@@ -2013,21 +1947,17 @@ main.frame = wt.CreateFrame({
 					if profiles.data.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
 				end
 
-				--Tooltip update
 				UpdateXPTooltip()
 			end
 		end,
 		UPDATE_EXHAUSTION = atMax and nil or function()
-			--Update Rested XP
 			local _, gainedRestedXP = UpdateXPValues()
 			if gainedRestedXP <= 0 then return end
 
-			--Update UI elements
 			UpdateXPDisplayText()
 			UpdateXPDisplaySegments()
 			UpdateIntegrationText(profiles.data.integration.keep, profiles.data.integration.remaining)
 
-			--Notification
 			if profiles.data.notifications.restedXP.gained and not (profiles.data.notifications.restedXP.significantOnly and gainedRestedXP <= math.ceil(RemainingXPCSC.xp.required / 1000)) then
 				print(cr(ns.strings.chat.restedXPGained.text:gsub(
 						"#AMOUNT", cr(tostring(gainedRestedXP), ns.colors.purple[1])
@@ -2041,11 +1971,9 @@ main.frame = wt.CreateFrame({
 				)
 			end
 
-			--Tooltip update
 			UpdateXPTooltip()
 		end,
 		PLAYER_UPDATE_RESTING = atMax and nil or function()
-			--Notification
 			if profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated and not IsResting() then
 				print((profiles.data.notifications.restedStatus.update and (cr(ns.strings.chat.restedStatus.notResting, ns.colors.purple[1]) .. " ") or "") .. (
 					(RemainingXPCSC.xp.accumulatedRested or 0) > 0 and cr(ns.strings.chat.restedXPAccumulated.text:gsub(
@@ -2062,27 +1990,8 @@ main.frame = wt.CreateFrame({
 				))
 			end
 
-			--Initiate or remove the cross-session Rested XP accumulation tracking variable
 			SetRestedAccumulation(profiles.data.notifications.restedXP.gained and profiles.data.notifications.restedXP.accumulated)
-
-			--Tooltip update
 			UpdateXPTooltip()
-		end,
-		UNIT_ENTERING_VEHICLE = atMax and nil or function(_, unit, swapUI) if unit == "player" and swapUI then
-			display.frame:Hide()
-			integration.frame:Hide()
-		end end,
-		UNIT_EXITING_VEHICLE = atMax and nil or function(_, unit) if unit == "player" then
-			if not profiles.data.display.hidden then display.frame:Show() end
-			if profiles.data.integration.enabled then integration.frame:Show() end
-		end end,
-		PET_BATTLE_OPENING_START = atMax and nil or function()
-			display.frame:Hide()
-			integration.frame:Hide()
-		end,
-		PET_BATTLE_CLOSE = atMax and nil or function()
-			if not profiles.data.display.hidden then display.frame:Show() end
-			if profiles.data.integration.enabled then integration.frame:Show() end
 		end,
 	},
 	initialize = atMax and nil or function(_, _, _, name)
@@ -2093,14 +2002,12 @@ main.frame = wt.CreateFrame({
 			parent = UIParent,
 			name = name .. "MainDisplay",
 			initialize = function(displayFrame)
-				--Background: Current XP segment
 				display.xp = wt.CreateCustomFrame({
 					parent = displayFrame,
 					name = "CurrentXPSegment",
 					position = { anchor = "LEFT", },
 				})
 
-				--Background: Rested XP segment
 				display.rested = wt.CreateCustomFrame({
 					parent = displayFrame,
 					name = "RestedXPSegment",
@@ -2111,7 +2018,6 @@ main.frame = wt.CreateFrame({
 					},
 				})
 
-				--Background: Border overplay
 				display.border = wt.CreateCustomFrame({
 					parent = displayFrame,
 					name = "BorderOverlay",
@@ -2122,7 +2028,6 @@ main.frame = wt.CreateFrame({
 					},
 				})
 
-				--Text
 				display.text = wt.CreateText({
 					parent = display.border,
 					name = "Text",
@@ -2168,20 +2073,17 @@ main.frame = wt.CreateFrame({
 					end
 				end,
 			},
-			initialize = function(displayFrame)
-				--Text
-				integration.text = wt.CreateText({
-					parent = displayFrame,
-					name = "Text",
-					position = {
-						anchor = "CENTER",
-						offset = { y = 3 }
-					},
-					layer = "OVERLAY",
-					font = "TextStatusBarText",
-					wrap = false,
-				})
-			end,
+			initialize = function(displayFrame) integration.text = wt.CreateText({
+				parent = displayFrame,
+				name = "Text",
+				position = {
+					anchor = "CENTER",
+					offset = { y = 3 }
+				},
+				layer = "OVERLAY",
+				font = "TextStatusBarText",
+				wrap = false,
+			}) end,
 		})
 	end
 })
