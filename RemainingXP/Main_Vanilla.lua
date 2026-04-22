@@ -764,6 +764,7 @@ main.frame = wt.CreateFrame({
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
 											size = { w = 1014, h = 10 },
@@ -783,6 +784,7 @@ main.frame = wt.CreateFrame({
 											strata = "HIGH",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = false,
 											size = { w = 64, h = 10 },
@@ -802,6 +804,7 @@ main.frame = wt.CreateFrame({
 											strata = "HIGH",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = false,
 											size = { w = 64, h = 10 },
@@ -822,6 +825,7 @@ main.frame = wt.CreateFrame({
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
 											size = { w = 124, h = 16 },
@@ -842,6 +846,7 @@ main.frame = wt.CreateFrame({
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = false,
 											size = { w = 104, h = 16 },
@@ -855,16 +860,17 @@ main.frame = wt.CreateFrame({
 											anchor = "TOPLEFT",
 											relativeTo = WatchFrame,
 											relativePoint = "TOPLEFT",
-											offset = { x = 30, y = -5 }
+											offset = { x = -5, y = -2.5 }
 										},
 										keepInBounds = true,
 										layer = {
-											strata = "MEDIUM",
+											strata = "LOW",
 											keepOnTop = false,
 										},
+										text = { visible = false, },
 										background = {
 											visible = true,
-											size = { w = 174, h = 24 },
+											size = { w = 200, h = 20 },
 										},
 									},
 								},
@@ -880,6 +886,7 @@ main.frame = wt.CreateFrame({
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
 											size = { w = 154, h = 34 },
@@ -898,6 +905,7 @@ main.frame = wt.CreateFrame({
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
 											size = { w = 154, h = 34 },
@@ -916,6 +924,7 @@ main.frame = wt.CreateFrame({
 										layer = {
 											strata = "MEDIUM",
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
 											size = { w = 980, h = 8 },
@@ -924,6 +933,7 @@ main.frame = wt.CreateFrame({
 								},
 							},
 							onPreset = function(preset)
+								options.display.text.visible.setData(preset.data.text.visible)
 								options.display.background.visible.setData(preset.data.background.visible)
 								options.display.background.size.w.setData(preset.data.background.size.w)
 								options.display.background.size.h.setData(preset.data.background.size.h)

@@ -22,6 +22,7 @@ ns.profileDefault = {
 			strata = "HIGH",
 			keepOnTop = false,
 		},
+		text = { visible = true, },
 		background = {
 			visible = true,
 			size = { w = 116, h = 16, },
@@ -152,12 +153,12 @@ ns.changelog = {
 		"#C_Changes:_#",
 		"The look of checkboxes & settings pages have been updated to match the new settings style.",
 		"The look of settings number sliders have been updated to match the new Blizzard sliders but keeping every enhanced functionality as usual for addons built with Widget Tools Toolboxes.",
-		"Font files have been moved to the Widget Tools addon, Remaining XP is built on. The custom font file named #H_The CUSTOM.ttf should now be placed in the main #H_Fonts_# folder right inside the WoW client folder._#",
+		"Font files have been moved to the Widget Tools addon, Remaining XP is built on. #H_The custom font file named_# #O_CUSTOM.ttf_# #H_should now be placed in the main_# #O_Fonts_# #H_folder right inside the WoW client folder._#",
 		"Adjusted the appearance of the Reload notice window.",
 		"Readded the ability to open specific settings pages from the display right-click menus.",
 		"Significant number of other under the hood changes & improvements.",
 		"#O_Note:_# See Widget Tools changelog for further under the hood changes.",
-		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any LUA script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
+		"#H_Thank you all for the help, suggestions & bug reports!_# If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using (when relevant) to give me the best chance of being able to reproduce & fix them. Try proving any Lua script error messages and taint logs (if you know how).",
 	},
 	{
 		"#V_Version 2.3_# #H_(23/7/2023)_#",

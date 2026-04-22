@@ -794,9 +794,10 @@ main.frame = wt.CreateFrame({
 											strata = "LOW",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
-											size = { w = 562, h = 16 },
+											size = { w = 624, h = 18 },
 										},
 									},
 								},
@@ -806,16 +807,17 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOM",
 											relativePoint = "BOTTOM",
-											offset = { x = -256, y = 0 }
+											offset = { x = -255, y = 5 }
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "HIGH",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = false,
-											size = { w = 68, h = 16 },
+											size = { w = 64, h = 12 },
 										},
 									},
 								},
@@ -825,16 +827,17 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOM",
 											relativePoint = "BOTTOM",
-											offset = { x = 252, y = 0 }
+											offset = { x = 255, y = 5 }
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "HIGH",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = false,
-											size = { w = 68, h = 16 },
+											size = { w = 64, h = 12 },
 										},
 									},
 								},
@@ -845,16 +848,17 @@ main.frame = wt.CreateFrame({
 											anchor = "TOPRIGHT",
 											relativeTo = PlayerFrame,
 											relativePoint = "TOPRIGHT",
-											offset = { x = -27, y = -11 }
+											offset = { x = -25, y = -11 }
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
-											size = { w = 126, h = 16 },
+											size = { w = 144, h = 16 },
 										},
 									},
 								},
@@ -865,16 +869,17 @@ main.frame = wt.CreateFrame({
 											anchor = "BOTTOMLEFT",
 											relativeTo = PlayerFrame,
 											relativePoint = "BOTTOMLEFT",
-											offset = { y = 2 }
+											offset = { x = 26, y = 5 }
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
-											visible = false,
-											size = { w = 104, h = 16 },
+											visible = true,
+											size = { w = 68, h = 16 },
 										},
 									},
 								},
@@ -885,16 +890,17 @@ main.frame = wt.CreateFrame({
 											anchor = "TOPLEFT",
 											relativeTo = ObjectiveTrackerFrame,
 											relativePoint = "TOPLEFT",
-											offset = { x = 34, y = -5 }
+											offset = { x = 34, y = -2 }
 										},
 										keepInBounds = true,
 										layer = {
-											strata = "MEDIUM",
+											strata = "BACKGROUND",
 											keepOnTop = false,
 										},
+										text = { visible = false, },
 										background = {
 											visible = true,
-											size = { w = 232, h = 22 },
+											size = { w = 274, h = 28 },
 										},
 									},
 								},
@@ -904,16 +910,16 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOMLEFT",
 											relativePoint = "BOTTOMLEFT",
-											offset = { x = 188, y = 12 }
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
-											size = { w = 490, h = 38 },
+											size = { w = 508, h = 38 },
 										},
 									},
 								},
@@ -923,16 +929,16 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOMRIGHT",
 											relativePoint = "BOTTOMRIGHT",
-											offset = { x = -188, y = 12 }
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
-											size = { w = 490, h = 38 },
+											size = { w = 508, h = 38 },
 										},
 									},
 								},
@@ -949,6 +955,7 @@ main.frame = wt.CreateFrame({
 											strata = "MEDIUM",
 											keepOnTop = false,
 										},
+										text = { visible = true, },
 										background = {
 											visible = true,
 											size = { w = 1248, h = 8 },
@@ -957,6 +964,7 @@ main.frame = wt.CreateFrame({
 								},
 							},
 							onPreset = function(preset)
+								options.display.text.visible.setData(preset.data.text.visible)
 								options.display.background.visible.setData(preset.data.background.visible)
 								options.display.background.size.w.setData(preset.data.background.size.w)
 								options.display.background.size.h.setData(preset.data.background.size.h)
