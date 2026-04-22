@@ -141,10 +141,23 @@ ns.textures = {
 ns.changelog = {
 	{
 		"#V_Version 3.0_# #H_(22/4/2026)_#",
-		"#C_Changes:_#",
+		"#N_New:_#",
 		"Added Midnight 12.0.5, Mists of Pandaria 5.5.3, The Burning Crusade 2.5.5 & Classic 1.15.8 support.",
-		"Significant number of under the hood changes & improvements.",
-		"#O_Note:_# See Widget Tools changelog for further under the hood changes."
+		"Added new display positioning options allowing for more fine-tuning.",
+		"Positioning visual aids have been added via Widget Tools (a foundational addon - also developed by me - Remaining XP is built with). Toggle the use of visual aids in the Widget Tools settings.",
+		"Added new display text coloring options, now the xp value coloring can be fully customized (more Font customization options are coming in future updates).",
+		"Default settings values are now displayed for every setting in their mouseover tooltips.",
+		"Right-clicking settings opens a menu to revert changes made, restore default values individually or copy & paste specific values to be able to easily move them across similar types of settings.",
+		"Widget Tools Lite mode can now be enabled in the Widget Tools addon settings (or via the #H_/wt lite_# chat command) to save on loading settings UI for addons using Widget Tools.",
+		"#C_Changes:_#",
+		"The look of checkboxes & settings pages have been updated to match the new settings style.",
+		"The look of settings number sliders have been updated to match the new Blizzard sliders but keeping every enhanced functionality as usual for addons built with Widget Tools Toolboxes.",
+		"Font files have been moved to the Widget Tools addon, Remaining XP is built on. The custom font file named #H_The CUSTOM.ttf should now be placed in the main #H_Fonts_# folder right inside the WoW client folder._#",
+		"Adjusted the appearance of the Reload notice window.",
+		"Readded the ability to open specific settings pages from the display right-click menus.",
+		"Significant number of other under the hood changes & improvements.",
+		"#O_Note:_# See Widget Tools changelog for further under the hood changes.",
+		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any LUA script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	},
 	{
 		"#V_Version 2.3_# #H_(23/7/2023)_#",
