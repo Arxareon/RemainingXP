@@ -676,6 +676,8 @@ main.frame = wt.CreateFrame({
 				},
 				onLoad = EnsureVisibility,
 				onSave = function()
+					Fade()
+
 					if not atMax then return end
 
 					display.frame:Hide()
