@@ -85,6 +85,7 @@
 			"PlayerFrame",
 			"ObjectiveTrackerFrame",
 			"MainMenuExpBar",
+			"WatchFrame",
 			"PLAYER_LEVEL_UP",
 			"NOTE"
 		],

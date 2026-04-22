@@ -211,7 +211,6 @@ ns.changelog = {
 		"Several old and inaccurate descriptions and tooltips have been updated.",
 		"No tooltip will stay on the screen after its target was hidden.",
 		"Many other under the hood fixes & improvements. Phew.",
-		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any LUA script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	},
 	{
 		"#V_Version 2.1_# #H_(28/11/2022)_#",
@@ -249,7 +248,6 @@ ns.changelog = {
 		"#F_Hotfix:_#",
 		"Fixed an issue with appearing when listing out the chat command list.",
 		"Other small changes & fixes.",
-		"#H_If you encounter any issues, please, consider reporting them! Try to include when/how they occur, and which addons are you using to give me the best chance to be able to reproduce and fix them._#",
 	},
 	{
 		"#V_Version 2.0.3_# #H_(17/3/2022)_#",

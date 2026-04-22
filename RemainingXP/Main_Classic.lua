@@ -757,16 +757,16 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOM",
 											relativePoint = "BOTTOM",
-											offset = { x = 0, y = 0 }
+											offset = { x = 0, y = 40.5 }
 										},
 										keepInBounds = true,
 										layer = {
-											strata = "LOW",
+											strata = "MEDIUM",
 											keepOnTop = false,
 										},
 										background = {
 											visible = true,
-											size = { w = 562, h = 16 },
+											size = { w = 1014, h = 10 },
 										},
 									},
 								},
@@ -776,7 +776,7 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOM",
 											relativePoint = "BOTTOM",
-											offset = { x = -256, y = 0 }
+											offset = { x = -485, y = 40.5 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -785,7 +785,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = false,
-											size = { w = 68, h = 16 },
+											size = { w = 64, h = 10 },
 										},
 									},
 								},
@@ -795,7 +795,7 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOM",
 											relativePoint = "BOTTOM",
-											offset = { x = 252, y = 0 }
+											offset = { x = 485, y = 40.5 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -804,7 +804,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = false,
-											size = { w = 68, h = 16 },
+											size = { w = 64, h = 10 },
 										},
 									},
 								},
@@ -815,7 +815,7 @@ main.frame = wt.CreateFrame({
 											anchor = "TOPRIGHT",
 											relativeTo = PlayerFrame,
 											relativePoint = "TOPRIGHT",
-											offset = { x = -27, y = -11 }
+											offset = { x = -8, y = -5.5 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -824,7 +824,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { w = 126, h = 16 },
+											size = { w = 124, h = 16 },
 										},
 									},
 								},
@@ -835,7 +835,7 @@ main.frame = wt.CreateFrame({
 											anchor = "BOTTOMLEFT",
 											relativeTo = PlayerFrame,
 											relativePoint = "BOTTOMLEFT",
-											offset = { y = 2 }
+											offset = { x = 22, y = 2 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -855,7 +855,7 @@ main.frame = wt.CreateFrame({
 											anchor = "TOPLEFT",
 											relativeTo = ObjectiveTrackerFrame,
 											relativePoint = "TOPLEFT",
-											offset = { x = 34, y = -5 }
+											offset = { x = 30, y = -5 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -864,7 +864,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { w = 232, h = 22 },
+											size = { w = 174, h = 24 },
 										},
 									},
 								},
@@ -874,7 +874,6 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOMLEFT",
 											relativePoint = "BOTTOMLEFT",
-											offset = { x = 188, y = 12 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -883,7 +882,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { w = 490, h = 38 },
+											size = { w = 154, h = 34 },
 										},
 									},
 								},
@@ -893,7 +892,6 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "BOTTOMRIGHT",
 											relativePoint = "BOTTOMRIGHT",
-											offset = { x = -188, y = 12 }
 										},
 										keepInBounds = true,
 										layer = {
@@ -902,7 +900,7 @@ main.frame = wt.CreateFrame({
 										},
 										background = {
 											visible = true,
-											size = { w = 490, h = 38 },
+											size = { w = 154, h = 34 },
 										},
 									},
 								},
@@ -912,16 +910,15 @@ main.frame = wt.CreateFrame({
 										position = {
 											anchor = "TOP",
 											relativePoint = "TOP",
-											offset = { x = 0, y = 3 }
+											offset = { x = 0, y = 3 },
 										},
 										keepInBounds = true,
 										layer = {
 											strata = "MEDIUM",
-											keepOnTop = false,
 										},
 										background = {
 											visible = true,
-											size = { w = 1248, h = 8 },
+											size = { w = 980, h = 8 },
 										},
 									},
 								},
