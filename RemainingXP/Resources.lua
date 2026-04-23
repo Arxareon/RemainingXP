@@ -142,6 +142,10 @@ ns.textures = {
 ns.changelog = {
 	{
 		"#V_Version 3.0_# #H_(22/4/2026)_#",
+		"#F_Hotfix (Version 3.0.1):_#",
+		"#H_The custom font file support has been reverted to the previous solution (but now handled by Widget Tools) until the next update because an oversight caused critical errors._# I have also removed several fonts to save on disk space. Once the planned custom font support is finished and released, any number of fully custom fonts will be usable to there will be little need to keep so many fonts bundled in. #H_To add a custom font file with this temporary solution, similarly like before, replace_# #O_Interface/Addons/WidgetTools/Fonts/CUSTOM.ttf_# #H_with any TrueTypeFont file, while keeping this exact file name._#",
+		"Several fonts have been removed and will no not be bundled in because I would rather prioritize smaller file sizes, and having large font files that offer little benefit for most is in opposition to that goal.",
+		"Added Wago ID information to help Wago to find and download addon dependencies automatically.",
 		"#N_New:_#",
 		"Added Midnight 12.0.5, Mists of Pandaria 5.5.3, The Burning Crusade 2.5.5 & Classic 1.15.8 support.",
 		"Added new display positioning options allowing for more fine-tuning.",

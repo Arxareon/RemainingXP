@@ -1,6 +1,6 @@
 ## Interface: 120005, 50503, 20505, 11508
 ## Title: Remaining XP
-## Version: 3.0
+## Version: 3.0.1
 ## X-Day: 22
 ## X-Month: 4
 ## X-Year: 2026
@@ -10,15 +10,16 @@
 ## IconTexture: Interface/AddOns/RemainingXP/Textures/Logo.tga
 ## X-Sponsors: Celierra
 ## X-License: All Rights Reserved
-## X-CurseForge: curseforge.com/wow/addons/remaining-xp
-## X-Wago: addons.wago.io/addons/remaining-xp
 ## X-Repository: github.com/Arxareon/RemainingXP
 ## X-Issues: github.com/Arxareon/RemainingXP/issues
+## X-CurseForge: curseforge.com/wow/addons/remaining-xp
+## X-Wago: addons.wago.io/addons/remaining-xp
+## X-Wago-ID: rkGrZxGy
 ## SavedVariables: RemainingXPDB, RemainingXPCS
 ## SavedVariablesPerCharacter: RemainingXPDBC, RemainingXPCSC
 ## LoadSavedVariablesFirst: 1
 ## Dependencies: WidgetTools
-## X-WidgetTools-ToolboxVersion: 3.0
+## X-WidgetTools-ToolboxVersion: 3.0.1
 ## X-WidgetTools-AddToNamespace: wt
 
 Resources.lua
