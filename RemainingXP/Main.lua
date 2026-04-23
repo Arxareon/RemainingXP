@@ -1990,7 +1990,7 @@ main.frame = wt.CreateFrame({
 					print(cr(ns.strings.chat.lvlUp.text:gsub(
 						"#LEVEL", cr(newLevel, ns.colors.purple[1])
 					) .. " " .. cr(ns.strings.chat.lvlUp.congrats, ns.colors.purple[3]), ns.colors.blue[1]))
-					if profiles.data.notifications.lvlUp.timePlayed then RequestTimePlayed() print('HEY') end
+					if profiles.data.notifications.lvlUp.timePlayed then RequestTimePlayed() end
 				end
 
 				UpdateXPTooltip()
